@@ -1,16 +1,22 @@
 from __future__ import annotations
 
+import hashlib
+import json
 import subprocess
 from pathlib import Path
 
 from readme_lab.agent_evaluation import (
     build_agent_evaluator_prompt,
+    load_agent_review_response,
     load_evaluator,
     run_agent_evaluation,
 )
 
 EVALUATOR = Path(
     "experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json"
+)
+COMMITTED_RUN = Path(
+    "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1"
 )
 
 
@@ -81,6 +87,20 @@ def test_initial_evaluator_is_advisory_and_treats_repo_as_evidence() -> None:
     assert "Do not use the recommendation to accept or reject" in prompt
 
 
+def test_soft_agent_response_schema_declares_types_for_structured_output() -> None:
+    evaluator = load_evaluator(EVALUATOR)
+    schema = json.loads(
+        evaluator["_response_schema_path"].read_text(encoding="utf-8")
+    )
+
+    properties = schema["properties"]
+    assert properties["schema_version"]["type"] == "string"
+    assert properties["recommendation"]["type"] == "string"
+    assert properties["confidence"]["type"] == "string"
+    concern_properties = properties["concerns"]["items"]["properties"]
+    assert concern_properties["severity"]["type"] == "string"
+
+
 def test_soft_agent_review_records_a_recommendation_without_deciding_hypothesis(
     tmp_path: Path,
 ) -> None:
@@ -125,3 +145,20 @@ def test_executor_failure_is_incomplete_not_candidate_rejection(tmp_path: Path) 
     assert result["result"] == "incomplete"
     assert result["incomplete_reason"] == "executor_failed"
     assert result["hypothesis_disposition"] == "not_decided"
+
+
+def test_committed_soft_review_is_valid_advisory_evidence() -> None:
+    evaluator = load_evaluator(EVALUATOR)
+    response = load_agent_review_response(COMMITTED_RUN / "response.json", evaluator)
+    run = json.loads((COMMITTED_RUN / "run.json").read_text(encoding="utf-8"))
+
+    assert response["recommendation"] == "request_changes"
+    assert run["result"] == "completed"
+    assert run["recommendation"] == response["recommendation"]
+    assert run["automated_authority"] == "evidence_only"
+    assert run["hypothesis_disposition"] == "not_decided"
+
+    for name in ("events", "stderr", "response"):
+        artifact = COMMITTED_RUN / run["artifacts"][name]
+        digest = hashlib.sha256(artifact.read_bytes()).hexdigest()
+        assert digest == run["artifacts"][f"{name}_sha256"]

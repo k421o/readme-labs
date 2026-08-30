@@ -36,7 +36,7 @@
     {
       "id": "linux-maintainer-soft-review",
       "kind": "soft_agent_review",
-      "status": "planned",
+      "status": "completed",
       "candidate_ids": [
         "reademe-temp-modular-readme-v1"
       ],
@@ -46,7 +46,9 @@
         "blocking and non-blocking concerns",
         "perspective limitations"
       ],
-      "run_records": []
+      "run_records": [
+        "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json"
+      ]
     }
   ],
   "completion_policy": {
