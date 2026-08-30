@@ -9,6 +9,7 @@ import re
 import shlex
 import shutil
 import subprocess
+import tomllib
 from datetime import UTC, datetime
 from importlib import resources
 from pathlib import Path
@@ -380,18 +381,33 @@ def _artifact_binding(
     marketplace_root = (
         codex_home / ".tmp" / "marketplaces" / marketplace_name
     ).resolve()
-    install_record_path = marketplace_root / ".codex-marketplace-install.json"
-    if not install_record_path.is_file():
-        raise FileNotFoundError(
-            f"missing Git marketplace install record: {install_record_path}"
-        )
-    install_record = json.loads(install_record_path.read_text(encoding="utf-8"))
-    if install_record.get("source_type") != "git":
+    config_path = codex_home.resolve() / "config.toml"
+    if not config_path.is_file():
+        raise FileNotFoundError(f"missing Codex config: {config_path}")
+    config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+    marketplace_config = config.get("marketplaces", {}).get(marketplace_name)
+    if not isinstance(marketplace_config, dict):
+        raise RuntimeError("plugin marketplace is missing from Codex config")
+    if marketplace_config.get("source_type") != "git":
         raise RuntimeError("evaluation plugin must come from a Git marketplace")
-    if install_record.get("revision") != artifact_revision:
+    if marketplace_config.get("ref") != artifact_revision:
         raise RuntimeError(
-            "marketplace install record does not match artifact revision"
+            "configured marketplace ref does not match artifact revision"
         )
+
+    install_record_path = marketplace_root / ".codex-marketplace-install.json"
+    install_record_sha256 = None
+    if install_record_path.is_file():
+        install_record = json.loads(
+            install_record_path.read_text(encoding="utf-8")
+        )
+        if install_record.get("source_type") != "git":
+            raise RuntimeError("marketplace install record is not a Git source")
+        if install_record.get("revision") != artifact_revision:
+            raise RuntimeError(
+                "marketplace install record does not match artifact revision"
+            )
+        install_record_sha256 = _sha256(install_record_path)
 
     clone_revision = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -441,8 +457,9 @@ def _artifact_binding(
     return {
         "artifact_revision_verified": True,
         "marketplace_revision": clone_revision,
-        "marketplace_ref": install_record.get("ref_name"),
-        "marketplace_install_record_sha256": _sha256(install_record_path),
+        "marketplace_ref": marketplace_config["ref"],
+        "marketplace_config_sha256": _sha256(config_path),
+        "marketplace_install_record_sha256": install_record_sha256,
         "committed_product_sha256": committed_sha256,
         "marketplace_product_sha256": marketplace_sha256,
         "installed_product_sha256": installed_sha256,

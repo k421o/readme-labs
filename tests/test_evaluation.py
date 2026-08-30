@@ -126,6 +126,12 @@ def test_artifact_binding_verifies_marketplace_and_installed_bytes(
         capture_output=True,
         text=True,
     ).stdout.strip()
+    codex_home.joinpath("config.toml").write_text(
+        "[marketplaces.readme-labs]\n"
+        'source_type = "git"\n'
+        f'ref = "{revision}"\n',
+        encoding="utf-8",
+    )
     (marketplace / ".codex-marketplace-install.json").write_text(
         json.dumps(
             {
@@ -153,17 +159,16 @@ def test_artifact_binding_verifies_marketplace_and_installed_bytes(
     )
 
 
-def test_artifact_binding_rejects_declared_revision_mismatch(tmp_path: Path) -> None:
+def test_artifact_binding_rejects_configured_revision_mismatch(
+    tmp_path: Path,
+) -> None:
     codex_home = tmp_path / "codex-home"
     marketplace = codex_home / ".tmp" / "marketplaces" / "readme-labs"
     marketplace.mkdir(parents=True)
-    (marketplace / ".codex-marketplace-install.json").write_text(
-        json.dumps(
-            {
-                "source_type": "git",
-                "revision": "0" * 40,
-            }
-        ),
+    codex_home.joinpath("config.toml").write_text(
+        "[marketplaces.readme-labs]\n"
+        'source_type = "git"\n'
+        f'ref = "{"0" * 40}"\n',
         encoding="utf-8",
     )
     plugin = {
@@ -173,7 +178,7 @@ def test_artifact_binding_rejects_declared_revision_mismatch(tmp_path: Path) -> 
         "source": {"path": (marketplace / "product").as_posix()},
     }
 
-    with pytest.raises(RuntimeError, match="install record"):
+    with pytest.raises(RuntimeError, match="configured marketplace ref"):
         _artifact_binding(codex_home, plugin, "f" * 40)
 
 
@@ -221,6 +226,12 @@ def test_artifact_binding_rejects_tracked_marketplace_tampering(
         capture_output=True,
         text=True,
     ).stdout.strip()
+    codex_home.joinpath("config.toml").write_text(
+        "[marketplaces.readme-labs]\n"
+        'source_type = "git"\n'
+        f'ref = "{revision}"\n',
+        encoding="utf-8",
+    )
     (marketplace / ".codex-marketplace-install.json").write_text(
         json.dumps(
             {
