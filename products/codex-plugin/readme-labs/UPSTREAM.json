@@ -3,6 +3,6 @@
   "generated_by": "scripts/build_plugin.py",
   "maturity": "experimental",
   "source": "capabilities/readme-review",
-  "source_revision": "3db4df5f8b217a98358f94c527c57dfa888deec5",
-  "source_sha256": "759abfedff89f320be5189474aa8a8ec8732cf6c9f2a0d98d0aa1b0541a6dc62"
+  "source_revision": "498cea098af4d8ad73f293d9ed7f86e8f2e00f49",
+  "source_sha256": "adf01177d1c9d0ad2604cd60c21f1d2e6f7826f5bb3afebf5b763d335da4f082"
 }
