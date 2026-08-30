@@ -41,6 +41,14 @@ The result is an actual temporary Git repository with separate base and
 mutation commits. A future runner can launch agents inside it and score their
 structured findings without exposing the scorecard.
 
+The materializer returns the capsule's network policy but does not itself
+provide a process sandbox. A runner must enforce that policy before an agent or
+command executes. The first
+[`bootstrap-readme-review-v1`](runs/bootstrap-readme-review-v1/) run is an
+explicitly non-blinded author dry run: it verifies materialization, repository
+evidence, response capture, and score plumbing, but is not evidence that the
+capability improves performance.
+
 ## Evaluation boundaries
 
 - A scenario must name its fidelity level and network policy.
