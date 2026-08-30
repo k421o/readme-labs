@@ -8,6 +8,7 @@ from pathlib import Path
 
 from readme_lab.capsule import materialize_capsule
 from readme_lab.corpus import collect_corpus, summarize_observations, write_summary
+from readme_lab.evaluation import run_codex_capsule, score_review_response
 from readme_lab.inspect import ROLE_IDS, inspect_readme
 
 
@@ -34,6 +35,27 @@ def build_parser() -> argparse.ArgumentParser:
     )
     materialize_parser.add_argument("capsule", type=Path)
     materialize_parser.add_argument("--destination", type=Path, required=True)
+    run_parser = capsule_subparsers.add_parser(
+        "run", help="execute a blinded README review through Codex"
+    )
+    run_parser.add_argument("capsule", type=Path)
+    run_parser.add_argument("--workspace", type=Path, required=True)
+    run_parser.add_argument("--run-dir", type=Path, required=True)
+    run_parser.add_argument("--run-id", required=True)
+    run_parser.add_argument("--artifact-revision", required=True)
+    run_parser.add_argument("--plugin-id", default="readme-labs@readme-labs")
+    run_parser.add_argument("--model", required=True)
+    run_parser.add_argument(
+        "--reasoning-effort",
+        choices=("low", "medium", "high", "xhigh"),
+        default="high",
+    )
+    score_parser = capsule_subparsers.add_parser(
+        "score", help="apply deterministic checks to a held-out response"
+    )
+    score_parser.add_argument("capsule", type=Path)
+    score_parser.add_argument("--response", type=Path, required=True)
+    score_parser.add_argument("--output", type=Path)
 
     corpus_parser = subparsers.add_parser("corpus", help="collect and analyze corpora")
     corpus_subparsers = corpus_parser.add_subparsers(
@@ -67,6 +89,29 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "capsule" and args.capsule_command == "materialize":
         result = materialize_capsule(args.capsule, args.destination)
         print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "capsule" and args.capsule_command == "run":
+        result = run_codex_capsule(
+            args.capsule,
+            workspace=args.workspace,
+            run_dir=args.run_dir,
+            run_id=args.run_id,
+            artifact_revision=args.artifact_revision,
+            plugin_id=args.plugin_id,
+            model=args.model,
+            reasoning_effort=args.reasoning_effort,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "capsule" and args.capsule_command == "score":
+        score = score_review_response(args.capsule, args.response)
+        if args.output:
+            args.output.parent.mkdir(parents=True, exist_ok=True)
+            args.output.write_text(
+                json.dumps(score, indent=2, sort_keys=True) + "\n",
+                encoding="utf-8",
+            )
+        print(json.dumps(score, indent=2, sort_keys=True))
         return 0
     if args.command == "corpus" and args.corpus_command == "collect":
         result = collect_corpus(

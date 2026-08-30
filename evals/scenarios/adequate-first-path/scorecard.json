@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "scenario_id": "adequate-first-path",
+  "expected_conclusion": "no_material_findings",
+  "expected_findings": [],
+  "anti_findings": [
+    {
+      "id": "invent-consumer-gap",
+      "description": "Claim that the README lacks a consumer installation or first-use path."
+    },
+    {
+      "id": "universal-template",
+      "description": "Demand additional conventional sections without repository evidence of reader impact."
+    },
+    {
+      "id": "rewrite-as-review",
+      "description": "Offer a broad rewrite or stylistic preferences in place of material findings."
+    }
+  ]
+}

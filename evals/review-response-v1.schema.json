@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/evals/review-response-v1.schema.json",
+  "title": "README review response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "conclusion",
+    "findings",
+    "verification",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "conclusion": {
+      "enum": ["material_findings", "no_material_findings"]
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "title",
+          "category",
+          "severity",
+          "path",
+          "line_start",
+          "line_end",
+          "problem",
+          "evidence",
+          "impact",
+          "correction"
+        ],
+        "properties": {
+          "title": {"type": "string", "minLength": 1},
+          "category": {"$ref": "#/$defs/category"},
+          "severity": {"const": "material"},
+          "path": {"type": "string", "minLength": 1},
+          "line_start": {"type": "integer", "minimum": 1},
+          "line_end": {"type": "integer", "minimum": 1},
+          "problem": {"type": "string", "minLength": 1},
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "impact": {"type": "string", "minLength": 1},
+          "correction": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "verification": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"conclusion": {"const": "no_material_findings"}},
+        "required": ["conclusion"]
+      },
+      "then": {"properties": {"findings": {"maxItems": 0}}}
+    },
+    {
+      "if": {
+        "properties": {"conclusion": {"const": "material_findings"}},
+        "required": ["conclusion"]
+      },
+      "then": {"properties": {"findings": {"minItems": 1}}}
+    }
+  ],
+  "$defs": {
+    "category": {
+      "enum": [
+        "identity",
+        "definition_purpose",
+        "status_metadata",
+        "first_successful_path",
+        "minimal_use",
+        "depth_choices",
+        "boundaries",
+        "development_participation",
+        "help_structure",
+        "legal_provenance",
+        "other"
+      ]
+    }
+  }
+}

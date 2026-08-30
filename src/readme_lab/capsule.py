@@ -120,7 +120,7 @@ def materialize_capsule(capsule_path: Path, destination: Path) -> dict[str, Any]
             "commit",
             "--quiet",
             "-m",
-            f"Apply {capsule['id']} mutation",
+            "Apply evaluation mutation",
             timestamp=git_timestamp,
         )
 

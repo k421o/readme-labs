@@ -7,6 +7,7 @@ SOURCE = Path("capabilities/readme-review")
 PLUGIN_ROOT = Path("products/codex-plugin/readme-labs")
 DESTINATION = PLUGIN_ROOT / "skills/readme-review"
 PROVENANCE = PLUGIN_ROOT / "UPSTREAM.json"
+MARKETPLACE = Path(".agents/plugins/marketplace.json")
 
 
 def file_map(root: Path) -> dict[str, bytes]:
@@ -34,6 +35,22 @@ def test_plugin_adapter_is_explicitly_experimental_and_pinned() -> None:
     assert len(provenance["source_sha256"]) == 64
 
 
-def test_repository_does_not_register_a_marketplace_product() -> None:
-    assert not Path("marketplace.json").exists()
-    assert not (PLUGIN_ROOT / "marketplace.json").exists()
+def test_repository_registers_its_own_mechanical_marketplace_adapter() -> None:
+    marketplace = json.loads(MARKETPLACE.read_text(encoding="utf-8"))
+
+    assert marketplace["name"] == "readme-labs"
+    assert marketplace["plugins"] == [
+        {
+            "name": "readme-labs",
+            "source": {
+                "source": "local",
+                "path": "./products/codex-plugin/readme-labs",
+            },
+            "policy": {
+                "installation": "AVAILABLE",
+                "authentication": "ON_INSTALL",
+            },
+            "category": "Productivity",
+        }
+    ]
+    assert "agent-skills" not in MARKETPLACE.read_text(encoding="utf-8").casefold()

@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/evals/review-scorecard-v1.schema.json",
+  "title": "README review scorecard v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "scenario_id",
+    "expected_conclusion",
+    "expected_findings",
+    "anti_findings"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "scenario_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "expected_conclusion": {
+      "enum": ["material_findings", "no_material_findings"]
+    },
+    "expected_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "category",
+          "severity",
+          "evidence",
+          "success_condition"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "category": {"$ref": "#/$defs/category"},
+          "severity": {"const": "material"},
+          "evidence": {"type": "string", "minLength": 1},
+          "success_condition": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "anti_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+          },
+          "description": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  },
+  "$defs": {
+    "category": {
+      "enum": [
+        "identity",
+        "definition_purpose",
+        "status_metadata",
+        "first_successful_path",
+        "minimal_use",
+        "depth_choices",
+        "boundaries",
+        "development_participation",
+        "help_structure",
+        "legal_provenance",
+        "other"
+      ]
+    }
+  }
+}

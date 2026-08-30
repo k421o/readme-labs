@@ -27,6 +27,15 @@ def test_readme_review_references_are_local_and_present() -> None:
         assert (SKILL_DIR / "references" / name).is_file()
 
 
+def test_readme_review_interface_freezes_finding_and_no_finding_job() -> None:
+    interface = (SKILL_DIR / "INTERFACE.md").read_text(encoding="utf-8")
+
+    assert "Named user job" in interface
+    assert "material findings" in interface
+    assert "no-material-findings" in interface
+    assert "does not promise" in interface
+
+
 def test_openai_interface_invokes_canonical_skill_name() -> None:
     metadata = yaml.safe_load(
         (SKILL_DIR / "agents/openai.yaml").read_text(encoding="utf-8")

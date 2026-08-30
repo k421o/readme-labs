@@ -1,6 +1,6 @@
 schema_version = 1
-id = "missing-first-path"
-title = "A package README loses its first successful path"
+id = "adequate-first-path"
+title = "A package README already provides an adequate first path"
 task = "Review this repository README for material reader-facing problems. Support findings with repository evidence and avoid generic template advice."
 scorecard = "scorecard.json"
 
@@ -9,9 +9,8 @@ kind = "local_git"
 fidelity_level = 4
 fixture = "../../fixtures/pebble-count"
 network = "disabled"
-mutation = "mutation.diff"
 git_timestamp = "2000-01-01T00:00:00Z"
 
 [metadata]
 target_role = "published_package"
-variable = "first_successful_path_removed"
+variable = "adequate_first_path_preserved"

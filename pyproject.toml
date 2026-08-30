@@ -33,6 +33,8 @@ packages = ["src/readme_lab"]
 "domain/readme-observation-v1.schema.json" = "readme_lab/data/readme-observation-v1.schema.json"
 "domain/readme-observation-v2.schema.json" = "readme_lab/data/readme-observation-v2.schema.json"
 "evals/task-capsule-v1.schema.json" = "readme_lab/data/task-capsule-v1.schema.json"
+"evals/review-response-v1.schema.json" = "readme_lab/data/review-response-v1.schema.json"
+"evals/review-scorecard-v1.schema.json" = "readme_lab/data/review-scorecard-v1.schema.json"
 "corpus/manifest-item-v1.schema.json" = "readme_lab/data/manifest-item-v1.schema.json"
 
 [tool.pytest.ini_options]
