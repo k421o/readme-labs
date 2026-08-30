@@ -13,7 +13,10 @@ readers. Establish its role before judging its sections or length.
 1. Read the README, the nearest applicable repository guidance, and enough of
    the surrounding repository to identify the component. Inspect manifests,
    entry points, canonical docs, contribution/security files, and commands that
-   bear directly on README claims.
+   bear directly on README claims. Identify evidenced delivery surfaces such as
+   a repository landing page, package metadata input, registry page,
+   documentation renderer, or component handoff; the filename or an inbound
+   link alone does not prove that every current claim is authoritative.
 2. Assign the README's primary role using
    [roles and anatomy](references/roles-and-anatomy.md). State uncertainty when
    the repository/package/publication relationship is ambiguous.
@@ -55,6 +58,9 @@ When asked to edit rather than review:
 
 - preserve correct, component-specific content and existing project voice;
 - remove or relocate content only when a clearer canonical surface exists;
+- do not delete or move a README consumed by packaging, a registry, or another
+  external surface unless the requested scope includes migrating that
+  interface; otherwise report the required migration;
 - use conventional headings when they improve recognition, not to impose a
   template;
 - validate changed relative links and commands in proportion to risk; and

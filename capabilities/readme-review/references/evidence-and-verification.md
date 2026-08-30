@@ -6,11 +6,14 @@ Match the evidence to the claim under review.
 
 1. Repository implementation, manifests, tests, configuration, and executable
    behavior for claims about this component.
-2. Canonical project documents for contribution, security, support, lifecycle,
+2. Package metadata, publication settings, registry configuration, repository
+   host behavior, and documentation-site configuration for claims about where
+   the README is delivered or rendered.
+3. Canonical project documents for contribution, security, support, lifecycle,
    and governance routes.
-3. Official platform or ecosystem documentation for rendering, publication,
+4. Official platform or ecosystem documentation for rendering, publication,
    installation, or package behavior.
-4. Pinned repository history when the review depends on when a claim became
+5. Pinned repository history when the review depends on when a claim became
    stale or why a compatibility route exists.
 
 Popularity and familiarity demonstrate exposure, not correctness.
@@ -25,6 +28,8 @@ Popularity and familiarity demonstrate exposure, not correctness.
   when mutation is in scope and dependencies are available.
 - Check whether a linked canonical document actually answers the question the
   README delegates to it.
+- Treat an inbound link or packaging reference as a dependency to inspect, not
+  proof that the linked text is correct or must remain unchanged.
 - Distinguish package installation from contributor bootstrap, and product
   downloads from source builds.
 - Date status, compatibility, performance, or support evidence when it can
