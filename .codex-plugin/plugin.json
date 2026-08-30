@@ -1,0 +1,30 @@
+{
+  "name": "readme-labs",
+  "version": "0.1.0",
+  "description": "Evidence-backed README structure, authoring, and review capabilities.",
+  "author": {
+    "name": "Karlton Suits",
+    "url": "https://github.com/k421o"
+  },
+  "license": "MIT",
+  "keywords": [
+    "documentation",
+    "readme",
+    "review",
+    "research",
+    "skills"
+  ],
+  "repository": "https://github.com/k421o/readme-labs",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "README Labs",
+    "shortDescription": "Review README purpose, evidence, and usability.",
+    "longDescription": "Review README delivery contracts and claims using evidence-backed, role-specific guidance.",
+    "developerName": "Karlton Suits",
+    "category": "Developer Tools",
+    "capabilities": [],
+    "defaultPrompt": [
+      "Use $readme-labs:readme-contract-review to review this README's evidenced contract."
+    ]
+  }
+}
