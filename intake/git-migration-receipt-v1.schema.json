@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/intake/git-migration-receipt-v1.schema.json",
+  "title": "README Labs owned Git migration receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "recorded_at",
+    "source",
+    "destination",
+    "content_equivalent",
+    "duplicate_snapshot_retained",
+    "settlement",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "source": {"$ref": "#/$defs/source"},
+    "destination": {"$ref": "#/$defs/destination"},
+    "content_equivalent": {"const": true},
+    "duplicate_snapshot_retained": {"const": false},
+    "settlement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source", "destination", "references"],
+      "properties": {
+        "source": {"enum": ["local_commit", "pushed", "pr_open", "merged"]},
+        "destination": {"enum": ["local_commit", "pushed", "pr_open", "merged"]},
+        "references": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository_id", "remote", "revision", "path", "artifact_type", "sha256"],
+      "properties": {
+        "repository_id": {"type": "string", "minLength": 1},
+        "remote": {"type": ["string", "null"]},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+        "path": {"type": "string", "minLength": 1},
+        "artifact_type": {"enum": ["file", "tree"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "repository_id",
+        "remote",
+        "revision",
+        "path",
+        "artifact_type",
+        "sha256",
+        "deletion_revision",
+        "path_absent"
+      ],
+      "properties": {
+        "repository_id": {"type": "string", "minLength": 1},
+        "remote": {"type": ["string", "null"]},
+        "revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+        "path": {"type": "string", "minLength": 1},
+        "artifact_type": {"enum": ["file", "tree"]},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "deletion_revision": {"type": "string", "pattern": "^[0-9a-f]{40,64}$"},
+        "path_absent": {"const": true}
+      }
+    },
+    "destination": {"$ref": "#/$defs/artifact"}
+  }
+}

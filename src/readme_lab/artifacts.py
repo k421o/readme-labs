@@ -14,11 +14,14 @@ def tree_sha256(root: Path) -> str:
         raise NotADirectoryError(root)
     digest = hashlib.sha256()
     for path in sorted(root.rglob("*")):
+        relative_path = path.relative_to(root)
+        if ".git" in relative_path.parts:
+            continue
         if path.is_symlink():
             raise ValueError(f"artifact trees must not contain symlinks: {path}")
         if not path.is_file():
             continue
-        relative = path.relative_to(root).as_posix().encode()
+        relative = relative_path.as_posix().encode()
         digest.update(relative)
         digest.update(b"\0")
         digest.update(path.read_bytes())

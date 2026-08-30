@@ -28,6 +28,7 @@
         "research_method",
         "evaluation_method",
         "workflow",
+        "repository_solution",
         "other"
       ]
     },

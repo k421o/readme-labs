@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/intake/external-action-plan-v1.schema.json",
+  "title": "README Labs guarded external action plan v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "job_id",
+    "created_at",
+    "action",
+    "status",
+    "preconditions",
+    "parameters",
+    "execution_requires_explicit_authorization"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "job_id": {"type": "string", "minLength": 1},
+    "created_at": {"type": "string", "format": "date-time"},
+    "action": {"enum": ["publish_private", "archive_owned", "source_cleanup"]},
+    "status": {"const": "planned"},
+    "preconditions": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["job_verified", "ownership_verification_required", "dry_run_first"],
+      "properties": {
+        "job_verified": {"const": true},
+        "ownership_verification_required": {"const": true},
+        "dry_run_first": {"const": true}
+      }
+    },
+    "parameters": {"type": "object"},
+    "execution_requires_explicit_authorization": {"const": true}
+  }
+}
