@@ -1,0 +1,3 @@
+# Imported evidence and candidate artifacts preserve upstream bytes verbatim.
+intake/snapshots/** -whitespace
+candidates/**/artifact/** -whitespace

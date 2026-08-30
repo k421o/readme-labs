@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "id": "popular-linux-open-source-maintainer-v1",
+  "title": "Popular Linux open-source maintainer",
+  "kind": "soft_agent_review",
+  "authority": "advisory",
+  "perspective": "A maintainer deciding whether a README change is acceptable to merge in a mature, popular open-source repository used on Linux.",
+  "instructions": "instructions.md",
+  "response_schema": "../../schemas/soft-agent-review-response-v1.schema.json",
+  "recommendations": [
+    "merge",
+    "approve_with_comments",
+    "request_changes",
+    "unable_to_assess"
+  ]
+}

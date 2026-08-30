@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "id": "reademe-temp-modular-readme-v1",
+  "title": "Modular parallel README authoring skill from reademe-temp",
+  "kind": "skill_bundle",
+  "authority": "experimental_candidate_only",
+  "storage": {
+    "mode": "embedded",
+    "artifact_root": "artifact",
+    "tree_sha256": "703913bad75d87d67707e681f168f0b7ca52266774beb872afc05c19df3396be"
+  },
+  "source_bindings": [
+    {
+      "manifest": "intake/manifests/reademe-temp-v1.json",
+      "item_ids": [
+        "modular-template-method",
+        "modular-readme-skill",
+        "modular-readme-forward-test"
+      ]
+    }
+  ],
+  "entrypoints": [
+    {
+      "id": "modular-readme",
+      "path": ".agents/skills/modular-readme",
+      "format": "codex_skill",
+      "host": "codex"
+    }
+  ],
+  "hypotheses": [
+    "README components can be drafted independently from shared repository evidence and assembled without competing writes.",
+    "Evidence reports and deterministic assembly can improve integration while the parent retains semantic responsibility.",
+    "A modular skill and template bundle may produce useful README outcomes even though its structure differs from the current canonical readme-review capability."
+  ],
+  "limitations": [
+    "The imported skill is a candidate, not a released or automatically invocable README Labs capability.",
+    "Its initial forward test covered one local repository and a minimal three-component profile.",
+    "The catalog and validation rules may encode current section assumptions and must remain open to competing candidates."
+  ]
+}

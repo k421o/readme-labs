@@ -28,6 +28,12 @@ made.
   introducing generic prose or erasing necessary variation?
 - Which parts of README evaluation can be deterministic, and which require
   blinded human judgment?
+- How do agents interpret, navigate, and act on README content under realistic
+  repository tasks?
+- How do people understand, trust, navigate, and use README content, and which
+  research methods can support those claims responsibly?
+- Which outside research, methods, skills, and complete solutions improve or
+  challenge the current domain model and capability designs?
 
 ## Outputs
 
@@ -38,6 +44,9 @@ The domain may produce:
 - Corpus manifests, annotations, derived features, and statistical reports.
 - Controlled fixtures, real-repository replays, mutations, and executable task
   capsules.
+- Provenance-bearing intake records and isolated libraries of candidate skills,
+  bundles, methods, and whole-solution snapshots.
+- Soft agent perspectives and privacy-bounded human/user-response observations.
 - Review, authoring, classification, or navigation capabilities.
 - Packaging adapters such as a Codex plugin.
 - A generic evaluation component after non-README reuse demonstrates a stable
@@ -69,7 +78,9 @@ The stable middle of the project consists of:
    judgments.
 
 Collectors and consumers may change independently when they preserve these
-contracts or version their changes.
+contracts or version their changes. Experimental candidates are not required
+to preserve the current contracts: they may challenge them, complete their
+declared trials, and propose a versioned replacement.
 
 ## Evidence hierarchy
 
@@ -98,6 +109,11 @@ or revision, and important limitations.
 capabilities derived from it. Downstream bundles consume intentionally released
 artifacts identified by version, source revision, and content hash.
 
+Outside research and candidate copies remain evidence, not competing source
+authority. Canonical ownership determines where an accepted change lands; it
+does not make the current method, schema, directory layout, skill count, or
+progressive-disclosure design immune from replacement.
+
 `repository-guidance` continues to own AGENTS.md guidance and cross-surface
 integration. It must not become a second editable home for the README domain.
 
@@ -111,6 +127,13 @@ second independent consumer proves the interface and justifies extraction.
 - Separate research conclusions from operational skill instructions.
 - Add criteria to a capability only when observed behavior or evidence supports
   a recurring decision boundary.
+- Admit structurally different candidates without requiring compatibility with
+  the current capability or its regression tests.
+- Let an admitted hypothesis complete its planned run unless a recorded safety,
+  authorization, or infrastructure boundary makes the run incomplete.
+- Treat automated experimental results and soft agent recommendations as
+  evidence; reserve adoption, rejection, and promotion for owner or designated
+  review after the declared run.
 - Keep held-out evaluation material out of the agent-visible workspace.
 - Record migrations and generated-product provenance.
 - Use the complexity progression to decide when adapters, directories,

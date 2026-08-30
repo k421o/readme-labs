@@ -93,6 +93,12 @@ do not infer efficacy from category matching alone. Preserve executor version,
 model, reasoning effort, prompt hash, network policy, materialized Git hashes,
 response, score, stderr, and failure dispositions.
 
+This is a release-candidate procedure for a capability claiming the current
+interface. It does not gate admission of a differently shaped candidate. Open
+experiments follow `docs/experimental-architecture.md`: automated results are
+evidence only and an admitted hypothesis completes its declared run unless a
+recorded safety, authorization, or infrastructure stop makes it incomplete.
+
 ## Update and rollback
 
 Codex Git marketplace configuration pins a ref. To move deliberately between

@@ -1,0 +1,83 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/experiments/schemas/soft-agent-review-response-v1.schema.json",
+  "title": "README Labs soft agent review response v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evaluator_id",
+    "recommendation",
+    "confidence",
+    "summary",
+    "strengths",
+    "concerns",
+    "questions",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "evaluator_id": {"$ref": "#/$defs/id"},
+    "recommendation": {
+      "enum": [
+        "merge",
+        "approve_with_comments",
+        "request_changes",
+        "unable_to_assess"
+      ]
+    },
+    "confidence": {"enum": ["low", "medium", "high"]},
+    "summary": {"type": "string", "minLength": 1},
+    "strengths": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/evidence_statement"}
+    },
+    "concerns": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["title", "severity", "evidence", "rationale", "suggested_change"],
+        "properties": {
+          "title": {"type": "string", "minLength": 1},
+          "severity": {"enum": ["blocking", "non_blocking"]},
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "rationale": {"type": "string", "minLength": 1},
+          "suggested_change": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "questions": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "evidence_statement": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["claim", "evidence"],
+      "properties": {
+        "claim": {"type": "string", "minLength": 1},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    }
+  }
+}

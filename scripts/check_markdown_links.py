@@ -11,6 +11,19 @@ from markdown_it import MarkdownIt
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_PARTS = {".git", ".venv", "dist", "build", ".pytest_cache", ".ruff_cache"}
 HISTORICAL_FIXTURE_ROOT = REPOSITORY_ROOT / "research" / "readme-contract-exercises"
+NON_AUTHORITATIVE_ARTIFACT_ROOTS = (
+    REPOSITORY_ROOT / "intake" / "snapshots",
+    REPOSITORY_ROOT / "candidates",
+)
+
+
+def is_non_authoritative_artifact(path: Path) -> bool:
+    if path.is_relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[0]):
+        return True
+    if path.is_relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[1]):
+        relative = path.relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[1])
+        return "artifact" in relative.parts
+    return False
 
 
 def markdown_files() -> list[Path]:
@@ -42,7 +55,9 @@ def destinations(path: Path) -> list[str]:
 def main() -> int:
     failures: list[str] = []
     for markdown in markdown_files():
-        if markdown.is_relative_to(HISTORICAL_FIXTURE_ROOT):
+        if markdown.is_relative_to(HISTORICAL_FIXTURE_ROOT) or (
+            is_non_authoritative_artifact(markdown)
+        ):
             continue
         for destination in destinations(markdown):
             parsed = urlsplit(destination)

@@ -1,0 +1,208 @@
+{
+  "schema_version": 1,
+  "id": "reademe-temp-v1",
+  "title": "Local reademe-temp README research, modular method, skill, and forward trial",
+  "observed_at": "2026-08-30T22:02:58Z",
+  "source_repository": {
+    "repository_id": "local:reademe-temp",
+    "remote": null,
+    "default_branch": "main",
+    "availability": "local_only"
+  },
+  "items": [
+    {
+      "id": "project-research-index",
+      "kind": "research_content",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": "README.md",
+        "artifact_type": "file",
+        "git_oid": "9a3619d92180b1ea94e6a5964de298e4e1c5b0be",
+        "sha256": "dcc717ec9d524ee2d3190997222adf9c1244a9751a893af8e470959988f149b0"
+      },
+      "snapshot": {
+        "path": "intake/snapshots/reademe-temp-0b7a4f5/README.md",
+        "artifact_type": "file",
+        "sha256": "dcc717ec9d524ee2d3190997222adf9c1244a9751a893af8e470959988f149b0"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "Index and limitations for the saved NotebookLM research workspace.",
+      "limitations": []
+    },
+    {
+      "id": "notebooklm-research-record",
+      "kind": "research_content",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": "docs",
+        "artifact_type": "tree",
+        "git_oid": "de3dfea5bedb39664ef62f869cc3ff6ae5a5e2da",
+        "sha256": "c61c4aa0fbac149395c5ed27cf2bdbd3976a4486d92a2671d62643121d37fbac"
+      },
+      "snapshot": {
+        "path": "intake/snapshots/reademe-temp-0b7a4f5/docs",
+        "artifact_type": "tree",
+        "sha256": "c61c4aa0fbac149395c5ed27cf2bdbd3976a4486d92a2671d62643121d37fbac"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "NotebookLM source inventory, transcript, artifact inventory, and capture limitations.",
+      "limitations": [
+        "The transcript includes generated research claims that require independent source review before adoption.",
+        "Some Studio bodies were not recoverable from the saved page."
+      ]
+    },
+    {
+      "id": "related-research-documents",
+      "kind": "research_content",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": "related-documents",
+        "artifact_type": "tree",
+        "git_oid": "26bd0e0ff4a4caf092a2156141598b7bf76eccd0",
+        "sha256": "fda09813a00561274d08ced0b0894f470b9d463a38d67e56f9cb05f1ab290ef2"
+      },
+      "snapshot": {
+        "path": "intake/snapshots/reademe-temp-0b7a4f5/related-documents",
+        "artifact_type": "tree",
+        "sha256": "fda09813a00561274d08ced0b0894f470b9d463a38d67e56f9cb05f1ab290ef2"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "Downloaded and Drive-exported README research documents with source checksums.",
+      "limitations": [
+        "Document conclusions have not yet been reconciled with README Labs evidence classes."
+      ]
+    },
+    {
+      "id": "notebooklm-extraction-method",
+      "kind": "research_method",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": "scripts/extract_notebooklm_save.py",
+        "artifact_type": "file",
+        "git_oid": "ccf118bea8de229829cec0af041ed0798832a131",
+        "sha256": "1679ee9456b26fcb9395cce7b1f535d0cd19ab1a0693a4e97c684d0ab0aa8bbc"
+      },
+      "snapshot": {
+        "path": "intake/snapshots/reademe-temp-0b7a4f5/scripts/extract_notebooklm_save.py",
+        "artifact_type": "file",
+        "sha256": "1679ee9456b26fcb9395cce7b1f535d0cd19ab1a0693a4e97c684d0ab0aa8bbc"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "Method used to recover NotebookLM source, chat, and Studio metadata from a saved page.",
+      "limitations": [
+        "The method depends on a specific saved-page DOM and optional macOS extended attributes."
+      ]
+    },
+    {
+      "id": "modular-template-method",
+      "kind": "research_method",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": "modular-templates",
+        "artifact_type": "tree",
+        "git_oid": "36a3f4e09f11290c14168e60a64864a7ad4695af",
+        "sha256": "8d0addae02cc0299a627d7d493282b91c4f362a06ecc6e2bd0f5b6887daab094"
+      },
+      "snapshot": {
+        "path": "candidates/reademe-temp-modular-readme-v1/artifact/modular-templates",
+        "artifact_type": "tree",
+        "sha256": "8d0addae02cc0299a627d7d493282b91c4f362a06ecc6e2bd0f5b6887daab094"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "A modular README component catalog and parallel assembly method.",
+      "limitations": [
+        "The module catalog may encode section assumptions that require experimental challenge."
+      ]
+    },
+    {
+      "id": "modular-readme-skill",
+      "kind": "skill",
+      "source": {
+        "state": "committed",
+        "revision": "0b7a4f58aaa7622f8be6450c929efbd200779e69",
+        "path": ".agents/skills/modular-readme",
+        "artifact_type": "tree",
+        "git_oid": "c4e093fdcf637703fd6eb96113f6aef92eb89246",
+        "sha256": "37b0885bdeb6e907cd459a2f829446e867de2d2299353ae8389ad8e814a88369"
+      },
+      "snapshot": {
+        "path": "candidates/reademe-temp-modular-readme-v1/artifact/.agents/skills/modular-readme",
+        "artifact_type": "tree",
+        "sha256": "37b0885bdeb6e907cd459a2f829446e867de2d2299353ae8389ad8e814a88369"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "Repo-local skill that delegates selected README components to isolated Codex workers and assembles validated fragments.",
+      "limitations": [
+        "The source repository has no remote and this branch was not merged into its local main branch.",
+        "Admission does not adopt the skill as a canonical README Labs capability."
+      ]
+    },
+    {
+      "id": "modular-readme-forward-test",
+      "kind": "trial_evidence",
+      "source": {
+        "state": "workspace",
+        "observed_at": "2026-08-30T22:02:58Z",
+        "path": ".agents/skills/modular-readme/work/forward-test",
+        "artifact_type": "tree",
+        "sha256": "dfcd650ad0c13e1548a39d59a414463aa68675f475b6b7f1d1f3216010bdb8e4"
+      },
+      "snapshot": {
+        "path": "intake/snapshots/reademe-temp-forward-test/forward-test",
+        "artifact_type": "tree",
+        "sha256": "dfcd650ad0c13e1548a39d59a414463aa68675f475b6b7f1d1f3216010bdb8e4"
+      },
+      "intake_mode": "snapshot",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "Uncommitted but complete three-worker forward-test packets, evidence reports, components, and assembled README.",
+      "limitations": [
+        "The original run tree was uncommitted and is identified by observation time and content digest rather than a Git object.",
+        "The forward test exercised one repository and does not establish general usefulness."
+      ]
+    }
+  ],
+  "relationships": [
+    {
+      "from": "notebooklm-extraction-method",
+      "relationship": "produced",
+      "to": "notebooklm-research-record"
+    },
+    {
+      "from": "notebooklm-research-record",
+      "relationship": "informed",
+      "to": "modular-template-method"
+    },
+    {
+      "from": "modular-template-method",
+      "relationship": "supports",
+      "to": "modular-readme-skill"
+    },
+    {
+      "from": "modular-readme-skill",
+      "relationship": "produced",
+      "to": "modular-readme-forward-test"
+    }
+  ],
+  "limitations": [
+    "The source repository is local-only, so selected snapshots are preserved here for durable review.",
+    "Intake preserves the original work without accepting its conclusions, method, or skill design."
+  ]
+}

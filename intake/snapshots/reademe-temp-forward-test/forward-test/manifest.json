@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "run_id": "forward-test",
+  "profile": "minimal",
+  "target_root": "/Users/karltonsuits/Documents/ChatGPT/reademe-temp",
+  "target_readme": "README.md",
+  "template_repo_root": "/Users/karltonsuits/Documents/ChatGPT/reademe-temp",
+  "selected_components": [
+    "project-title",
+    "short-description",
+    "relative-links",
+    "usage-quickstart"
+  ],
+  "worker_components": [
+    "project-title",
+    "short-description",
+    "usage-quickstart"
+  ],
+  "derived_components": [],
+  "policy_components": [
+    "relative-links"
+  ]
+}

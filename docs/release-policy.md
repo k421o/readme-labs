@@ -17,6 +17,12 @@ not by itself a released support promise.
 Each release states its artifact class and maturity. Product and domain
 maturity may differ.
 
+Release gates apply only when promoting an artifact under the named release
+contract. They are not candidate-admission rules and do not grant automated
+tests authority to reject an experimental hypothesis. A candidate that fails a
+current contract may complete its planned trials and propose a new versioned
+contract; it simply cannot be released as compatible with the old one.
+
 ## Capability release candidate gates
 
 - Skill and interface metadata pass native validation.
@@ -30,6 +36,11 @@ maturity may differ.
   author's bootstrap dry run.
 - Change notes describe new instructions, likely behavioral effects, and
   rollback.
+
+Automatic checks diagnose declared properties and execution integrity.
+Independent semantic review and owner or designated-review synthesis retain
+the decision authority. An incomplete evaluator run is recorded as incomplete,
+not as evidence that the candidate is useless.
 
 The first factory release records its blinded finding and no-material-finding
 runs under `evals/runs/` and its independent assessment in the `v0.2.0` release
