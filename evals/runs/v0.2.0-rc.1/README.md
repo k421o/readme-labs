@@ -43,6 +43,10 @@ assessed the behavior and evidence:
    home. It found a mistyped predecessor hash and missing final-product native
    evidence. The original hold report is preserved unchanged; the transition
    record and final consumer run record the subsequent dispositions.
+4. Task `01a053c5-dc29-7ef3-8922-518da152b72c` independently recomputed the
+   repaired evidence in another fresh environment. It found no remaining
+   material blocker and judged experimental `v0.2.0` ready to merge and
+   publish. Its report and event stream are preserved unchanged.
 
 The raw reports are preserved under `independent-review/`. Earlier exploratory
 runs are intentionally excluded from this directory: they exposed failure

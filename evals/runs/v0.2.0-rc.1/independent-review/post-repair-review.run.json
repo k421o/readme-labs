@@ -1,0 +1,32 @@
+{
+  "schema_version": "1.0.0",
+  "thread_id": "01a053c5-dc29-7ef3-8922-518da152b72c",
+  "subject_revision": "b8b323bc5a67f1a7e2fe47656174b7ecb8fb79c6",
+  "environment": {
+    "codex_home": "fresh_auth_only",
+    "subject_plugin_installed": false,
+    "prior_task_context": false,
+    "sandbox": "read-only",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high"
+  },
+  "prompt_sha256": "28b32acca2cc22ff02748abab4652760af3d9f77ff04e8096b67c29258faf889",
+  "result": "ready_to_merge_and_publish_experimental_v0.2.0",
+  "remaining_material_blockers": 0,
+  "verified_closures": [
+    "predecessor product hash independently recomputes to the corrected value",
+    "current HEAD retains the exact tested final product subtree and SHA-256",
+    "native final update, rollback, and restore evidence is internally coherent",
+    "unnamed-skill final consumer transcript loaded the exact installed 0.2.0 skill and remained read-only"
+  ],
+  "artifacts": {
+    "report": "post-repair-review.txt",
+    "report_sha256": "e1b312dd6feff7cc34eeb9b5b061e3448cc715008c2337b086bc211d9ccae5f9",
+    "events": "post-repair-review-events.jsonl",
+    "events_sha256": "1b82912181ac8754c8359d0fd343758f108fe96f0b7cd993a21a59ef0c6e3365"
+  },
+  "limitations": [
+    "The transition record summarizes native command results rather than preserving raw stdout and stderr.",
+    "The read-only review environment could not start the full pytest suite because it had no writable temporary directory; the release task reruns the suite separately."
+  ]
+}

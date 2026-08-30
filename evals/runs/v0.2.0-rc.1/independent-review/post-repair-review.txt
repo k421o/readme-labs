@@ -1,0 +1,42 @@
+## Blockers
+
+No remaining material blocker found.
+
+The two preserved prepublication blockers are closed under the repository’s evidence contract:
+
+- The predecessor hash is corrected and independently recomputes to `90432dd3df76343ccce19d179d94eeea76a4ec6b98531b84dd0f220ded8ec84e`.
+- Final `0.2.0` native update, rollback, restore, and unnamed-skill consumer evidence now exercises the final product bytes, hash `08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0`.
+
+## Verdict
+
+Ready to merge and publish experimental `v0.2.0`.
+
+The branch is clean at `b8b323bc5a67f1a7e2fe47656174b7ecb8fb79c6`, matches its origin branch, is 16 commits ahead of `origin/main`, and can fast-forward from current main. Publication still requires the normal post-merge action: create the currently absent `v0.2.0` tag and GitHub release at a commit whose product subtree retains the final hash above. Tag absence is a pending publication step, not an unresolved repair blocker.
+
+## Checks
+
+- Exact product identities:
+
+  | State | Commit | Git product tree | Recomputed SHA-256 |
+  |---|---|---|---|
+  | Predecessor `0.2.0-dev.2` | `0e845c375b3d16e90e3b93e45c32e6879ddc3b16` | `4bf8a93b184a6868bad3878f2f53f5c5fd79c995` | `90432dd3df76343ccce19d179d94eeea76a4ec6b98531b84dd0f220ded8ec84e` |
+  | RC `0.2.0-rc.1` | `0ec30675771ca90c947cca1bf86c912845e1f341` | `475468ea9840f0d7b52ef36faacb952c032479a6` | `433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a` |
+  | Tested final `0.2.0` | `7097c725c1056a5a6df7b774b666780ff60144f6` | `9e3a51a9d094069370404e44d50e8e9bd01ef579` | `08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0` |
+  | Current `HEAD` | `b8b323bc5a67f1a7e2fe47656174b7ecb8fb79c6` | same `9e3a51…` | same `08fffa45…` |
+
+- Ancestry is linear: predecessor → RC → tested final → current HEAD. The repair commit changes only release/evidence files; marketplace and product bytes are identical to `7097c725…`.
+- The [marketplace transition record](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/runs/v0.2.0-rc.1/marketplace-transitions.json:15) records final update, rollback to the corrected predecessor, and restore to final, checking immutable refs, clean checkout, Git/marketplace/cache hash equality, and inventory versions.
+- The [final consumer record](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/consumers/repository-guidance-v0.2.0/run.json:1) has matching prompt, response, and event hashes. Its unnamed prompt loaded the installed `0.2.0` skill; the transcript’s loaded `SKILL.md` bytes exactly match the current packaged skill, the turn completed successfully, and its final message matches the stored response.
+- Marketplace placement and metadata are coherent: `.agents/plugins/marketplace.json` points to the existing product path; marketplace, plugin, and manifest names agree; version is `0.2.0`; policy is `AVAILABLE`/`ON_INSTALL`.
+- Canonical and packaged capability trees are byte-identical at `71d0f220…`, matching `UPSTREAM.json`.
+- All six hashes in the [release record](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/docs/releases/v0.2.0.md:36) recompute exactly.
+- Ruff, 59-file local-link checking, generated-adapter synchronization, and all three plugin-adapter tests passed.
+- Worktree remained clean; no files were edited.
+
+## Residual limitations
+
+- Native transition evidence is a committed summary of command results, not raw native-command stdout/stderr. Its immutable revisions, versions, ancestry, and hashes are independently corroborated.
+- The downstream consumer commit `5b338322…` is not present in this worktree’s local object database, so its recorded tree `f5c55b…` could not be independently reconstructed here. The committed transcript and its artifact hashes do verify the executed snapshot evidence.
+- Full pytest could not start because the read-only environment provides no writable temporary directory. This is an environment failure before collection, not a test failure.
+- The efficacy claim remains intentionally narrow: one fixture pair, one model, and one run per condition; the disclosed unattributed sandbox-denial correlation remains.
+- Public/verified marketplace rendering was not tested and is outside the experimental release gate. `repository-guidance` still pins historical `v0.1.0`; the final run proves independent installation and discovery, not a completed downstream migration.
