@@ -14,15 +14,23 @@ from readme_lab.inspect import inspect_readme
 
 PILOT = Path("corpus/manifests/pilot-high-exposure-v1.jsonl")
 FIXTURE = Path("tests/fixtures/readme-with-conventional-sections.md")
-PILOT_OBSERVATIONS = Path(
-    "corpus/observations/pilot-high-exposure-v1.jsonl"
-)
+PILOT_OBSERVATIONS = Path("corpus/observations/pilot-high-exposure-v1.jsonl")
 
 
 def test_pilot_manifest_is_valid_pinned_and_explicitly_non_normative() -> None:
     items = load_manifest(PILOT)
     assert len(items) == 16
     assert len({item["revision"] for item in items}) == 16
+    assert all(item["role_assignment"] == "annotated" for item in items)
+    assert all(
+        item["role_annotation"]
+        == {
+            "protocol": "bootstrap-role-annotation",
+            "protocol_version": "1.0.0",
+            "annotator": "bootstrap-corpus-author",
+        }
+        for item in items
+    )
     assert all(item["selection"]["quality_label"] is False for item in items)
     assert all(
         item["selection"]["training_prevalence_claim"] == "none" for item in items
@@ -50,6 +58,9 @@ def test_committed_pilot_observations_match_manifest_sources() -> None:
         for item in observations
     }
     assert actual == expected
+    assert all(item["schema_version"] == "2.0.0" for item in observations)
+    assert all(item["role"]["assignment"] == "annotated" for item in observations)
+    assert all("annotation" in item["derivation"] for item in observations)
 
 
 def test_summarize_observations_reports_descriptive_counts(tmp_path: Path) -> None:

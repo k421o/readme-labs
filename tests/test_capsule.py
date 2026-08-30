@@ -38,6 +38,22 @@ def test_materialize_capsule_builds_mutated_git_repository(tmp_path: Path) -> No
         "Apply missing-first-path mutation",
         "Materialize base fixture",
     ]
+    assert len(result["base_commit"]) == 40
+    assert len(result["base_tree"]) == 40
+    assert len(result["final_commit"]) == 40
+    assert len(result["final_tree"]) == 40
+    assert len(result["capsule_sha256"]) == 64
+    assert len(result["mutation_sha256"]) == 64
+
+
+def test_materialize_capsule_has_reproducible_history(tmp_path: Path) -> None:
+    first = materialize_capsule(CAPSULE, tmp_path / "first")
+    second = materialize_capsule(CAPSULE, tmp_path / "second")
+
+    assert first["base_commit"] == second["base_commit"]
+    assert first["base_tree"] == second["base_tree"]
+    assert first["final_commit"] == second["final_commit"]
+    assert first["final_tree"] == second["final_tree"]
 
 
 def test_materialize_refuses_existing_destination(tmp_path: Path) -> None:

@@ -14,12 +14,13 @@
     "environment": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["kind", "fidelity_level", "fixture", "network"],
+      "required": ["kind", "fidelity_level", "fixture", "network", "git_timestamp"],
       "properties": {
         "kind": {"const": "local_git"},
         "fidelity_level": {"const": 4},
         "fixture": {"type": "string", "minLength": 1},
         "network": {"const": "disabled"},
+        "git_timestamp": {"type": "string", "format": "date-time"},
         "mutation": {"type": "string", "minLength": 1}
       }
     },

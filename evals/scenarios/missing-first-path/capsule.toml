@@ -10,6 +10,7 @@ fidelity_level = 4
 fixture = "fixture"
 network = "disabled"
 mutation = "mutation.diff"
+git_timestamp = "2000-01-01T00:00:00Z"
 
 [metadata]
 target_role = "published_package"

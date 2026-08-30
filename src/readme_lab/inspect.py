@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from collections import defaultdict
 from datetime import UTC, datetime
@@ -34,9 +35,35 @@ def _normalized_heading(value: str) -> str:
     return " ".join(re.sub(r"[^\w]+", " ", value.casefold()).split())
 
 
-def _observation_id(repository: str, revision: str, path: str, digest: str) -> str:
+EXTRACTOR_NAME = "readme-lab-inspect"
+EXTRACTOR_VERSION = "2.0.0"
+ROLE_ASSIGNMENTS = {"declared", "inferred", "annotated"}
+
+
+def _document_id(repository: str, revision: str, path: str, digest: str) -> str:
     identity = "\0".join((repository, revision, path, digest)).encode()
     return f"sha256:{hashlib.sha256(identity).hexdigest()}"
+
+
+def _canonical_sha256(value: Any) -> str:
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    ).encode()
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _observation_id(
+    document_id: str,
+    *,
+    role: dict[str, Any],
+    derivation: dict[str, Any],
+) -> str:
+    identity = {
+        "document_id": document_id,
+        "role": role,
+        "derivation": derivation,
+    }
+    return f"sha256:{_canonical_sha256(identity)}"
 
 
 def _infer_role(path: Path) -> tuple[str, str, list[str]]:
@@ -59,12 +86,26 @@ def inspect_readme(
     source_path: str | None = None,
     retrieval_url: str | None = None,
     license_spdx: str | None = None,
+    role_assignment: str | None = None,
+    role_note: str | None = None,
+    annotation: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Create and validate a READMEObservation for one Markdown file."""
 
     if role is not None and role not in ROLE_IDS:
         expected = ", ".join(sorted(ROLE_IDS))
         raise ValueError(f"unknown role {role!r}; expected one of: {expected}")
+    if role_assignment is not None and role_assignment not in ROLE_ASSIGNMENTS:
+        expected = ", ".join(sorted(ROLE_ASSIGNMENTS))
+        raise ValueError(
+            f"unknown role assignment {role_assignment!r}; expected one of: {expected}"
+        )
+    if role is None and role_assignment is not None:
+        raise ValueError("role_assignment requires an explicit role")
+    if role_assignment == "annotated" and annotation is None:
+        raise ValueError("annotated roles require annotation provenance")
+    if annotation is not None and role_assignment != "annotated":
+        raise ValueError("annotation provenance requires role_assignment='annotated'")
 
     content = path.read_text(encoding="utf-8")
     digest = hashlib.sha256(content.encode()).hexdigest()
@@ -86,8 +127,9 @@ def inspect_readme(
         if token.type == "inline" and token.children:
             links += sum(child.type == "link_open" for child in token.children)
 
+    taxonomy = load_taxonomy()
     aliases: dict[str, set[str]] = defaultdict(set)
-    for category in load_taxonomy()["categories"]:
+    for category in taxonomy["categories"]:
         for alias in category["heading_aliases"]:
             aliases[_normalized_heading(alias)].add(category["id"])
 
@@ -115,16 +157,39 @@ def inspect_readme(
     inferred_role, assignment, limitations = _infer_role(Path(recorded_path))
     primary_role = role or inferred_role
     if role is not None:
-        assignment = "declared"
+        assignment = role_assignment or "declared"
 
     timestamp = observed_at or datetime.now(UTC)
     if timestamp.tzinfo is None:
         raise ValueError("observed_at must include a timezone")
 
+    document_id = _document_id(repository, revision, recorded_path, digest)
+    role_record: dict[str, Any] = {
+        "primary": primary_role,
+        "secondary": [],
+        "assignment": assignment,
+    }
+    if role_note is not None:
+        role_record["note"] = role_note
+    derivation: dict[str, Any] = {
+        "taxonomy": {
+            "kind": taxonomy["kind"],
+            "version": taxonomy["version"],
+            "sha256": _canonical_sha256(taxonomy),
+        },
+        "extractor": {
+            "name": EXTRACTOR_NAME,
+            "version": EXTRACTOR_VERSION,
+        },
+    }
+    if annotation is not None:
+        derivation["annotation"] = annotation
+
     observation: dict[str, Any] = {
-        "schema_version": "1.0.0",
+        "schema_version": "2.0.0",
+        "document_id": document_id,
         "observation_id": _observation_id(
-            repository, revision, recorded_path, digest
+            document_id, role=role_record, derivation=derivation
         ),
         "observed_at": timestamp.isoformat().replace("+00:00", "Z"),
         "source": {
@@ -133,11 +198,8 @@ def inspect_readme(
             "path": recorded_path,
             "content_sha256": digest,
         },
-        "role": {
-            "primary": primary_role,
-            "secondary": [],
-            "assignment": assignment,
-        },
+        "role": role_record,
+        "derivation": derivation,
         "structure": {
             "line_count": len(content.splitlines()),
             "word_count": len(re.findall(r"\b\w+\b", content)),

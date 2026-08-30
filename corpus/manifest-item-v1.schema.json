@@ -17,6 +17,16 @@
     "license_spdx": {"type": "string", "minLength": 1},
     "role_primary": {"type": "string", "minLength": 1},
     "role_assignment": {"enum": ["annotated", "declared", "inferred"]},
+    "role_annotation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["protocol", "protocol_version", "annotator"],
+      "properties": {
+        "protocol": {"type": "string", "minLength": 1},
+        "protocol_version": {"type": "string", "minLength": 1},
+        "annotator": {"type": "string", "minLength": 1}
+      }
+    },
     "repository_created_at": {"type": "string", "format": "date-time"},
     "primary_language": {"type": ["string", "null"]},
     "selection": {
@@ -32,5 +42,14 @@
       }
     },
     "collected_at": {"type": "string", "format": "date-time"}
-  }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {"role_assignment": {"const": "annotated"}},
+        "required": ["role_assignment"]
+      },
+      "then": {"required": ["role_annotation"]}
+    }
+  ]
 }

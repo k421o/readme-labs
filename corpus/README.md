@@ -13,6 +13,8 @@ quality ranking or as proof of inclusion in a model's training data.
 - `analysis/`: reproducible aggregate outputs and interpretation notes.
 - `sampling-plan-v1.md`: the planned separation between prevalence,
   high-exposure, and role-edge-case samples.
+- `bootstrap-role-annotation-v1.md`: provenance and limitations for the
+  historical role labels in the pilot manifest.
 
 Raw third-party README bodies are fetched into an untracked cache. The
 collector verifies each body against its Git blob SHA before extracting an
