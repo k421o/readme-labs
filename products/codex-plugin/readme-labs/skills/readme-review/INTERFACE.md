@@ -23,6 +23,7 @@ verification limits.
 - When there are no material findings, say so and report unverified commands,
   links, rendered surfaces, and role assumptions.
 - Separate verified facts from semantic judgments.
+- Tie every command-execution claim to the current task's actual tool record.
 
 The evaluation runner uses `evals/review-response-v1.schema.json` as a
 machine-checkable projection of this contract. That schema is an evaluation
