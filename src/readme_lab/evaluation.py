@@ -72,6 +72,17 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _tree_sha256(root: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted(item for item in root.rglob("*") if item.is_file()):
+        relative = path.relative_to(root).as_posix().encode()
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def _command_events(path: Path | None) -> list[dict[str, str]]:
     if path is None:
         return []
@@ -315,7 +326,85 @@ def _write_json(path: Path, value: dict[str, Any]) -> None:
     )
 
 
-def _codex_inventory(executable: str, plugin_id: str) -> dict[str, Any]:
+def _explicit_codex_home() -> Path:
+    raw_codex_home = os.environ.get("CODEX_HOME")
+    if raw_codex_home is None:
+        raise RuntimeError(
+            "blinded execution requires an explicit disposable CODEX_HOME"
+        )
+    codex_home = Path(raw_codex_home).resolve()
+    personal_codex_home = (Path.home() / ".codex").resolve()
+    if codex_home == personal_codex_home:
+        raise RuntimeError("refusing to use personal CODEX_HOME for blinded execution")
+    if not codex_home.is_dir():
+        raise FileNotFoundError(f"CODEX_HOME does not exist: {codex_home}")
+    return codex_home
+
+
+def _artifact_binding(
+    codex_home: Path,
+    plugin: dict[str, Any],
+    artifact_revision: str,
+) -> dict[str, Any]:
+    marketplace_name = plugin["marketplaceName"]
+    marketplace_root = codex_home / ".tmp" / "marketplaces" / marketplace_name
+    install_record_path = marketplace_root / ".codex-marketplace-install.json"
+    if not install_record_path.is_file():
+        raise FileNotFoundError(
+            f"missing Git marketplace install record: {install_record_path}"
+        )
+    install_record = json.loads(install_record_path.read_text(encoding="utf-8"))
+    if install_record.get("source_type") != "git":
+        raise RuntimeError("evaluation plugin must come from a Git marketplace")
+    if install_record.get("revision") != artifact_revision:
+        raise RuntimeError(
+            "marketplace install record does not match artifact revision"
+        )
+
+    clone_revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=marketplace_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    if clone_revision != artifact_revision:
+        raise RuntimeError("marketplace clone does not match artifact revision")
+
+    marketplace_product = Path(plugin["source"]["path"]).resolve()
+    if not _is_within(marketplace_product, marketplace_root):
+        raise RuntimeError("plugin source is outside its marketplace snapshot")
+    installed_product = (
+        codex_home
+        / "plugins"
+        / "cache"
+        / marketplace_name
+        / plugin["name"]
+        / plugin["version"]
+    ).resolve()
+    if not marketplace_product.is_dir() or not installed_product.is_dir():
+        raise FileNotFoundError("marketplace or installed plugin product is missing")
+    marketplace_sha256 = _tree_sha256(marketplace_product)
+    installed_sha256 = _tree_sha256(installed_product)
+    if marketplace_sha256 != installed_sha256:
+        raise RuntimeError("installed plugin differs from the marketplace product")
+
+    return {
+        "artifact_revision_verified": True,
+        "marketplace_revision": clone_revision,
+        "marketplace_ref": install_record.get("ref_name"),
+        "marketplace_install_record_sha256": _sha256(install_record_path),
+        "marketplace_product_sha256": marketplace_sha256,
+        "installed_product_sha256": installed_sha256,
+        "installed_product_matches_marketplace": True,
+    }
+
+
+def _codex_inventory(
+    executable: str,
+    plugin_id: str,
+    artifact_revision: str,
+) -> dict[str, Any]:
     version = subprocess.run(
         [executable, "--version"],
         check=True,
@@ -334,23 +423,17 @@ def _codex_inventory(executable: str, plugin_id: str) -> dict[str, Any]:
     ]
     if len(installed) != 1 or not installed[0].get("enabled"):
         raise RuntimeError(f"expected one enabled installed plugin: {plugin_id}")
-    return {"codex_version": version, "plugin": installed[0]}
+    return {
+        "codex_version": version,
+        "plugin": installed[0],
+        "artifact_binding": _artifact_binding(
+            _explicit_codex_home(), installed[0], artifact_revision
+        ),
+    }
 
 
 def _prepare_permission_profile(held_out_root: Path) -> tuple[str, Path]:
-    raw_codex_home = os.environ.get("CODEX_HOME")
-    if raw_codex_home is None:
-        raise RuntimeError(
-            "blinded execution requires an explicit disposable CODEX_HOME"
-        )
-    codex_home = Path(raw_codex_home).resolve()
-    personal_codex_home = (Path.home() / ".codex").resolve()
-    if codex_home == personal_codex_home:
-        raise RuntimeError(
-            "refusing to write an evaluation profile to personal CODEX_HOME"
-        )
-    if not codex_home.is_dir():
-        raise FileNotFoundError(f"CODEX_HOME does not exist: {codex_home}")
+    codex_home = _explicit_codex_home()
 
     profile_name = "readme-labs-evaluation"
     profile_path = codex_home / f"{profile_name}.config.toml"
@@ -422,7 +505,11 @@ def run_codex_capsule(
         raise ValueError("workspace and run_dir must be outside the held-out checkout")
 
     capsule = load_capsule(capsule_path)
-    inventory = _codex_inventory(codex_executable, plugin_id)
+    inventory = _codex_inventory(
+        codex_executable,
+        plugin_id,
+        artifact_revision,
+    )
     materialization = materialize_capsule(capsule_path, workspace)
     run_dir.mkdir(parents=True)
     response_schema = run_dir / RESPONSE_SCHEMA_NAME
