@@ -51,6 +51,10 @@ Rank findings by reader impact. Separate verified facts from interpretations.
 Do not use stars, badges, length, heading order, or familiarity as a quality
 score.
 
+Before responding, audit every execution verb in findings, verification, and
+limitations against the current tool record. Remove any run, attempted,
+blocked, denied, passed, or failed claim that has no matching tool execution.
+
 If no material issues remain, say so and name any commands, links, rendered
 surfaces, or role assumptions that were not independently verified.
 

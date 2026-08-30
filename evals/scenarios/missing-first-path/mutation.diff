@@ -2,7 +2,7 @@ diff --git a/README.md b/README.md
 index 9c51023..0d526dc 100644
 --- a/README.md
 +++ b/README.md
-@@ -5,11 +5,0 @@
+@@ -6,11 +6,0 @@
 -## Getting started
 -
 -Install the package from this repository and run one file:
@@ -12,5 +12,5 @@ index 9c51023..0d526dc 100644
 -pebble-count notes.txt
 -```
 -
--The command prints one integer: the number of non-empty lines.
+-The command prints one integer: the number of non-blank lines.
 -

@@ -40,6 +40,7 @@ def _write_response(path: Path, *, finding: bool) -> None:
         "schema_version": "1.0.0",
         "conclusion": "material_findings" if finding else "no_material_findings",
         "findings": findings,
+        "commands": [],
         "verification": ["Inspected README.md and pyproject.toml."],
         "limitations": ["Did not build a wheel."],
     }
@@ -100,3 +101,41 @@ def test_deterministic_scoring_rejects_wrong_conclusion(tmp_path: Path) -> None:
 
     assert score["result"] == "automatic_fail"
     assert score["automatic_checks"]["conclusion_match"] is False
+
+
+def test_deterministic_scoring_rejects_unrecorded_execution_claim(
+    tmp_path: Path,
+) -> None:
+    response = tmp_path / "response.json"
+    _write_response(response, finding=True)
+    value = json.loads(response.read_text(encoding="utf-8"))
+    value["verification"].append("Attempted pytest, but the command failed.")
+    response.write_text(json.dumps(value), encoding="utf-8")
+
+    score = score_review_response(FINDING_CAPSULE, response)
+
+    assert score["result"] == "automatic_fail"
+    assert score["automatic_checks"]["execution_claims_consistent_with_events"] is False
+
+
+def test_deterministic_scoring_matches_recorded_command_claim(tmp_path: Path) -> None:
+    response = tmp_path / "response.json"
+    events = tmp_path / "events.jsonl"
+    _write_response(response, finding=True)
+    value = json.loads(response.read_text(encoding="utf-8"))
+    value["commands"] = [{"command": "pytest -q", "outcome": "succeeded"}]
+    value["verification"].append("Executed pytest -q successfully.")
+    response.write_text(json.dumps(value), encoding="utf-8")
+    event = {
+        "type": "item.completed",
+        "item": {
+            "type": "command_execution",
+            "command": '/bin/zsh -lc "pytest -q"',
+            "exit_code": 0,
+        },
+    }
+    events.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    score = score_review_response(FINDING_CAPSULE, response, events_path=events)
+
+    assert score["result"] == "automatic_pass_requires_independent_review"

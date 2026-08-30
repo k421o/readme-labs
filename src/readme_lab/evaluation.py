@@ -23,6 +23,10 @@ SCORECARD_SCHEMA_NAME = "review-scorecard-v1.schema.json"
 RESPONSE_SCHEMA_PATH = REPOSITORY_ROOT / "evals" / RESPONSE_SCHEMA_NAME
 SCORECARD_SCHEMA_PATH = REPOSITORY_ROOT / "evals" / SCORECARD_SCHEMA_NAME
 IMMUTABLE_REVISION = re.compile(r"^[0-9a-f]{40}$")
+EXECUTION_CLAIM = re.compile(
+    r"\b(attempted|executed|ran|denied|blocked|passed|failed|completed)\b",
+    re.IGNORECASE,
+)
 
 
 def _load_schema(name: str, source_path: Path) -> dict[str, Any]:
@@ -66,7 +70,43 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def score_review_response(capsule_path: Path, response_path: Path) -> dict[str, Any]:
+def _command_events(path: Path | None) -> list[dict[str, str]]:
+    if path is None:
+        return []
+    events: list[dict[str, str]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        if not line:
+            continue
+        event = json.loads(line)
+        item = event.get("item", {})
+        if event.get("type") != "item.completed":
+            continue
+        if item.get("type") != "command_execution":
+            continue
+        events.append(
+            {
+                "command": item["command"],
+                "outcome": "succeeded" if item.get("exit_code") == 0 else "failed",
+            }
+        )
+    return events
+
+
+def _execution_claim_phrases(response: dict[str, Any]) -> list[str]:
+    claims: list[str] = []
+    for field in ("verification", "limitations"):
+        for text in response[field]:
+            if EXECUTION_CLAIM.search(text):
+                claims.append(text)
+    return claims
+
+
+def score_review_response(
+    capsule_path: Path,
+    response_path: Path,
+    *,
+    events_path: Path | None = None,
+) -> dict[str, Any]:
     """Apply deterministic gates and leave semantic judgments for review."""
 
     response = load_response(response_path)
@@ -101,11 +141,25 @@ def score_review_response(capsule_path: Path, response_path: Path) -> dict[str, 
     ) or (response["conclusion"] == "no_material_findings" and not response["findings"])
     expected_match = all(item["category_and_severity_match"] for item in matches)
     no_unexpected_findings = not unmatched_response_indexes
+    recorded_commands = _command_events(events_path)
+    command_matches = []
+    for claim in response["commands"]:
+        matched = any(
+            claim["command"] in event["command"]
+            and claim["outcome"] == event["outcome"]
+            for event in recorded_commands
+        )
+        command_matches.append({**claim, "recorded_event_match": matched})
+    execution_claim_phrases = _execution_claim_phrases(response)
+    execution_claims_consistent = all(
+        item["recorded_event_match"] for item in command_matches
+    ) and (not execution_claim_phrases or bool(response["commands"]))
     automatic_pass = (
         conclusion_match
         and response_consistent
         and expected_match
         and no_unexpected_findings
+        and execution_claims_consistent
     )
     return {
         "score_schema_version": "1.0.0",
@@ -116,6 +170,9 @@ def score_review_response(capsule_path: Path, response_path: Path) -> dict[str, 
             "response_conclusion_and_findings_consistent": response_consistent,
             "expected_finding_matches": matches,
             "unexpected_response_finding_indexes": sorted(unmatched_response_indexes),
+            "command_claim_matches": command_matches,
+            "execution_claim_phrases": execution_claim_phrases,
+            "execution_claims_consistent_with_events": execution_claims_consistent,
         },
         "anti_findings": [
             {**item, "semantic_review_required": True}
@@ -128,6 +185,7 @@ def score_review_response(capsule_path: Path, response_path: Path) -> dict[str, 
         ),
         "limitations": [
             "Category matching does not establish that evidence or impact is correct.",
+            "Command claims are matched textually and still require semantic review.",
             "Anti-findings and success conditions require independent semantic review.",
         ],
     }
@@ -141,6 +199,7 @@ def build_executor_prompt(capsule: dict[str, Any]) -> str:
             "Work only as a reviewer; do not edit repository files.",
             "Use any applicable installed capability that Codex discovers normally.",
             "Inspect repository evidence to support or reject material findings.",
+            "In commands, list every command you claim was attempted or executed.",
             "Return the requested structured response and nothing outside it.",
             "",
             f"Task: {capsule['task']}",
@@ -390,7 +449,7 @@ def run_codex_capsule(
         raise RuntimeError(f"Codex executor failed with exit code {result.returncode}")
 
     load_response(response_path)
-    score = score_review_response(capsule_path, response_path)
+    score = score_review_response(capsule_path, response_path, events_path=events_path)
     score_path = run_dir / "score.json"
     _write_json(score_path, score)
     scorecard_path = (capsule_path.parent / capsule["scorecard"]).resolve()

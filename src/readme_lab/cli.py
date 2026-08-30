@@ -55,6 +55,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
     score_parser.add_argument("capsule", type=Path)
     score_parser.add_argument("--response", type=Path, required=True)
+    score_parser.add_argument("--events", type=Path)
     score_parser.add_argument("--output", type=Path)
 
     corpus_parser = subparsers.add_parser("corpus", help="collect and analyze corpora")
@@ -104,7 +105,9 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps(result, indent=2, sort_keys=True))
         return 0
     if args.command == "capsule" and args.capsule_command == "score":
-        score = score_review_response(args.capsule, args.response)
+        score = score_review_response(
+            args.capsule, args.response, events_path=args.events
+        )
         if args.output:
             args.output.parent.mkdir(parents=True, exist_ok=True)
             args.output.write_text(

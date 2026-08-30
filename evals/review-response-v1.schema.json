@@ -8,6 +8,7 @@
     "schema_version",
     "conclusion",
     "findings",
+    "commands",
     "verification",
     "limitations"
   ],
@@ -49,6 +50,22 @@
           },
           "impact": {"type": "string", "minLength": 1},
           "correction": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "commands": {
+      "description": "Every command the response describes as run, attempted, passed, failed, blocked, or denied. Use the exact command text and recorded outcome; otherwise leave this empty.",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "outcome"],
+        "properties": {
+          "command": {"type": "string", "minLength": 1},
+          "outcome": {
+            "type": "string",
+            "enum": ["succeeded", "failed"]
+          }
         }
       }
     },
