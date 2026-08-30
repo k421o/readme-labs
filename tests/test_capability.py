@@ -14,6 +14,7 @@ def test_readme_review_capability_has_no_scaffold_placeholders() -> None:
     assert "Do not demand empty conventional sections" in skill
     assert "Do not use stars" in skill
     assert "unless the requested scope includes migrating" in skill
+    assert "current task's tool record contains that execution" in skill
 
 
 def test_readme_review_references_are_local_and_present() -> None:

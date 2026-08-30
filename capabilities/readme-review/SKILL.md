@@ -28,7 +28,9 @@ readers. Establish its role before judging its sections or length.
    or working-directory constraints are visible where a reader needs them.
 5. Verify factual claims with repository evidence. Prefer executing safe,
    bounded commands when the task authorizes verification; otherwise report
-   what was and was not checked. Follow
+   what was and was not checked. Describe a command as run, attempted, failed,
+   or denied only when the current task's tool record contains that execution;
+   otherwise say it was not run without inventing a reason. Follow
    [evidence and verification](references/evidence-and-verification.md).
 6. Apply the [review criteria](references/review-criteria.md). Report only
    issues that can materially change understanding, correct use, navigation,

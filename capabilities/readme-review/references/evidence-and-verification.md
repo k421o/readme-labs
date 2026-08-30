@@ -45,3 +45,9 @@ Use direct language for verified mismatches. Label semantic interpretation,
 role assignment, and likely reader impact as judgments. State unrun commands,
 unopened external links, unavailable registry rendering, or missing toolchains
 as residual verification limits.
+
+The current task's tool record is the authority for execution claims. Never
+state that a command was run, attempted, blocked, denied, passed, or failed
+unless a corresponding execution appears there. If a useful check was not
+executed, report it as not run; do not infer a failure reason from the sandbox,
+prompt, available binaries, or prior sessions.
