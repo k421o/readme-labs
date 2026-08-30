@@ -165,3 +165,68 @@ def test_deterministic_scoring_unwraps_codex_shell_quoting(tmp_path: Path) -> No
     score = score_review_response(FINDING_CAPSULE, response, events_path=events)
 
     assert score["result"] == "automatic_pass_requires_independent_review"
+
+
+def test_deterministic_scoring_marks_unattributed_sandbox_denial(
+    tmp_path: Path,
+) -> None:
+    response = tmp_path / "response.json"
+    events = tmp_path / "events.jsonl"
+    stderr = tmp_path / "stderr.log"
+    _write_response(response, finding=True)
+    value = json.loads(response.read_text(encoding="utf-8"))
+    value["commands"] = [{"command": "python -m pytest", "outcome": "failed"}]
+    value["limitations"].append("Attempted python -m pytest; it was denied.")
+    response.write_text(json.dumps(value), encoding="utf-8")
+    events.write_text("", encoding="utf-8")
+    stderr.write_text(
+        "WARN sandbox: recorded sandbox violation: operation_not_permitted\n",
+        encoding="utf-8",
+    )
+
+    score = score_review_response(
+        FINDING_CAPSULE,
+        response,
+        events_path=events,
+        stderr_path=stderr,
+    )
+
+    assert score["result"] == "automatic_pass_requires_independent_review"
+    command_match = score["automatic_checks"]["command_claim_matches"][0]
+    assert command_match["recorded_event_match"] is False
+    assert command_match["sandbox_violation_match"] is True
+    assert command_match["evidence"] == (
+        "correlated_unattributed_sandbox_violation"
+    )
+    assert score["automatic_checks"]["used_unattributed_sandbox_evidence"] is True
+
+
+def test_deterministic_scoring_does_not_overassign_sandbox_denial(
+    tmp_path: Path,
+) -> None:
+    response = tmp_path / "response.json"
+    events = tmp_path / "events.jsonl"
+    stderr = tmp_path / "stderr.log"
+    _write_response(response, finding=True)
+    value = json.loads(response.read_text(encoding="utf-8"))
+    value["commands"] = [
+        {"command": "python -m pytest", "outcome": "failed"},
+        {"command": "python -m build", "outcome": "failed"},
+    ]
+    response.write_text(json.dumps(value), encoding="utf-8")
+    events.write_text("", encoding="utf-8")
+    stderr.write_text(
+        "WARN sandbox: recorded sandbox violation: operation_not_permitted\n",
+        encoding="utf-8",
+    )
+
+    score = score_review_response(
+        FINDING_CAPSULE,
+        response,
+        events_path=events,
+        stderr_path=stderr,
+    )
+
+    assert score["result"] == "automatic_fail"
+    matches = score["automatic_checks"]["command_claim_matches"]
+    assert sum(item["sandbox_violation_match"] for item in matches) == 1

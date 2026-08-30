@@ -28,6 +28,7 @@ EXECUTION_CLAIM = re.compile(
     r"\b(attempted|executed|ran|denied|blocked|passed|failed|completed)\b",
     re.IGNORECASE,
 )
+SANDBOX_VIOLATION = re.compile(r"recorded sandbox violation", re.IGNORECASE)
 
 
 def _load_schema(name: str, source_path: Path) -> dict[str, Any]:
@@ -118,11 +119,18 @@ def _execution_claim_phrases(response: dict[str, Any]) -> list[str]:
     return claims
 
 
+def _sandbox_violation_count(path: Path | None) -> int:
+    if path is None:
+        return 0
+    return len(SANDBOX_VIOLATION.findall(path.read_text(encoding="utf-8")))
+
+
 def score_review_response(
     capsule_path: Path,
     response_path: Path,
     *,
     events_path: Path | None = None,
+    stderr_path: Path | None = None,
 ) -> dict[str, Any]:
     """Apply deterministic gates and leave semantic judgments for review."""
 
@@ -159,18 +167,42 @@ def score_review_response(
     expected_match = all(item["category_and_severity_match"] for item in matches)
     no_unexpected_findings = not unmatched_response_indexes
     recorded_commands = _command_events(events_path)
+    remaining_sandbox_violations = _sandbox_violation_count(stderr_path)
     command_matches = []
     for claim in response["commands"]:
-        matched = any(
+        event_match = any(
             claim["command"] == _unwrap_shell_command(event["command"])
             and claim["outcome"] == event["outcome"]
             for event in recorded_commands
         )
-        command_matches.append({**claim, "recorded_event_match": matched})
+        sandbox_violation_match = (
+            not event_match
+            and claim["outcome"] == "failed"
+            and remaining_sandbox_violations > 0
+        )
+        if sandbox_violation_match:
+            remaining_sandbox_violations -= 1
+        command_matches.append(
+            {
+                **claim,
+                "recorded_event_match": event_match,
+                "sandbox_violation_match": sandbox_violation_match,
+                "evidence": (
+                    "command_event"
+                    if event_match
+                    else "correlated_unattributed_sandbox_violation"
+                    if sandbox_violation_match
+                    else None
+                ),
+            }
+        )
     execution_claim_phrases = _execution_claim_phrases(response)
     execution_claims_consistent = all(
-        item["recorded_event_match"] for item in command_matches
+        item["evidence"] is not None for item in command_matches
     ) and (not execution_claim_phrases or bool(response["commands"]))
+    used_unattributed_sandbox_evidence = any(
+        item["sandbox_violation_match"] for item in command_matches
+    )
     automatic_pass = (
         conclusion_match
         and response_consistent
@@ -190,6 +222,10 @@ def score_review_response(
             "command_claim_matches": command_matches,
             "execution_claim_phrases": execution_claim_phrases,
             "execution_claims_consistent_with_events": execution_claims_consistent,
+            "sandbox_violation_count": _sandbox_violation_count(stderr_path),
+            "used_unattributed_sandbox_evidence": (
+                used_unattributed_sandbox_evidence
+            ),
         },
         "anti_findings": [
             {**item, "semantic_review_required": True}
@@ -203,6 +239,14 @@ def score_review_response(
         "limitations": [
             "Category matching does not establish that evidence or impact is correct.",
             "Command claims are matched textually and still require semantic review.",
+            *(
+                [
+                    "Codex stderr reported a sandbox denial without its command; the "
+                    "failed command is correlated by count but not machine-attributed."
+                ]
+                if used_unattributed_sandbox_evidence
+                else []
+            ),
             "Anti-findings and success conditions require independent semantic review.",
         ],
     }
@@ -466,7 +510,12 @@ def run_codex_capsule(
         raise RuntimeError(f"Codex executor failed with exit code {result.returncode}")
 
     load_response(response_path)
-    score = score_review_response(capsule_path, response_path, events_path=events_path)
+    score = score_review_response(
+        capsule_path,
+        response_path,
+        events_path=events_path,
+        stderr_path=stderr_path,
+    )
     score_path = run_dir / "score.json"
     _write_json(score_path, score)
     scorecard_path = (capsule_path.parent / capsule["scorecard"]).resolve()
