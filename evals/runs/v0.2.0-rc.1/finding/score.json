@@ -1,0 +1,91 @@
+{
+  "anti_findings": [
+    {
+      "description": "Demand every conventional README section regardless of applicability.",
+      "id": "universal-template",
+      "semantic_review_required": true
+    },
+    {
+      "description": "Claim the package cannot be installed or used without checking pyproject.toml.",
+      "id": "unsupported-installability-claim",
+      "semantic_review_required": true
+    },
+    {
+      "description": "Treat the absent quick start as a style-only heading preference.",
+      "id": "style-only-framing",
+      "semantic_review_required": true
+    }
+  ],
+  "automatic_checks": {
+    "command_claim_matches": [
+      {
+        "command": "pwd && rg --files -g 'README*' -g '!node_modules' -g '!vendor' && git status --short && git log -1 --oneline",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "sed -n '1,240p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/0.2.0-rc.1/skills/readme-review/SKILL.md",
+        "evidence": "command_event",
+        "outcome": "failed",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "rg --files /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs | rg 'SKILL\\.md$|readme-review'",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "sed -n '1,260p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/SKILL.md && sed -n '1,320p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/review-criteria.md && sed -n '1,320p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/evidence-and-verification.md && sed -n '1,360p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/roles-and-anatomy.md",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "nl -ba README.md && rg --files -g '!node_modules' -g '!vendor' -g '!*.lock' | sort && find . -maxdepth 2 -type f -not -path './.git/*' | sort && git show --stat --oneline HEAD && git show --format=fuller --no-ext-diff HEAD -- README.md",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "nl -ba pyproject.toml && nl -ba src/pebble_count/__init__.py && nl -ba tests/test_pebble_count.py && git ls-files -s LICENSE COPYING NOTICE 2>/dev/null || true && git log --oneline --all -- README.md",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      }
+    ],
+    "conclusion_match": true,
+    "execution_claim_phrases": [
+      "The package was not installed or executed; this finding is supported by the declared console entry point and its implementation."
+    ],
+    "execution_claims_consistent_with_events": true,
+    "expected_finding_matches": [
+      {
+        "category_and_severity_match": true,
+        "expected_id": "consumer-path-missing",
+        "response_finding_index": 0,
+        "semantic_review_required": true
+      }
+    ],
+    "response_conclusion_and_findings_consistent": true,
+    "sandbox_violation_count": 0,
+    "unexpected_response_finding_indexes": [],
+    "used_unattributed_sandbox_evidence": false
+  },
+  "limitations": [
+    "Category matching does not establish that evidence or impact is correct.",
+    "Command claims are matched textually and still require semantic review.",
+    "Anti-findings and success conditions require independent semantic review."
+  ],
+  "response_sha256": "2451f42211242ec9cfd5a6ac3aa854bad05f1ebb7be33564fe58deef166adccb",
+  "result": "automatic_pass_requires_independent_review",
+  "scenario_id": "missing-first-path",
+  "score_schema_version": "1.0.0"
+}

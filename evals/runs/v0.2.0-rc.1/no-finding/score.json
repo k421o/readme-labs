@@ -1,0 +1,85 @@
+{
+  "anti_findings": [
+    {
+      "description": "Claim that the README lacks a consumer installation or first-use path.",
+      "id": "invent-consumer-gap",
+      "semantic_review_required": true
+    },
+    {
+      "description": "Demand additional conventional sections without repository evidence of reader impact.",
+      "id": "universal-template",
+      "semantic_review_required": true
+    },
+    {
+      "description": "Offer a broad rewrite or stylistic preferences in place of material findings.",
+      "id": "rewrite-as-review",
+      "semantic_review_required": true
+    }
+  ],
+  "automatic_checks": {
+    "command_claim_matches": [
+      {
+        "command": "pwd && sed -n '1,240p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/0.2.0-rc.1/skills/readme-review/SKILL.md",
+        "evidence": "command_event",
+        "outcome": "failed",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "rg --files -g 'SKILL.md' /private/tmp/readme-labs-codex-home.0L1wy6 2>/dev/null || true\nrg --files -g 'README*' -g '!node_modules' .\nfind . -maxdepth 2 -type f -print | sort",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "sed -n '1,260p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/SKILL.md\nnl -ba README.md\nprintf '\\n--- pyproject ---\\n'\nnl -ba pyproject.toml\nprintf '\\n--- tests ---\\n'\nnl -ba tests/test_pebble_count.py\nprintf '\\n--- repository status ---\\n'\ngit status --short\ngit log --oneline -5",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "sed -n '1,260p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/roles-and-anatomy.md\nsed -n '1,300p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/evidence-and-verification.md\nsed -n '1,320p' /private/tmp/readme-labs-codex-home.0L1wy6/plugins/cache/readme-labs/readme-labs/0.2.0-rc.1/skills/readme-review/references/review-criteria.md\nprintf '\\n--- source files ---\\n'\nrg --files -g '!*.pyc' -g '!node_modules' .\nprintf '\\n--- Python implementation ---\\n'\nnl -ba src/pebble_count/__init__.py\nprintf '\\n--- tracked repository files ---\\n'\ngit ls-files",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      },
+      {
+        "command": "python --version\npython -m pytest -q",
+        "evidence": "correlated_unattributed_sandbox_violation",
+        "outcome": "failed",
+        "recorded_event_match": false,
+        "sandbox_violation_match": true
+      },
+      {
+        "command": "git diff --check\nfind . -maxdepth 1 -type f -name 'LICENSE*' -o -name 'COPYING*' -o -name 'NOTICE*'\ngit diff -- README.md pyproject.toml src/pebble_count/__init__.py tests/test_pebble_count.py",
+        "evidence": "command_event",
+        "outcome": "succeeded",
+        "recorded_event_match": true,
+        "sandbox_violation_match": false
+      }
+    ],
+    "conclusion_match": true,
+    "execution_claim_phrases": [
+      "Package installation, CLI execution, and test execution were not independently verified because the recorded Python command failed."
+    ],
+    "execution_claims_consistent_with_events": true,
+    "expected_finding_matches": [],
+    "response_conclusion_and_findings_consistent": true,
+    "sandbox_violation_count": 1,
+    "unexpected_response_finding_indexes": [],
+    "used_unattributed_sandbox_evidence": true
+  },
+  "limitations": [
+    "Category matching does not establish that evidence or impact is correct.",
+    "Command claims are matched textually and still require semantic review.",
+    "Codex stderr reported a sandbox denial without its command; the failed command is correlated by count but not machine-attributed.",
+    "Anti-findings and success conditions require independent semantic review."
+  ],
+  "response_sha256": "85d6b11d3453b43aacc0ec83690edb2440209ee53f5445ee5ad0e25fb7025924",
+  "result": "automatic_pass_requires_independent_review",
+  "scenario_id": "adequate-first-path",
+  "score_schema_version": "1.0.0"
+}

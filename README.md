@@ -116,6 +116,7 @@ current architecture and release policy were reconciled. It is a historical
 compatibility artifact pinned by a downstream release, not a current support
 promise and not evidence for the present capability. See the
 [factory runbook](docs/factory-runbook.md), [release policy](docs/release-policy.md),
+[v0.2.0 release record](docs/releases/v0.2.0.md),
 [downstream integration boundary](docs/downstream-integration.md), and
 [concurrency reconciliation](docs/migrations/2026-08-30-concurrent-bootstrap-reconciliation.md).
 
