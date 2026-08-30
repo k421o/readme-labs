@@ -38,16 +38,40 @@ uv run readme-lab capsule materialize \
 ```
 
 The result is an actual temporary Git repository with separate base and
-mutation commits. A future runner can launch agents inside it and score their
-structured findings without exposing the scorecard.
+mutation commits. The blinded runner launches Codex inside it and reads the
+held-out scorecard only after the executor exits:
 
-The materializer returns the capsule's network policy but does not itself
-provide a process sandbox. A runner must enforce that policy before an agent or
-command executes. The first
+```console
+CODEX_HOME=/path/to/disposable-authenticated-codex-home \
+  uv run readme-lab capsule run \
+  evals/scenarios/missing-first-path/capsule.toml \
+  --workspace /tmp/readme-labs-missing-first-path \
+  --run-dir /tmp/readme-labs-missing-first-path-run \
+  --run-id example-finding-run \
+  --artifact-revision <full-40-character-revision> \
+  --model gpt-5.6-terra \
+  --reasoning-effort high
+```
+
+The disposable Codex home must already contain an enabled
+`readme-labs@readme-labs` plugin installed from the exact revision supplied to
+`--artifact-revision`. The runner records and checks that inventory; the
+argument is provenance, not an installation shortcut.
+
+The runner enforces the capsule's network policy, denies command access to the
+factory checkout, verifies that boundary before inference, captures structured
+Codex events and stderr, and performs deterministic scoring after exit. The
+first
 [`bootstrap-readme-review-v1`](runs/bootstrap-readme-review-v1/) run is an
 explicitly non-blinded author dry run: it verifies materialization, repository
 evidence, response capture, and score plumbing, but is not evidence that the
 capability improves performance.
+
+Codex `exec --json` currently omits the exact command when the command sandbox
+denies a tool call. The runner preserves this limitation: it may correlate one
+reported failed command with one unattributed stderr sandbox violation, labels
+that evidence as unattributed, and requires independent semantic review. It
+never rewrites the denial as an exact command event.
 
 ## Evaluation boundaries
 
@@ -58,3 +82,10 @@ capability improves performance.
 - Fixture correctness is tested before a mutated scenario is admitted.
 - Agent prompts and model settings belong in run records, not in a scorecard.
 - Human judgments should be blinded to treatment and report agreement.
+- Automatic category matching is a gate, not a semantic judgment; an
+  independent reviewer checks evidence, anti-findings, and unexpected claims.
+
+See the [factory runbook](../docs/factory-runbook.md) for installation,
+evaluation, packaging, and rollback commands. Material failures and their
+dispositions are recorded in
+[`failure-dispositions-v0.2.0.md`](failure-dispositions-v0.2.0.md).

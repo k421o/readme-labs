@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 SOURCE = Path("capabilities/readme-review")
@@ -28,7 +29,7 @@ def test_plugin_adapter_is_explicitly_experimental_and_pinned() -> None:
     )
     provenance = json.loads(PROVENANCE.read_text(encoding="utf-8"))
 
-    assert "dev" in manifest["version"]
+    assert re.fullmatch(r"\d+\.\d+\.\d+(?:-rc\.\d+)?", manifest["version"])
     assert "Experimental" in manifest["interface"]["displayName"]
     assert provenance["maturity"] == "experimental"
     assert len(provenance["source_revision"]) == 40

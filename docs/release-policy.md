@@ -31,9 +31,10 @@ maturity may differ.
 - Change notes describe new instructions, likely behavioral effects, and
   rollback.
 
-The current `readme-review` capability has only an author dry run. It is
-canonical source and can be packaged experimentally, but it has not crossed
-these release-candidate gates.
+The first factory release records its blinded finding and no-material-finding
+runs under `evals/runs/` and its independent assessment in the `v0.2.0` release
+record. The earlier author dry run remains explicitly excluded from efficacy
+evidence.
 
 ## Historical `v0.1.0` release
 
@@ -43,8 +44,9 @@ the domain-first bootstrap branch were reconciled. It contains the predecessor
 and three reconstruction exercises. `repository-guidance@v0.2.0` pins it by
 commit and tree hash.
 
-The tag and release remain immutable provenance and a working downstream
-compatibility boundary. They do not retroactively demonstrate that the current
+The tag and release remain immutable provenance and a downstream compatibility
+boundary. They do not create a current support promise or retroactively
+demonstrate that the current
 `readme-review` capability or `0.1.0-dev.1` generated adapter passed the gates
 above. Future releases must state which policy revision and scenario evidence
 they satisfy; they must not move or rewrite `v0.1.0`.
@@ -61,9 +63,11 @@ they satisfy; they must not move or rewrite `v0.1.0`.
 - Downstream compatibility is tested against the released artifact rather than
   a source-tree approximation.
 
-The `0.1.0-dev.1` plugin manifest denotes the current experimental adapter.
-There is no marketplace registration or stable release of that product shape
-in the bootstrap milestone.
+The repository-owned `.agents/plugins/marketplace.json` is the native
+mechanical delivery surface for the generated adapter. A Git marketplace
+installed from an immutable release or commit is allowed at experimental
+maturity. It is not public or verified marketplace publication and does not
+transfer source authority away from `capabilities/readme-review`.
 
 ## Data release gates
 

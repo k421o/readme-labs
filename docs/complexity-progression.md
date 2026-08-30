@@ -162,9 +162,10 @@ Add or promote a product adapter only when all applicable statements are true:
 - maturity and limitations are visible to installers; and
 - the release boundary and downstream update path are documented.
 
-Marketplace registration and personal installation are distribution choices,
-not evidence of domain correctness. They are not required for the first
-milestone.
+A repository-owned local/Git marketplace and native installation are
+mechanical delivery choices, not evidence of domain correctness. They may be
+required to verify a product adapter without claiming public, verified, or
+stable marketplace status.
 
 ## Gates for extracting another repository
 
