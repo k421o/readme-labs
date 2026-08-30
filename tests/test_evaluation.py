@@ -9,8 +9,8 @@ from readme_lab.capsule import load_capsule
 from readme_lab.evaluation import (
     RESPONSE_SCHEMA_PATH,
     SCORECARD_SCHEMA_PATH,
+    build_executor_permission_profile,
     build_executor_prompt,
-    build_executor_sandbox_profile,
     load_scorecard,
     score_review_response,
 )
@@ -67,10 +67,12 @@ def test_executor_prompt_withholds_scenario_and_scorecard_names() -> None:
     assert "readme-review" not in prompt
 
 
-def test_outer_sandbox_denies_factory_without_leaking_scenario_name() -> None:
-    profile = build_executor_sandbox_profile(Path("/tmp/factory-checkout"))
+def test_permission_profile_denies_factory_without_leaking_scenario_name() -> None:
+    profile = build_executor_permission_profile(Path("/tmp/factory-checkout"))
 
-    assert "deny file-read* file-write*" in profile
+    assert 'extends = ":workspace"' in profile
+    assert '= "deny"' in profile
+    assert "enabled = false" in profile
     assert Path("/tmp/factory-checkout").resolve().as_posix() in profile
     assert "missing-first-path" not in profile
 

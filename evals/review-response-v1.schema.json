@@ -12,8 +12,9 @@
     "limitations"
   ],
   "properties": {
-    "schema_version": {"const": "1.0.0"},
+    "schema_version": {"type": "string", "const": "1.0.0"},
     "conclusion": {
+      "type": "string",
       "enum": ["material_findings", "no_material_findings"]
     },
     "findings": {
@@ -36,7 +37,7 @@
         "properties": {
           "title": {"type": "string", "minLength": 1},
           "category": {"$ref": "#/$defs/category"},
-          "severity": {"const": "material"},
+          "severity": {"type": "string", "const": "material"},
           "path": {"type": "string", "minLength": 1},
           "line_start": {"type": "integer", "minimum": 1},
           "line_end": {"type": "integer", "minimum": 1},
@@ -60,24 +61,9 @@
       "items": {"type": "string", "minLength": 1}
     }
   },
-  "allOf": [
-    {
-      "if": {
-        "properties": {"conclusion": {"const": "no_material_findings"}},
-        "required": ["conclusion"]
-      },
-      "then": {"properties": {"findings": {"maxItems": 0}}}
-    },
-    {
-      "if": {
-        "properties": {"conclusion": {"const": "material_findings"}},
-        "required": ["conclusion"]
-      },
-      "then": {"properties": {"findings": {"minItems": 1}}}
-    }
-  ],
   "$defs": {
     "category": {
+      "type": "string",
       "enum": [
         "identity",
         "definition_purpose",

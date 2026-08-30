@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
-import platform
+import os
 import re
 import shutil
 import subprocess
@@ -96,15 +96,24 @@ def score_review_response(capsule_path: Path, response_path: Path) -> dict[str, 
         )
 
     conclusion_match = response["conclusion"] == scorecard["expected_conclusion"]
+    response_consistent = (
+        response["conclusion"] == "material_findings" and bool(response["findings"])
+    ) or (response["conclusion"] == "no_material_findings" and not response["findings"])
     expected_match = all(item["category_and_severity_match"] for item in matches)
     no_unexpected_findings = not unmatched_response_indexes
-    automatic_pass = conclusion_match and expected_match and no_unexpected_findings
+    automatic_pass = (
+        conclusion_match
+        and response_consistent
+        and expected_match
+        and no_unexpected_findings
+    )
     return {
         "score_schema_version": "1.0.0",
         "scenario_id": scorecard["scenario_id"],
         "response_sha256": _sha256(response_path),
         "automatic_checks": {
             "conclusion_match": conclusion_match,
+            "response_conclusion_and_findings_consistent": response_consistent,
             "expected_finding_matches": matches,
             "unexpected_response_finding_indexes": sorted(unmatched_response_indexes),
         },
@@ -158,15 +167,23 @@ def _is_within(path: Path, parent: Path) -> bool:
     return True
 
 
-def build_executor_sandbox_profile(held_out_root: Path) -> str:
-    """Deny the executor all reads and writes to the factory checkout."""
+def build_executor_permission_profile(held_out_root: Path) -> str:
+    """Create a Codex profile that denies the held-out factory checkout."""
 
     encoded_path = json.dumps(held_out_root.resolve().as_posix())
     return "\n".join(
         (
-            "(version 1)",
-            "(allow default)",
-            f"(deny file-read* file-write* (subpath {encoded_path}))",
+            'default_permissions = "readme-eval"',
+            "",
+            "[permissions.readme-eval]",
+            'description = "README evaluation workspace with held-out factory data."',
+            'extends = ":workspace"',
+            "",
+            "[permissions.readme-eval.filesystem]",
+            f'{encoded_path} = "deny"',
+            "",
+            "[permissions.readme-eval.network]",
+            "enabled = false",
             "",
         )
     )
@@ -200,6 +217,66 @@ def _codex_inventory(executable: str, plugin_id: str) -> dict[str, Any]:
     return {"codex_version": version, "plugin": installed[0]}
 
 
+def _prepare_permission_profile(held_out_root: Path) -> tuple[str, Path]:
+    raw_codex_home = os.environ.get("CODEX_HOME")
+    if raw_codex_home is None:
+        raise RuntimeError(
+            "blinded execution requires an explicit disposable CODEX_HOME"
+        )
+    codex_home = Path(raw_codex_home).resolve()
+    personal_codex_home = (Path.home() / ".codex").resolve()
+    if codex_home == personal_codex_home:
+        raise RuntimeError(
+            "refusing to write an evaluation profile to personal CODEX_HOME"
+        )
+    if not codex_home.is_dir():
+        raise FileNotFoundError(f"CODEX_HOME does not exist: {codex_home}")
+
+    profile_name = "readme-labs-evaluation"
+    profile_path = codex_home / f"{profile_name}.config.toml"
+    profile = build_executor_permission_profile(held_out_root)
+    if profile_path.exists() and profile_path.read_text(encoding="utf-8") != profile:
+        raise FileExistsError(
+            f"refusing to replace a different profile: {profile_path}"
+        )
+    profile_path.write_text(profile, encoding="utf-8")
+    return profile_name, profile_path
+
+
+def _verify_permission_profile(
+    executable: str,
+    *,
+    profile_name: str,
+    workspace: Path,
+    held_out_root: Path,
+) -> None:
+    held_out_probe = held_out_root / "README.md"
+    command = [
+        executable,
+        "sandbox",
+        "--profile",
+        profile_name,
+        "--permission-profile",
+        "readme-eval",
+        "--cd",
+        workspace.as_posix(),
+        "/bin/sh",
+        "-c",
+        (
+            "/usr/bin/head -c 1 README.md >/dev/null 2>&1 "
+            '&& ! /usr/bin/head -c 1 "$1" >/dev/null 2>&1'
+        ),
+        "readme-eval-preflight",
+        held_out_probe.as_posix(),
+    ]
+    result = subprocess.run(command, capture_output=True, text=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            "permission profile preflight did not prove workspace-read and "
+            "factory-deny boundaries"
+        )
+
+
 def run_codex_capsule(
     capsule_path: Path,
     *,
@@ -214,8 +291,6 @@ def run_codex_capsule(
 ) -> dict[str, Any]:
     """Run one blinded Codex execution and score it after the process exits."""
 
-    if platform.system() != "Darwin" or shutil.which("sandbox-exec") is None:
-        raise RuntimeError("blinded execution currently requires macOS sandbox-exec")
     if not IMMUTABLE_REVISION.fullmatch(artifact_revision):
         raise ValueError("artifact_revision must be a full 40-character Git commit")
     if workspace.exists() or run_dir.exists():
@@ -232,9 +307,12 @@ def run_codex_capsule(
     run_dir.mkdir(parents=True)
     response_schema = run_dir / RESPONSE_SCHEMA_NAME
     shutil.copy2(RESPONSE_SCHEMA_PATH, response_schema)
-    sandbox_profile = run_dir / "executor.sb"
-    sandbox_profile.write_text(
-        build_executor_sandbox_profile(held_out_root), encoding="utf-8"
+    profile_name, profile_path = _prepare_permission_profile(held_out_root)
+    _verify_permission_profile(
+        codex_executable,
+        profile_name=profile_name,
+        workspace=workspace,
+        held_out_root=held_out_root,
     )
     response_path = run_dir / "response.json"
     events_path = run_dir / "events.jsonl"
@@ -242,17 +320,14 @@ def run_codex_capsule(
     prompt = build_executor_prompt(capsule)
     started_at = datetime.now(UTC)
     command = [
-        "sandbox-exec",
-        "-f",
-        sandbox_profile.as_posix(),
         codex_executable,
         "exec",
+        "--profile",
+        profile_name,
         "--ephemeral",
         "--json",
         "--color",
         "never",
-        "--sandbox",
-        "workspace-write",
         "--cd",
         workspace.as_posix(),
         "--output-schema",
@@ -294,8 +369,10 @@ def run_codex_capsule(
             "return_code": result.returncode,
             "ephemeral": True,
             "network_policy": capsule["environment"]["network"],
-            "codex_tool_sandbox": "workspace-write",
-            "factory_checkout_denied_by_outer_sandbox": True,
+            "permission_profile": "readme-eval",
+            "permission_profile_sha256": _sha256(profile_path),
+            "factory_checkout_denied_by_command_sandbox": True,
+            "permission_preflight_passed": True,
             "scorecard_read_after_executor_exit": True,
         },
         "materialization": materialization,
