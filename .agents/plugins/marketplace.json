@@ -1,0 +1,20 @@
+{
+  "name": "readme-labs",
+  "interface": {
+    "displayName": "README Labs"
+  },
+  "plugins": [
+    {
+      "name": "readme-labs",
+      "source": {
+        "source": "local",
+        "path": "./products/codex-plugin/readme-labs"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

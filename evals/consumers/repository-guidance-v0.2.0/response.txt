@@ -1,0 +1,7 @@
+## Finding
+
+1. **Onboarding stops before any capability can be used** — [README.md](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/README.md:24), lines 24–39, says to install this plugin and the pinned README Labs release, but gives only the post-install invocation prompts. There is no local-install command, marketplace route, or canonical setup link for either dependency. The repository does identify the plugin as `repository-guidance` in [.codex-plugin/plugin.json](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/.codex-plugin/plugin.json:2) and confirms that README review requires the separate `readme-labs` plugin in [upstreams/readme-labs.lock.json](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/upstreams/readme-labs.lock.json:9), but neither supplies an install path for a reader.
+
+   A new user therefore cannot reach the README’s main promised result—invoking either owned skill or the separately required README-review skill. Add a concise, maintained installation route for the supported host(s), and explicitly route installation of the pinned README Labs capability.
+
+The evaluation commands, teardown behavior, and internal README links otherwise match the inspected CLI, CI workflow, and evaluation documentation. I did not run live Codex evaluations or verify external GitHub/OpenAI links.

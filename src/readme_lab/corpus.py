@@ -17,8 +17,8 @@ from jsonschema import Draft202012Validator, FormatChecker
 from readme_lab.domain import load_taxonomy
 from readme_lab.inspect import inspect_readme
 
-MANIFEST_SCHEMA_PATH = Path(__file__).resolve().parents[2] / "corpus" / (
-    "manifest-item-v1.schema.json"
+MANIFEST_SCHEMA_PATH = (
+    Path(__file__).resolve().parents[2] / "corpus" / ("manifest-item-v1.schema.json")
 )
 
 
@@ -89,8 +89,10 @@ def collect_corpus(
         sample_dir = cache_dir / item["sample_id"]
         sample_dir.mkdir(parents=True, exist_ok=True)
         cached_path = sample_dir / Path(item["path"]).name
-        content = cached_path.read_bytes() if cached_path.exists() else _fetch(
-            item["source_url"]
+        content = (
+            cached_path.read_bytes()
+            if cached_path.exists()
+            else _fetch(item["source_url"])
         )
         actual_blob_sha = git_blob_sha(content)
         if actual_blob_sha != item["blob_sha"]:
@@ -110,6 +112,8 @@ def collect_corpus(
                 repository=item["repository"],
                 revision=item["revision"],
                 role=item["role_primary"],
+                role_assignment=item["role_assignment"],
+                annotation=item.get("role_annotation"),
                 observed_at=observed_at,
                 source_path=item["path"],
                 retrieval_url=item["source_url"],

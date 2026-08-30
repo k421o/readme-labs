@@ -1,6 +1,7 @@
 {
   "schema_version": 1,
   "scenario_id": "missing-first-path",
+  "expected_conclusion": "material_findings",
   "expected_findings": [
     {
       "id": "consumer-path-missing",
@@ -11,8 +12,17 @@
     }
   ],
   "anti_findings": [
-    "Demand every conventional README section regardless of applicability.",
-    "Claim the package cannot be installed or used without checking pyproject.toml.",
-    "Treat the absent quick start as a style-only heading preference."
+    {
+      "id": "universal-template",
+      "description": "Demand every conventional README section regardless of applicability."
+    },
+    {
+      "id": "unsupported-installability-claim",
+      "description": "Claim the package cannot be installed or used without checking pyproject.toml."
+    },
+    {
+      "id": "style-only-framing",
+      "description": "Treat the absent quick start as a style-only heading preference."
+    }
   ]
 }

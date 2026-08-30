@@ -1,0 +1,79 @@
+{
+  "artifact_revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
+  "artifacts": {
+    "events": "events.jsonl",
+    "events_sha256": "0d6066036aeb576d66a453bd744a0d54b32150a5ee9eb71e525a035406997d98",
+    "held_out_scorecard_sha256": "7da2b13f860f5575b205638d57a4fb6473c45a52f9a01829c0c066dfa3df5703",
+    "response": "response.json",
+    "response_sha256": "2451f42211242ec9cfd5a6ac3aa854bad05f1ebb7be33564fe58deef166adccb",
+    "score": "score.json",
+    "score_sha256": "7ccadc49e6c1ca20ad0ab5829d335970f64cf97b2e2f1b05371a0d389dfab550",
+    "stderr": "stderr.log",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "execution": {
+    "ephemeral": true,
+    "factory_checkout_denied_by_command_sandbox": true,
+    "finished_at": "2026-08-30T16:58:09.827235Z",
+    "network_policy": "disabled",
+    "permission_preflight_passed": true,
+    "permission_profile": "readme-eval",
+    "permission_profile_sha256": "1aef80dad8712bdff68fb05e3a08791aec9d118125abe435cc629c4fdb3882d3",
+    "return_code": 0,
+    "scorecard_read_after_executor_exit": true,
+    "started_at": "2026-08-30T16:57:12.568697Z"
+  },
+  "executor": {
+    "artifact_binding": {
+      "artifact_revision_verified": true,
+      "committed_product_sha256": "433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a",
+      "installed_product_matches_marketplace": true,
+      "installed_product_sha256": "433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a",
+      "marketplace_install_record_sha256": "84933e0a695ede9894f70e3f0d5471d691c00c3fcc5e711ecdb460e72e36597b",
+      "marketplace_product_sha256": "433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a",
+      "marketplace_ref": "0ec30675771ca90c947cca1bf86c912845e1f341",
+      "marketplace_revision": "0ec30675771ca90c947cca1bf86c912845e1f341"
+    },
+    "codex_version": "codex-cli 0.151.0-alpha.7.2",
+    "kind": "codex_cli",
+    "model": "gpt-5.6-terra",
+    "plugin": {
+      "authPolicy": "ON_INSTALL",
+      "enabled": true,
+      "installPolicy": "AVAILABLE",
+      "installed": true,
+      "marketplaceName": "readme-labs",
+      "marketplaceSource": {
+        "source": "https://github.com/k421o/readme-labs.git",
+        "sourceType": "git"
+      },
+      "name": "readme-labs",
+      "pluginId": "readme-labs@readme-labs",
+      "source": {
+        "path": "/private/tmp/readme-labs-codex-home.0L1wy6/.tmp/marketplaces/readme-labs/products/codex-plugin/readme-labs",
+        "source": "local"
+      },
+      "version": "0.2.0-rc.1"
+    },
+    "reasoning_effort": "high"
+  },
+  "materialization": {
+    "base_commit": "000eca745008aac55cb4322158b6758444cb49ee",
+    "base_tree": "f3bde812ab11e42106742a87fc4973890c2ff48c",
+    "capsule_sha256": "c6879c7f381534a9f35575fd27efcb77ab8bba3cf39d27373750782158b7c427",
+    "destination": "/private/tmp/readme-labs-eval-finding-v0.2.0-rc.1-v3",
+    "fidelity_level": 4,
+    "final_commit": "03d147dac946a1b7aa850160dcef361af5d5df00",
+    "final_tree": "0f867baa7aedd85bf739c67529490d6d0666b716",
+    "git_timestamp": "2000-01-01T00:00:00Z",
+    "mutation_sha256": "c4a50ad5b162b896ba8111b0c24651d5f49ff4102d90cc04f0577b84365959d6",
+    "network": "disabled",
+    "scenario_id": "missing-first-path",
+    "task": "Review this repository README for material reader-facing problems. Support findings with repository evidence and avoid generic template advice."
+  },
+  "result": "automatic_pass_requires_independent_review",
+  "run_id": "v0.2.0-rc.1-finding-final",
+  "run_schema_version": "2.0.0",
+  "scenario_id": "missing-first-path",
+  "task_sha256": "be2d0c695415ab77c89527f88d02d42353b252bbb710989626dfbe523485b44d"
+}

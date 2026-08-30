@@ -11,6 +11,7 @@ uv run python scripts/build_plugin.py
 uv run python scripts/build_plugin.py --check
 ```
 
-The adapter intentionally has no marketplace entry. Installation and a public
-release are separate product-maturity decisions; this directory currently
-proves packaging validity and a reproducible source boundary only.
+The repository exposes the adapter through its own local/Git marketplace so
+Codex can discover and install it through the native plugin flow. That
+mechanical installation channel is not a public or verified marketplace
+listing, and it does not transfer source authority away from `readme-labs`.

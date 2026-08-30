@@ -11,7 +11,10 @@ from jsonschema import Draft202012Validator, FormatChecker
 
 DOMAIN_DIR = Path(__file__).resolve().parents[2] / "domain"
 TAXONOMY_PATH = DOMAIN_DIR / "taxonomy-v1.json"
-OBSERVATION_SCHEMA_PATH = DOMAIN_DIR / "readme-observation-v1.schema.json"
+OBSERVATION_SCHEMA_PATHS = {
+    "1.0.0": DOMAIN_DIR / "readme-observation-v1.schema.json",
+    "2.0.0": DOMAIN_DIR / "readme-observation-v2.schema.json",
+}
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -42,9 +45,15 @@ def load_taxonomy(path: Path | None = None) -> dict[str, Any]:
 
 
 def validate_observation(observation: dict[str, Any]) -> None:
-    """Raise a validation error when an observation violates the v1 contract."""
+    """Raise a validation error when an observation violates its contract."""
 
-    schema = _load_domain_file(
-        "readme-observation-v1.schema.json", OBSERVATION_SCHEMA_PATH
-    )
+    version = observation.get("schema_version")
+    if version not in OBSERVATION_SCHEMA_PATHS:
+        expected = ", ".join(sorted(OBSERVATION_SCHEMA_PATHS))
+        raise ValueError(
+            f"unknown READMEObservation schema version {version!r}; "
+            f"expected one of: {expected}"
+        )
+    schema_name = f"readme-observation-v{version.split('.')[0]}.schema.json"
+    schema = _load_domain_file(schema_name, OBSERVATION_SCHEMA_PATHS[version])
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(observation)

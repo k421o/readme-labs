@@ -4,7 +4,8 @@ This plugin is a packaging adapter for the canonical `readme-review`
 capability in `k421o/readme-labs`.
 
 - Maturity: experimental
-- Marketplace status: not registered
+- Marketplace status: repository-owned local/Git marketplace; not a public or
+  verified listing
 - Editable source: `capabilities/readme-review`
 - Generation record: `UPSTREAM.json`
 

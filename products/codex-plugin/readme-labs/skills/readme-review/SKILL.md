@@ -28,7 +28,9 @@ readers. Establish its role before judging its sections or length.
    or working-directory constraints are visible where a reader needs them.
 5. Verify factual claims with repository evidence. Prefer executing safe,
    bounded commands when the task authorizes verification; otherwise report
-   what was and was not checked. Follow
+   what was and was not checked. Describe a command as run, attempted, failed,
+   or denied only when the current task's tool record contains that execution;
+   otherwise say it was not run without inventing a reason. Follow
    [evidence and verification](references/evidence-and-verification.md).
 6. Apply the [review criteria](references/review-criteria.md). Report only
    issues that can materially change understanding, correct use, navigation,
@@ -48,6 +50,10 @@ For each finding, provide:
 Rank findings by reader impact. Separate verified facts from interpretations.
 Do not use stars, badges, length, heading order, or familiarity as a quality
 score.
+
+Before responding, audit every execution verb in findings, verification, and
+limitations against the current tool record. Remove any run, attempted,
+blocked, denied, passed, or failed claim that has no matching tool execution.
 
 If no material issues remain, say so and name any commands, links, rendered
 surfaces, or role assumptions that were not independently verified.

@@ -1,0 +1,45 @@
+{
+  "schema_version": "1.0.0",
+  "purpose": "final-product normal discovery and downstream usefulness",
+  "consumer": {
+    "repository": "https://github.com/k421o/repository-guidance.git",
+    "revision": "5b338322a4181e09e761429fbe158efa1fe7cf97",
+    "tree": "f5c55b7342b64953d8b46ee7a50864769252297e",
+    "checkout_was_clean_after_run": true
+  },
+  "artifact": {
+    "marketplace": "readme-labs",
+    "tested_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+    "plugin_version": "0.2.0",
+    "product_sha256": "08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0",
+    "installed_through_native_marketplace": true
+  },
+  "execution": {
+    "thread_id": "01a053b3-f6aa-71e1-884b-8d539df95756",
+    "codex_version": "codex-cli 0.151.0-alpha.7.2",
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "edits_authorized": false,
+    "return_code": 0,
+    "skill_named_in_prompt": false,
+    "installed_skill_loaded": true,
+    "installed_skill_path_fragment": "plugins/cache/readme-labs/readme-labs/0.2.0/skills/readme-review/SKILL.md"
+  },
+  "prompt": "Review this repository root README for material reader-facing problems. Support findings with repository evidence, avoid generic template advice, and do not edit files.",
+  "prompt_sha256": "ea71d1fe9c91fa7287a5319529e98e8830c6ba98301edb528f1118d5e602057a",
+  "result": {
+    "material_findings": 1,
+    "summary": "The consumer documents post-install invocations but no actionable installation route for its own plugin or the separately required README capability."
+  },
+  "artifacts": {
+    "response": "response.txt",
+    "response_sha256": "b74118e980f605bd4d04f898cec6e0df524b2f7db274c7c6a379199d5cef2657",
+    "events": "events.jsonl",
+    "events_sha256": "1dafb1d9ccc07cf324025f16463b89caa1cae592dd75061583fcc3895002818a"
+  },
+  "limitations": [
+    "The consumer remains pinned to historical readme-labs v0.1.0; this run verifies independent installation and normal discovery rather than changing that declared integration.",
+    "The reviewer inspected implementation evidence but did not run live consumer evaluations or external links."
+  ]
+}

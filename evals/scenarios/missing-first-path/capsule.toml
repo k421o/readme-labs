@@ -7,9 +7,10 @@ scorecard = "scorecard.json"
 [environment]
 kind = "local_git"
 fidelity_level = 4
-fixture = "fixture"
+fixture = "../../fixtures/pebble-count"
 network = "disabled"
 mutation = "mutation.diff"
+git_timestamp = "2000-01-01T00:00:00Z"
 
 [metadata]
 target_role = "published_package"

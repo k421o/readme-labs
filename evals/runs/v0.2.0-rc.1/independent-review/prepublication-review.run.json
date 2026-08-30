@@ -1,0 +1,34 @@
+{
+  "schema_version": "1.0.0",
+  "thread_id": "01a053aa-9651-7620-872e-56390cc1f465",
+  "subject_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+  "environment": {
+    "codex_home": "fresh_auth_only",
+    "subject_plugin_installed": false,
+    "prior_task_context": false,
+    "sandbox": "read-only",
+    "model": "gpt-5.6-sol",
+    "reasoning_effort": "high"
+  },
+  "result": "hold_with_two_artifact_integrity_blockers",
+  "blockers": [
+    {
+      "id": "incorrect-predecessor-hash",
+      "disposition": "corrected and independently recomputed"
+    },
+    {
+      "id": "final-product-bytes-not-exercised",
+      "disposition": "native update, rollback, restore, and unnamed-skill consumer run completed"
+    }
+  ],
+  "artifacts": {
+    "report": "prepublication-review.txt",
+    "report_sha256": "8c2afefd504510f0655a89d72cb24d0ce82ef76c1bbff24a914837a866d5332b",
+    "events": "prepublication-review-events.jsonl",
+    "events_sha256": "659f29759a8580d28bca7c5baffde3f610184249136434ab0d9f01eae3af63a7"
+  },
+  "notes": [
+    "The report is preserved as the gate result before remediation; its hold verdict is not rewritten after the blockers were fixed.",
+    "A separate post-repair review must determine whether the dispositions close the hold."
+  ]
+}

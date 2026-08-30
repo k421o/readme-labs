@@ -6,26 +6,25 @@ AGENTS.md guidance and cross-surface routing.
 
 ## Current state
 
-`repository-guidance@v0.2.0` has completed the authority split. It contains no
-editable README research or skill and pins `readme-labs@v0.1.0` by release,
-commit, and tree hash. That immutable tag exposes the earlier
-`readme-contract-review` skill and remains a valid compatibility artifact even
-after the current source layout changes.
+`repository-guidance@v0.2.0` contains no editable README research or skill and
+pins `readme-labs@v0.1.0` by release, commit, and tree hash. That immutable tag
+exposes the earlier `readme-contract-review` skill and remains historical
+compatibility evidence after the current source layout changes. It is not a
+statement that the predecessor is actively supported.
 
-The canonical source capability is now `capabilities/readme-review`. It has not
-passed the release gates in [`release-policy.md`](release-policy.md), so the
-downstream lock must not be silently repointed to this branch or the
-experimental generated adapter. New README-domain work belongs here; the
-downstream bundle remains on `v0.1.0` until an intentional release and upgrade
-is evaluated.
+The canonical source capability is `capabilities/readme-review`. A downstream
+lock must never point to its moving branch or independently edit its generated
+adapter. New README-domain work belongs here; a downstream migration selects an
+intentional immutable release and evaluates the interface-name change.
 
 ## Allowed consumption models
 
 In preferred order:
 
-1. Install the released README plugin alongside `repository-guidance` and let
-   the downstream bundle provide discovery and routing, when plugin composition
-   supports that relationship.
+1. Add the repository-owned `readme-labs` Git marketplace at an immutable
+   release or commit, install `readme-labs@readme-labs` through native Codex
+   plugin discovery, and let the downstream bundle provide only its locally
+   owned routing when composition supports that relationship.
 2. Vendor a generated released capability with its upstream tag, commit, tree
    hash, and generator recorded, plus a CI synchronization check.
 3. Use release automation to copy a capability into a distribution repository
@@ -62,3 +61,8 @@ repository-guidance bundle and routing
 
 No arrow points back upward. Downstream needs can motivate an upstream issue or
 change, but must not silently redefine the README taxonomy or skill.
+
+Agent Labs and Agent Skills are not in this dependency chain. Any later Agent
+Skills listing is an optional downstream consumer of an immutable README Labs
+release, not a prerequisite for source development, discovery, installation,
+or release.

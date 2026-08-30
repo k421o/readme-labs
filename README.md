@@ -92,7 +92,7 @@ uv run readme-lab inspect README.md \
 The emitted record describes structure and provenance. It is not a quality
 score.
 
-## Bootstrap status
+## First factory status
 
 The initial milestone now includes:
 
@@ -100,16 +100,23 @@ The initial milestone now includes:
 - an AST-based inspector and deterministic contract tests;
 - a 16-repository, Git-blob-verified high-exposure pilot with derived
   observations and descriptive analysis;
-- a local-Git mutation capsule with held-out scoring material;
-- the canonical `readme-review` capability and a transparent author dry run;
-  and
-- a generated, validated `0.1.0-dev.1` experimental Codex plugin adapter.
+- deterministic local-Git finding and no-finding scenarios with held-out
+  scorecards;
+- the canonical `readme-review` capability and a blinded Codex runner;
+- a generated experimental Codex plugin adapter; and
+- a repository-owned local/Git marketplace for native discovery and
+  installation from immutable repository revisions.
 
-There is no marketplace registration. The immutable `v0.1.0` tag was published
-by a concurrent extraction before this architecture and release policy were
-reconciled. It remains a supported historical pin for the downstream bundle,
-but no release yet satisfies the current capability gates. See the
-[release policy](docs/release-policy.md),
+The marketplace is the proper mechanical Codex delivery path for this
+repository. It is not a public or verified marketplace listing, and it does
+not make the product adapter authoritative over the canonical capability.
+
+The immutable `v0.1.0` tag was published by a concurrent extraction before the
+current architecture and release policy were reconciled. It is a historical
+compatibility artifact pinned by a downstream release, not a current support
+promise and not evidence for the present capability. See the
+[factory runbook](docs/factory-runbook.md), [release policy](docs/release-policy.md),
+[v0.2.0 release record](docs/releases/v0.2.0.md),
 [downstream integration boundary](docs/downstream-integration.md), and
 [concurrency reconciliation](docs/migrations/2026-08-30-concurrent-bootstrap-reconciliation.md).
 
@@ -122,11 +129,11 @@ independently.
 
 `repository-guidance` is already a downstream integration surface: its `v0.2.0`
 release removed the editable README copy and pins the immutable historical
-`readme-labs@v0.1.0` artifact. A future migration may update that lock to a
-release of the current `readme-review` capability after the new gates pass;
-AGENTS.md guidance and cross-surface routing remain locally owned downstream.
+`readme-labs@v0.1.0` artifact. That pin records compatibility, not active
+support. A future migration may update the lock to a release of the current
+`readme-review` capability after the new gates pass; AGENTS.md guidance and
+cross-surface routing remain locally owned downstream.
 
 ## License
 
 MIT
-Research, evidence, evaluation, and derived capabilities for README structure, authoring, and review.

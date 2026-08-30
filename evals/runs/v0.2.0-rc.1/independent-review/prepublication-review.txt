@@ -1,0 +1,81 @@
+## Concrete blockers
+
+1. **The rollback record contains a wrong predecessor hash.**  
+   [marketplace-transitions.json](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/runs/v0.2.0-rc.1/marketplace-transitions.json:15) records:
+
+   `90432dd3c61990c2a1cf5e865dd26c4c6d4d29b7f43bc285fc6cfec28af02121`
+
+   Recomputing revision `0e845c375b3d16e90e3b93e45c32e6879ddc3b16` with the repository’s own Git-subtree hashing algorithm yields:
+
+   `90432dd3df76343ccce19d179d94eeea76a4ec6b98531b84dd0f220ded8ec84e`
+
+   The RC hash recomputes correctly, so this is not an algorithm mismatch. It makes the durable rollback audit internally false.
+
+2. **The promoted `0.2.0` product bytes were not installed, transitioned, consumed, or recorded by hash.**  
+   Every preserved execution binds plugin `0.2.0-rc.1` at `0ec30675771ca90c947cca1bf86c912845e1f341`, product hash `433cdc…`. The committed manifest is now `0.2.0` ([plugin.json](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/products/codex-plugin/readme-labs/.codex-plugin/plugin.json:1)), producing a different final product-tree hash:
+
+   `08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0`
+
+   The only product change is the version field, so the semantic RC evidence remains relevant. Mechanically, however, version controls inventory/cache placement, and the policy requires native checks and downstream compatibility against the released artifact ([release-policy.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/docs/release-policy.md:54)). The release record also omits this final product hash.
+
+Before publishing, correct the predecessor hash and preserve a final-commit native install/list plus final-to-predecessor rollback/restore—or an equivalently strong exact-final-byte transition record. A final unnamed-skill consumer smoke test would close the downstream gate cleanly.
+
+## Verdict
+
+**The RC vertical is reproducible and semantically passes, but `v0.2.0` is not yet publishable under the repository’s own policy.** No capability-behavior blocker remains; two artifact-integrity blockers remain.
+
+The branch is clean at `7097c725c1056a5a6df7b774b666780ff60144f6`, 15 commits ahead of `origin/main`. No `v0.2.0` tag exists yet, so a reader cannot currently resolve or install the final release named in [docs/releases/v0.2.0.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/docs/releases/v0.2.0.md:68). That absence is an expected publication step, but it reinforces that the final vertical is not reproducible today.
+
+## Source boundaries and exact vertical
+
+| Stage | Repository source of truth / operation |
+| --- | --- |
+| Concepts | `domain/`, interpreted through `research/` |
+| Editable behavior | `capabilities/readme-review/` |
+| Evaluation | `evals/scenarios/`, schemas, scorer, and preserved runs |
+| Generate | `uv run python scripts/build_plugin.py` |
+| Check | `uv sync --locked --dev`; Ruff; pytest; link checker; `scripts/build_plugin.py --check`; `uv build` |
+| Codex package | `products/codex-plugin/readme-labs/.codex-plugin/plugin.json`, generated `skills/readme-review/`, and `UPSTREAM.json` |
+| Discovery | `.agents/plugins/marketplace.json` |
+| Install | Disposable authenticated `CODEX_HOME`; `codex plugin marketplace add … --ref <40-char-commit> --sparse …`; `codex plugin add readme-labs@readme-labs`; `codex plugin list --json` |
+| Evaluate | `evals/scenarios/missing-first-path/capsule.toml` and `adequate-first-path/capsule.toml` via `readme-lab capsule run` |
+| Update/rollback | Remove marketplace, re-add at the target immutable revision, reinstall, inspect inventory |
+| Consume | Normal skill discovery or `$readme-review`; downstream owns its own routing |
+| Release promise | `docs/releases/v0.2.0.md` plus the eventual immutable Git tag/GitHub release |
+
+The complete commands are in [factory-runbook.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/docs/factory-runbook.md:23). Official OpenAI documentation independently confirms the required `.codex-plugin/plugin.json`, bundled `skills/`, repo marketplace, Git `--ref`, and repeatable sparse-checkout mechanism. [OpenAI plugin packaging documentation](https://developers.openai.com/plugins/build/plugins)
+
+`uv build` packages the separate Python harness/tool at `0.1.0.dev0`; it does not create the `0.2.0` Codex artifact. The plugin is consumed directly from the Git marketplace tree.
+
+## Evidence checked
+
+- Canonical and packaged capability trees are byte-identical. `scripts/build_plugin.py --check` passes. The canonical tree hash is `71d0f220…`, matching [UPSTREAM.json](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/products/codex-plugin/readme-labs/UPSTREAM.json:1).
+- All six release-record contract hashes recompute exactly.
+- Finding bundle:
+  - response `2451f422…`
+  - score `7ccadc49…`
+  - correctly reports the deliberately removed consumer install/use path.
+- No-finding bundle:
+  - response `85d6b11d…`
+  - score `491c5f1b…`
+  - correctly returns no material findings and avoids all anti-findings.
+- Both responses validate against the preserved response schema. Recomputing scores from capsules, responses, events, and stderr reproduces both committed scores exactly.
+- Both runs bind the Git object, marketplace checkout, and installed cache to `433cdc93279e…` ([finding run](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/runs/v0.2.0-rc.1/finding/run.json:27), [no-finding run](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/runs/v0.2.0-rc.1/no-finding/run.json:27)).
+- The real consumer run used an unnamed README-review prompt, loaded the installed RC skill, kept the consumer clean, and produced three repository-specific findings ([consumer run](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/evals/consumers/repository-guidance-v0.2.0-rc.1/run.json:1)). Its response/events/stderr hashes all recompute correctly.
+- Current committed metadata is internally synchronized:
+  - plugin `0.2.0`, experimental;
+  - marketplace `readme-labs`, `AVAILABLE`, `ON_INSTALL`;
+  - canonical source revision `961c4e6…`;
+  - packaged source hash `71d0f220…`.
+- Ruff, generated-adapter synchronization, and all 59 local Markdown-link checks passed.
+
+## Residual limitations
+
+- The read-only environment prevented pytest from obtaining a temporary directory and prevented `uv build`; this was an environment failure before test collection, not a failing repository test.
+- I did not perform a live authenticated marketplace installation or model run.
+- Evidence covers one fixture pair, one model, and one execution per condition.
+- The no-finding run retains the disclosed count-correlated, machine-unattributed sandbox denial.
+- Public directory rendering was not tested and is explicitly outside this experimental release’s criteria.
+- `repository-guidance` still pins historical `v0.1.0`; its preserved RC run demonstrates discovery/usefulness, not a completed downstream migration.
+
+No files were edited.

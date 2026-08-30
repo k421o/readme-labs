@@ -1,0 +1,42 @@
+## Focused verdict
+
+**Pass. No material blocker in either replacement bundle.**
+
+- **Semantic success:** `missing-first-path` correctly identifies the absent consumer installation-and-use path and distinguishes it from contributor setup. `adequate-first-path` correctly returns `no_material_findings`.
+- **Anti-findings:** All scorecard anti-findings are avoided; neither response contains unexpected findings.
+- **Command consistency:** Finding run: **6/6** command claims exactly match completed events and outcomes. No-finding run: **8/9** exact; the sole unmatched failed command, `python --version && pytest -q`, correlates one-to-one with the sole sandbox warning and has no competing unmatched command.
+- **Artifact binding:** Confirmed for revision `0ec30675771ca90c947cca1bf86c912845e1f341`. The Git revision’s product bytes, marketplace product, and installed cache independently produce the same tree SHA-256: `433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a`. The install record and marketplace HEAD also pin that exact revision.
+- Every artifact hash recorded in both `run.json` files matches its replacement-bundle file.
+
+Preservation and update/rollback remain separate pending release tasks; they are not scenario failures.
+
+## Residual limitations
+
+- The no-finding sandbox correlation is count-based, not machine-attributed; it supports the command’s failure but not the exact denied path or cause.
+- The binding implementation checks marketplace HEAD and marketplace-versus-installed bytes, but does not itself reject a dirty marketplace checkout or compare its digest directly with the committed Git object. Independent recomputation closes that gap for these specific bundles.
+- Tests cover successful binding and declared-revision mismatch, but not dirty-marketplace or installed-byte-tampering cases.
+- I could not rerun `tests/test_evaluation.py` locally because the available Python environments lack `pytest`/`jsonschema`; the implementation and tests were inspected directly.
+- Evidence remains one fixture pair, one model, and one run per condition. End-to-end CLI behavior and registry/publication rendering remain unverified.
+
+## Audit hashes
+
+| Artifact | SHA-256 |
+|---|---|
+| Finding bundle tree | `33ac871e8fabbddf55b713c68557a806b55a5e9066606a040454ed9d1d5de8af` |
+| Finding `run.json` | `3144294cc5a4a7dfc19ffb7573a5b64bfdea56dc1a9d246617f34d5ca420791e` |
+| Finding `response.json` | `c60194f7f120bbb611179e0754fd1549f35320f8ef2907f04de8a35f7ff5e0e6` |
+| Finding `score.json` | `fac4ec5bd0b4b35c4deb5401a6d861b672f71223e79251e456de6913cbb7c7a6` |
+| Finding `events.jsonl` | `c1e8b80de336c5b69971268416e54da37c1a3d5015666faf03ae0c5a196e31e5` |
+| Finding `stderr.log` | `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855` |
+| No-finding bundle tree | `518e580a765fbf2874e326058471655fcf2ca035c896c60196295956abd93e3d` |
+| No-finding `run.json` | `1abe526e4c5578c78a5e362e3fc563986ce444fad0857a1bcf636919dd73325d` |
+| No-finding `response.json` | `f83b0ce211bbf8780cf49670bb3dc11805f9d1015c1677d55a8fdd9d0acd992d` |
+| No-finding `score.json` | `c6cef5f5295b5b038206e3915d449009d2b25efd1fa12bc9ef33fd0ac119792e` |
+| No-finding `events.jsonl` | `0f3968f9c3988aa2d7c48e6c9cefbc0b5b1f46051e32643e22d329218214e7fa` |
+| No-finding `stderr.log` | `217d00f41832d1395e5abe75546127e2a79472a934ae3a9343c25ca999498bf1` |
+| Missing-path scorecard | `7da2b13f860f5575b205638d57a4fb6473c45a52f9a01829c0c066dfa3df5703` |
+| Adequate-path scorecard | `6375ea6c1644d6b36a66f93112f10549b125942c463ccb5e6094315adc61662d` |
+| Artifact product tree / installed tree | `433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a` |
+| Marketplace install record | `84933e0a695ede9894f70e3f0d5471d691c00c3fcc5e711ecdb460e72e36597b` |
+| `src/readme_lab/evaluation.py` | `9eedbda99f4fdc75f798ca735eeef5850d457f6f86b6d4d92ff6b742325611c2` |
+| `tests/test_evaluation.py` | `c6534804e2704a8ffbf7ab690167ceac308ee826beffa0526af2ffe4e2fa476d` |

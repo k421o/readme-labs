@@ -14,6 +14,7 @@ def test_readme_review_capability_has_no_scaffold_placeholders() -> None:
     assert "Do not demand empty conventional sections" in skill
     assert "Do not use stars" in skill
     assert "unless the requested scope includes migrating" in skill
+    assert "current task's tool record contains that execution" in skill
 
 
 def test_readme_review_references_are_local_and_present() -> None:
@@ -25,6 +26,15 @@ def test_readme_review_references_are_local_and_present() -> None:
     ):
         assert f"references/{name}" in skill
         assert (SKILL_DIR / "references" / name).is_file()
+
+
+def test_readme_review_interface_freezes_finding_and_no_finding_job() -> None:
+    interface = (SKILL_DIR / "INTERFACE.md").read_text(encoding="utf-8")
+
+    assert "Named user job" in interface
+    assert "material findings" in interface
+    assert "no-material-findings" in interface
+    assert "does not promise" in interface
 
 
 def test_openai_interface_invokes_canonical_skill_name() -> None:

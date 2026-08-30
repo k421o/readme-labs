@@ -1,0 +1,124 @@
+## Verdict
+
+**Evidence verdict: supports release at experimental maturity.** Both held-out scenarios pass independent semantic review, and I found no capability-behavior blocker.
+
+**Full release-readiness verdict: conditional hold.** Before publishing the final release, the held-out bundles and this independent assessment need to be preserved in the repository’s required release surfaces. Currently, only the bootstrap run exists under `evals/runs/`, no `docs/releases/` record exists, and the decisive evidence remains under ephemeral `/tmp` paths. The supplied evidence also does not demonstrate the release-policy requirement to exercise update and rollback paths.
+
+### Scenario results
+
+| Scenario | Verdict | Assessment |
+| --- | --- | --- |
+| `missing-first-path` | **Pass** | The response correctly identifies a material missing consumer path. The mutated README contains only development installation and `pytest`, while `pyproject.toml` declares `pebble-count = "pebble_count:main"` and the implementation accepts a path and prints the non-blank-line count. The finding distinguishes consumer use from contributor setup, explains reader impact, and proposes the smallest correction. All three anti-findings are avoided; there are no unexpected findings. |
+| `adequate-first-path` | **Pass** | The preserved README provides repository installation, CLI invocation, and expected output. The response correctly returns `no_material_findings`, does not invent a consumer gap, demand conventional sections, or substitute a rewrite. There are no unexpected findings. |
+
+## Execution-evidence review
+
+The finding run has seven claimed commands:
+
+- Six have exact completed command events with matching outcomes.
+- `python -m pytest && nl -ba README.md && git status --short` has no JSONL event and is correlated to the run’s single unattributed sandbox warning.
+- The separate `pytest` failure is exact: its event shows `ModuleNotFoundError: No module named 'pytest'`.
+- “The CLI was not executed” is consistent with the event stream.
+
+The no-finding run has five claimed commands:
+
+- Four have exact completed command events.
+- The multiline command ending in `python -m pytest -q` is the sole missing event and is correlated to the sole sandbox warning.
+- A later exact event shows no `python` result from `command -v python` while locating `/opt/homebrew/bin/pytest`, which makes the response’s explanation semantically plausible.
+- The correlation remains unattributed; neither response nor score falsely calls it an exact command event.
+
+I accept both one-to-one correlations for experimental evidence because each run has exactly one unmatched failed command and exactly one unattributed warning, with no competing unmatched command. This remains a residual traceability limitation, not exact attribution.
+
+The held-out boundary is also supported by implementation and observed materialization:
+
+- The runner verifies workspace-readable/factory-denied permissions before inference, executes Codex, and loads the scorecard only after executor exit in [evaluation.py](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/src/readme_lab/evaluation.py:431).
+- The materialized workspaces contain the fixture rather than the scorecard.
+- Neither event stream reads a scorecard or factory path.
+- The recalculated scorecard, capsule, mutation, response, event, stderr, and score hashes all match their run records.
+
+## Adapter and marketplace boundaries
+
+The generated adapter does not independently own behavior:
+
+- [INTERFACE.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/capabilities/readme-review/INTERFACE.md:28) says the response schema is only an evaluation adapter and that `INTERFACE.md` plus `SKILL.md` own the human-facing interface.
+- `capabilities/readme-review` and `products/codex-plugin/readme-labs/skills/readme-review` are byte-identical.
+- The canonical source tree hash is `71d0f220affaee0b9a62be0b35a1f6314e57b77eee7507121c3b3f7a36b0a2eb`, matching [UPSTREAM.json](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/products/codex-plugin/readme-labs/UPSTREAM.json).
+- Its recorded source revision, `961c4e6c5afe4efb0d0d5413adbc0e2abfe56198`, is the last commit modifying the canonical capability; the tested artifact revision is `0ec30675771ca90c947cca1bf86c912845e1f341`.
+- The disposable marketplace clone is at that exact tested revision, its installation record pins the same ref, and its installed cache is byte-identical to the release product.
+
+The marketplace is correctly characterized:
+
+- [.agents/plugins/marketplace.json](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/.agents/plugins/marketplace.json) is a repository-local mechanical path to the generated product.
+- [README.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/README.md:110) explicitly calls it the “mechanical Codex delivery path,” not a public or verified listing, and denies any transfer of authority.
+- The product README repeats that it is a generated experimental packaging adapter.
+
+## Material blocker before final publication
+
+The semantic evidence passes, but the current checkout is not yet release-record complete:
+
+1. The two decisive bundles exist only at:
+
+   - `/tmp/readme-labs-run-finding-v0.2.0-rc.1`
+   - `/tmp/readme-labs-run-no-finding-v0.2.0-rc.1`
+
+   [docs/release-policy.md](/Users/karltonsuits/.codex/worktrees/readme-labs/complete-first-factory/docs/release-policy.md:29) requires the first factory runs under `evals/runs/` and the independent assessment in the `v0.2.0` release record. Neither is present.
+
+2. The run record’s inventory check requires an enabled plugin ID but does not itself cryptographically bind that inventory entry to `artifact_revision`. I resolved the binding by inspecting the disposable Git clone, installation record, and byte-identical cache, but those are also ephemeral. The preserved evidence should include that install-record hash or equivalent artifact-content binding.
+
+3. The supplied evidence proves installation and discovery but does not show the release-policy requirement that update and rollback paths were actually exercised.
+
+These are release-evidence/preservation blockers, not failures of either README-review scenario.
+
+## Residual limitations
+
+- Only one mutated/control pair, one fixture, one model, and one run per condition were evaluated.
+- Neither run executed the CLI or completed a fresh installation/test verification inside the scenario.
+- Package-registry rendering and external surfaces were not checked.
+- Each run retains one unattributed sandbox-denial correlation.
+- The paired scenarios test first-path discrimination, not the capability’s broader README-review taxonomy.
+
+## Audit hashes
+
+Canonical/package evidence:
+
+| Path | SHA-256 |
+| --- | --- |
+| `capabilities/readme-review/INTERFACE.md` | `01c86abd73de8b4f37831a9f1e75faca9ca0ee2782f2e6aded935afe2e4de096` |
+| `capabilities/readme-review/SKILL.md` | `139d93a7f27a347be05f5f15b9f85275d6729be76a94f60e8de26d2da12f1cb8` |
+| `references/evidence-and-verification.md` | `651da8fb00d092926a90a422abbc13e578ee6ec9a7504abebe849be8e4326c3d` |
+| `references/review-criteria.md` | `eaee7086fcdcfdfc1c22ca77cf3e412d4dc9e18a21453dbc71aaebed108fdf64` |
+| `references/roles-and-anatomy.md` | `d52562d95606dfd2168d0cb83edb2a45e1853cafef01e8fd94620e2f416eae00` |
+| `products/.../plugin.json` | `99ac25d7db12be6a3618c8a2ec10b30cffb9a6eb33e39208b7a1eed27cff63d3` |
+| `products/.../UPSTREAM.json` | `07e675b73b7e9f1f0298db4b3dd49c722b7e16b1d103a2ba1c77c0b746778aa8` |
+| `.agents/plugins/marketplace.json` | `73f135c4a826e2d469f59441752f05396b85704f69c888d81e410028b81a5f1d` |
+| `evals/failure-dispositions-v0.2.0.md` | `34d2aa198c47807354c68306196613b43cf78be08db00da293b1a928cd4c6fea` |
+
+Scenario evidence:
+
+| Path | SHA-256 |
+| --- | --- |
+| `missing-first-path/capsule.toml` | `c6879c7f381534a9f35575fd27efcb77ab8bba3cf39d27373750782158b7c427` |
+| `missing-first-path/mutation.diff` | `c4a50ad5b162b896ba8111b0c24651d5f49ff4102d90cc04f0577b84365959d6` |
+| `missing-first-path/scorecard.json` | `7da2b13f860f5575b205638d57a4fb6473c45a52f9a01829c0c066dfa3df5703` |
+| `adequate-first-path/capsule.toml` | `4fb9ec481dd3205f06adaff6cea6c272e9bd4913b09e46fef05e996b0b17d24f` |
+| `adequate-first-path/scorecard.json` | `6375ea6c1644d6b36a66f93112f10549b125942c463ccb5e6094315adc61662d` |
+
+Run bundles:
+
+| Run/file | SHA-256 |
+| --- | --- |
+| Finding `run.json` | `ef01e784e3bb504ed3588a59da6ceeb4b519d1b3002756045cb5776c8220f8b3` |
+| Finding `response.json` | `7019460f9a792b31dc7fa6d48060582e1b3381c03708485993de151269d2e6b8` |
+| Finding `score.json` | `b7630a97f9f665a66379ebcc3e350154f1817c48d8b3fca81419e1884b20fa4c` |
+| Finding `events.jsonl` | `e28aa5d143a385ab888ebbd0652b005aef069d87155d9ae769f2412aae200490` |
+| Finding `stderr.log` | `04eaa1221a8af701a0a59bca24704b98118c1e82e7068d9243326653c5e57c29` |
+| No-finding `run.json` | `72a48e605ce3d5cd09f5201d6779ae67f13be996757c6dbb5393329f2222825e` |
+| No-finding `response.json` | `6b54248adf728d12d93dbc49c643c40b1b8b97dbd812e903a34f134c746687ac` |
+| No-finding `score.json` | `840006cc422efd5a129008917ed204bd96bdc5a48ec53ea587132b1361e65afc` |
+| No-finding `events.jsonl` | `dee0ee04338a80f841da93a94f3c0919e261a8001bc6bd49ce97506e38a8ebc8` |
+| No-finding `stderr.log` | `cc18d724ad05f8dfecceedb86d3801af6842018a1735213edbd6eed12fb13732` |
+
+Disposable installation record:
+
+`/private/tmp/readme-labs-codex-home.0L1wy6/.tmp/marketplaces/readme-labs/.codex-marketplace-install.json`  
+SHA-256: `84933e0a695ede9894f70e3f0d5471d691c00c3fcc5e711ecdb460e72e36597b`

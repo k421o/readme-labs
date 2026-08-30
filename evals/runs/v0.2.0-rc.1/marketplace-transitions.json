@@ -1,0 +1,111 @@
+{
+  "schema_version": "1.0.0",
+  "environment": {
+    "kind": "disposable_authenticated_codex_home",
+    "codex_version": "codex-cli 0.151.0-alpha.7.2",
+    "private_install_record_required": false
+  },
+  "marketplace": {
+    "name": "readme-labs",
+    "source": "https://github.com/k421o/readme-labs.git",
+    "mechanical_channel": "repository-owned Git marketplace",
+    "public_or_verified_listing": false
+  },
+  "artifacts": {
+    "predecessor": {
+      "revision": "0e845c375b3d16e90e3b93e45c32e6879ddc3b16",
+      "plugin_version": "0.2.0-dev.2",
+      "product_sha256": "90432dd3df76343ccce19d179d94eeea76a4ec6b98531b84dd0f220ded8ec84e"
+    },
+    "release_candidate": {
+      "revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
+      "tag": "v0.2.0-rc.1",
+      "plugin_version": "0.2.0-rc.1",
+      "product_sha256": "433cdc93279e108833716c84fafb79102882dec8c9cf5f3ddf9886167c9fe29a",
+      "marketplace_config_sha256": "387ad00a8bf7dfb5e93f5cc9f30485b9f88cd54edd59c67b2c97e931cb853d10"
+    },
+    "final_product": {
+      "tested_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+      "plugin_version": "0.2.0",
+      "product_sha256": "08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0",
+      "relationship_to_tag": "The eventual v0.2.0 tag must contain these exact product bytes; documentation-only commits may change the enclosing repository revision."
+    }
+  },
+  "transitions": [
+    {
+      "kind": "rollback",
+      "from_revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
+      "to_revision": "0e845c375b3d16e90e3b93e45c32e6879ddc3b16",
+      "verified_at": "2026-08-30T17:00:23Z",
+      "result": "pass",
+      "checks": [
+        "configured marketplace ref equals target revision",
+        "marketplace checkout HEAD equals target revision",
+        "Git-object, marketplace, and installed-cache product hashes match",
+        "plugin inventory reports version 0.2.0-dev.2"
+      ]
+    },
+    {
+      "kind": "restore",
+      "from_revision": "0e845c375b3d16e90e3b93e45c32e6879ddc3b16",
+      "to_revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
+      "verified_at": "2026-08-30T17:01:46Z",
+      "result": "pass",
+      "checks": [
+        "configured marketplace ref equals target revision",
+        "marketplace checkout HEAD equals target revision",
+        "Git-object, marketplace, and installed-cache product hashes match",
+        "plugin inventory reports version 0.2.0-rc.1"
+      ]
+    },
+    {
+      "kind": "update",
+      "from_revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
+      "to_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+      "verified_at": "2026-08-30T17:23:59Z",
+      "result": "pass",
+      "checks": [
+        "configured marketplace ref equals target revision",
+        "marketplace checkout HEAD equals target revision and is clean",
+        "Git-object, marketplace, and installed-cache product hashes equal 08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0",
+        "plugin inventory reports version 0.2.0"
+      ]
+    },
+    {
+      "kind": "rollback",
+      "from_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+      "to_revision": "0e845c375b3d16e90e3b93e45c32e6879ddc3b16",
+      "verified_at": "2026-08-30T17:24:30Z",
+      "result": "pass",
+      "checks": [
+        "configured marketplace ref equals target revision",
+        "marketplace checkout HEAD equals target revision and is clean",
+        "Git-object, marketplace, and installed-cache product hashes equal 90432dd3df76343ccce19d179d94eeea76a4ec6b98531b84dd0f220ded8ec84e",
+        "plugin inventory reports version 0.2.0-dev.2"
+      ]
+    },
+    {
+      "kind": "restore",
+      "from_revision": "0e845c375b3d16e90e3b93e45c32e6879ddc3b16",
+      "to_revision": "7097c725c1056a5a6df7b774b666780ff60144f6",
+      "verified_at": "2026-08-30T17:24:45Z",
+      "result": "pass",
+      "checks": [
+        "configured marketplace ref equals target revision",
+        "marketplace checkout HEAD equals target revision and is clean",
+        "Git-object, marketplace, and installed-cache product hashes equal 08fffa459cf9e62fbb32260440a243e7d34e53e98c26c6aeb42a41a50f583bc0",
+        "plugin inventory reports version 0.2.0"
+      ]
+    }
+  ],
+  "native_transition_commands": [
+    "codex plugin marketplace remove readme-labs",
+    "codex plugin marketplace add https://github.com/k421o/readme-labs.git --ref <full-revision> --sparse .agents/plugins --sparse products/codex-plugin/readme-labs --json",
+    "codex plugin add readme-labs@readme-labs --json",
+    "codex plugin list --json"
+  ],
+  "notes": [
+    "Authentication material and disposable host paths are intentionally excluded.",
+    "The durable marketplace ref and Git checkout are sufficient authority for artifact verification; private host metadata is optional evidence, not a release contract."
+  ]
+}

@@ -1,6 +1,7 @@
 # pebble-count
 
-`pebble-count` counts non-empty lines in a UTF-8 text file.
+`pebble-count` counts non-blank lines in a UTF-8 text file. A line containing
+only whitespace is blank.
 
 ## Getting started
 
@@ -11,7 +12,7 @@ python -m pip install -e .
 pebble-count notes.txt
 ```
 
-The command prints one integer: the number of non-empty lines.
+The command prints one integer: the number of non-blank lines.
 
 ## Development
 

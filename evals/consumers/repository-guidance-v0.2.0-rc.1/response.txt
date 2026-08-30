@@ -1,0 +1,18 @@
+Found three material reader-facing issues in the root README. Its role is a combined Codex-plugin landing page and source/package page for the evaluation harness.
+
+1. **The capability install path is not actionable.**  
+   [README.md](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/README.md:24) lines 24–39 says to install this repository “as a local or marketplace plugin,” then only shows prompts that require the plugin to already be installed. It provides neither a local-install command nor a marketplace route. This is especially ambiguous because the same README is declared as the `guidance-eval` package’s metadata readme in [pyproject.toml](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/pyproject.toml:5), while the wheel configuration packages only `src/guidance_eval` ([line 24](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/pyproject.toml:24)).  
+   Impact: a new reader cannot reach the advertised `$repository-guidance:…` skills and may conflate installing the Python harness with installing the plugin.  
+   Smallest correction: add the supported local-install command and/or an exact marketplace link, and explicitly distinguish plugin installation from installing/running `guidance-eval`.
+
+2. **One documented evaluation command has an unstated network prerequisite.**  
+   [README.md](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/README.md:43) lists only Python, Git, and authenticated Codex as requirements, then documents `natural-itsdangerous` ([line 49](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/README.md:49)). That scenario uses a `github_archive` source ([natural-itsdangerous.toml](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/evals/scenarios/natural-itsdangerous.toml:5)), and the harness fetches `https://github.com/...` with `urllib.request.urlopen` ([workspace.py](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/src/guidance_eval/workspace.py:29)).  
+   Impact: readers in restricted/offline environments are likely to treat the documented command as runnable and hit an unexplained prerequisite.  
+   Smallest correction: note that GitHub-archive scenarios require outbound GitHub access; identify `controlled-init` as the local/offline fixture option.
+
+3. **The cleanup instruction is misleading for the normal successful-run path.**  
+   [README.md](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/README.md:68) tells readers to run `teardown` to remove disposable workspaces, but successful runs already call `teardown_run` unless `--keep-workspaces` is set ([runner.py](/tmp/readme-labs-consumer-repository-guidance-v0.2.0-rc.1/src/guidance_eval/runner.py:212)).  
+   Impact: after a standard successful run, the suggested command normally has nothing left to remove, obscuring when cleanup is actually needed.  
+   Smallest correction: qualify it as cleanup for failed or `--keep-workspaces` runs, and state that successful runs clean up disposable inputs automatically.
+
+I inspected repository metadata, scenarios, and implementation statically; I did not run `uv` or live Codex evaluations.
