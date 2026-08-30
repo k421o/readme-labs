@@ -31,6 +31,7 @@ packages = ["src/readme_lab"]
 "domain/taxonomy-v1.json" = "readme_lab/data/taxonomy-v1.json"
 "domain/readme-observation-v1.schema.json" = "readme_lab/data/readme-observation-v1.schema.json"
 "evals/task-capsule-v1.schema.json" = "readme_lab/data/task-capsule-v1.schema.json"
+"corpus/manifest-item-v1.schema.json" = "readme_lab/data/manifest-item-v1.schema.json"
 
 [tool.pytest.ini_options]
 addopts = "-q"

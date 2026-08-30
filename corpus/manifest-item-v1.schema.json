@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/corpus/manifest-item-v1.schema.json",
+  "title": "README corpus manifest item v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "sample_id", "repository", "revision", "default_branch", "path", "blob_sha", "source_url", "license_spdx", "role_primary", "role_assignment", "repository_created_at", "primary_language", "selection", "collected_at"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "sample_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "repository": {"type": "string", "pattern": "^[^/]+/[^/]+$"},
+    "revision": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "default_branch": {"type": "string", "minLength": 1},
+    "path": {"type": "string", "minLength": 1},
+    "blob_sha": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "source_url": {"type": "string", "format": "uri"},
+    "license_spdx": {"type": "string", "minLength": 1},
+    "role_primary": {"type": "string", "minLength": 1},
+    "role_assignment": {"enum": ["annotated", "declared", "inferred"]},
+    "repository_created_at": {"type": "string", "format": "date-time"},
+    "primary_language": {"type": ["string", "null"]},
+    "selection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["frame", "stars", "forks", "quality_label", "training_prevalence_claim"],
+      "properties": {
+        "frame": {"const": "high_exposure_purposive_v1"},
+        "stars": {"type": "integer", "minimum": 0},
+        "forks": {"type": "integer", "minimum": 0},
+        "quality_label": {"const": false},
+        "training_prevalence_claim": {"const": "none"}
+      }
+    },
+    "collected_at": {"type": "string", "format": "date-time"}
+  }
+}

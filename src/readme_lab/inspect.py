@@ -56,6 +56,9 @@ def inspect_readme(
     revision: str,
     role: str | None = None,
     observed_at: datetime | None = None,
+    source_path: str | None = None,
+    retrieval_url: str | None = None,
+    license_spdx: str | None = None,
 ) -> dict[str, Any]:
     """Create and validate a READMEObservation for one Markdown file."""
 
@@ -108,7 +111,8 @@ def inspect_readme(
                 }
             )
 
-    inferred_role, assignment, limitations = _infer_role(path)
+    recorded_path = source_path or path.as_posix()
+    inferred_role, assignment, limitations = _infer_role(Path(recorded_path))
     primary_role = role or inferred_role
     if role is not None:
         assignment = "declared"
@@ -120,13 +124,13 @@ def inspect_readme(
     observation: dict[str, Any] = {
         "schema_version": "1.0.0",
         "observation_id": _observation_id(
-            repository, revision, path.as_posix(), digest
+            repository, revision, recorded_path, digest
         ),
         "observed_at": timestamp.isoformat().replace("+00:00", "Z"),
         "source": {
             "repository": repository,
             "revision": revision,
-            "path": path.as_posix(),
+            "path": recorded_path,
             "content_sha256": digest,
         },
         "role": {
@@ -153,5 +157,9 @@ def inspect_readme(
             "This structural observation is not a README quality score.",
         ],
     }
+    if retrieval_url is not None:
+        observation["source"]["retrieval_url"] = retrieval_url
+    if license_spdx is not None:
+        observation["source"]["license_spdx"] = license_spdx
     validate_observation(observation)
     return observation
