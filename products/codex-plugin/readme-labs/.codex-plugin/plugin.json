@@ -1,0 +1,18 @@
+{
+  "name": "readme-labs",
+  "version": "0.1.0-dev.1",
+  "description": "Experimental README review capability derived from readme-labs",
+  "author": {
+    "name": "k421o"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "README Labs (Experimental)",
+    "shortDescription": "Evidence-backed README review for Codex.",
+    "longDescription": "An experimental packaging adapter for the readme-review capability developed and evaluated in readme-labs.",
+    "developerName": "k421o",
+    "category": "Productivity",
+    "capabilities": [],
+    "defaultPrompt": "Use $readme-review to review this repository's README files."
+  }
+}
