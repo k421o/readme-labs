@@ -21,6 +21,7 @@ readme-lab = "readme_lab.cli:main"
 [dependency-groups]
 dev = [
   "pytest>=8.4,<10",
+  "pyyaml>=6.0,<7",
   "ruff>=0.12,<1",
 ]
 
