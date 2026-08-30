@@ -139,3 +139,29 @@ def test_deterministic_scoring_matches_recorded_command_claim(tmp_path: Path) ->
     score = score_review_response(FINDING_CAPSULE, response, events_path=events)
 
     assert score["result"] == "automatic_pass_requires_independent_review"
+
+
+def test_deterministic_scoring_unwraps_codex_shell_quoting(tmp_path: Path) -> None:
+    response = tmp_path / "response.json"
+    events = tmp_path / "events.jsonl"
+    _write_response(response, finding=True)
+    command = "rg --files -g 'README*' -g '!vendor'"
+    value = json.loads(response.read_text(encoding="utf-8"))
+    value["commands"] = [{"command": command, "outcome": "succeeded"}]
+    response.write_text(json.dumps(value), encoding="utf-8")
+    event = {
+        "type": "item.completed",
+        "item": {
+            "type": "command_execution",
+            "command": (
+                "/bin/zsh -lc \"rg --files -g 'README*' "
+                "-g '\"'!vendor'\"'\""
+            ),
+            "exit_code": 0,
+        },
+    }
+    events.write_text(json.dumps(event) + "\n", encoding="utf-8")
+
+    score = score_review_response(FINDING_CAPSULE, response, events_path=events)
+
+    assert score["result"] == "automatic_pass_requires_independent_review"

@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import subprocess
 from datetime import UTC, datetime
@@ -92,6 +93,22 @@ def _command_events(path: Path | None) -> list[dict[str, str]]:
     return events
 
 
+def _unwrap_shell_command(command: str) -> str:
+    """Return the payload of a recorded ``shell -lc`` command when present."""
+
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return command
+    if (
+        len(tokens) == 3
+        and Path(tokens[0]).name in {"bash", "sh", "zsh"}
+        and tokens[1] in {"-c", "-lc"}
+    ):
+        return tokens[2]
+    return command
+
+
 def _execution_claim_phrases(response: dict[str, Any]) -> list[str]:
     claims: list[str] = []
     for field in ("verification", "limitations"):
@@ -145,7 +162,7 @@ def score_review_response(
     command_matches = []
     for claim in response["commands"]:
         matched = any(
-            claim["command"] in event["command"]
+            claim["command"] == _unwrap_shell_command(event["command"])
             and claim["outcome"] == event["outcome"]
             for event in recorded_commands
         )
