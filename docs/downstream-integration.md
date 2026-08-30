@@ -6,15 +6,18 @@ AGENTS.md guidance and cross-surface routing.
 
 ## Current state
 
-The experimental plugin adapter is valid and installable from the source tree,
-but no evidence-backed README capability release has been cut. Therefore the
-existing README material in `repository-guidance` remains a temporary
-compatibility source. New README-domain research and editable capability work
-belongs here.
+`repository-guidance@v0.2.0` has completed the authority split. It contains no
+editable README research or skill and pins `readme-labs@v0.1.0` by release,
+commit, and tree hash. That immutable tag exposes the earlier
+`readme-contract-review` skill and remains a valid compatibility artifact even
+after the current source layout changes.
 
-Creating the new repository does not by itself authorize deletion or rewiring
-in the downstream repository. Migration begins after an upstream artifact
-passes the release gates in [`release-policy.md`](release-policy.md).
+The canonical source capability is now `capabilities/readme-review`. It has not
+passed the release gates in [`release-policy.md`](release-policy.md), so the
+downstream lock must not be silently repointed to this branch or the
+experimental generated adapter. New README-domain work belongs here; the
+downstream bundle remains on `v0.1.0` until an intentional release and upgrade
+is evaluated.
 
 ## Allowed consumption models
 
@@ -30,19 +33,19 @@ In preferred order:
 
 An independently edited copy is not an allowed model.
 
-## Migration checklist
+## Future upgrade checklist
 
 1. Select a released README artifact and verify its signature or content hash.
 2. Record the version, upstream revision, compatibility, and rollback version
    in `repository-guidance`.
-3. Replace the old README review implementation with installation, generated
-   vendoring, or a narrow router; preserve AGENTS.md guidance locally.
+3. Update installation or routing from the historical `readme-contract-review`
+   interface to the released capability name; preserve AGENTS.md guidance
+   locally.
 4. Test discovery so README requests reach the released capability and
    AGENTS.md requests continue to reach their existing owner.
 5. Replay downstream integration fixtures plus the upstream capability's
    published scenario set.
-6. Remove the temporary compatibility copy only after the replacement is
-   available through the actual installation path.
+6. Confirm that no editable compatibility copy is reintroduced.
 7. Document upgrade and rollback behavior in the downstream pull request.
 
 ## Dependency rule

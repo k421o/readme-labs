@@ -10,6 +10,7 @@ from markdown_it import MarkdownIt
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 EXCLUDED_PARTS = {".git", ".venv", "dist", "build", ".pytest_cache", ".ruff_cache"}
+HISTORICAL_FIXTURE_ROOT = REPOSITORY_ROOT / "research" / "readme-contract-exercises"
 
 
 def markdown_files() -> list[Path]:
@@ -41,6 +42,8 @@ def destinations(path: Path) -> list[str]:
 def main() -> int:
     failures: list[str] = []
     for markdown in markdown_files():
+        if markdown.is_relative_to(HISTORICAL_FIXTURE_ROOT):
+            continue
         for destination in destinations(markdown):
             parsed = urlsplit(destination)
             if parsed.scheme or parsed.netloc or not parsed.path:

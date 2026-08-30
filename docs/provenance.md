@@ -20,7 +20,18 @@ The README review rubric originated in
 `repository-guidance`. Its operational rules are being re-derived here against
 the expanded anatomy rather than copied into two independently editable skills.
 
-Until the downstream migration is complete, the existing files in
-`repository-guidance` remain compatibility sources. New README-domain changes
-belong in `readme-labs`; a later downstream change will replace the old editable
-copy with a pinned released artifact or separate installation boundary.
+A concurrent extraction task independently imported the broader purpose,
+pitfall, and blind reconstruction research through
+[`readme-labs` PR #2](https://github.com/k421o/readme-labs/pull/2). It merged as
+`158202b`, published immutable tag `v0.1.0`, and used
+`skills/readme-contract-review` as its release capability. While this bootstrap
+branch was still isolated, [`repository-guidance` PR #7](https://github.com/k421o/repository-guidance/pull/7)
+removed its editable README copies and released `v0.2.0` with a commit-and-tree
+lock on that tag.
+
+The two tasks did not exchange state before publication. Their artifacts are
+reconciled in
+[`docs/migrations/2026-08-30-concurrent-bootstrap-reconciliation.md`](migrations/2026-08-30-concurrent-bootstrap-reconciliation.md):
+unique research and immutable history are retained, while the domain-first
+layout, `capabilities/readme-review`, versioned contracts, evaluation lab, and
+generated product adapters are the current editable authority.

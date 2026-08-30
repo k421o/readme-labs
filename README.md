@@ -105,9 +105,13 @@ The initial milestone now includes:
   and
 - a generated, validated `0.1.0-dev.1` experimental Codex plugin adapter.
 
-There is no marketplace registration or evidence-backed capability release
-yet. See the [release policy](docs/release-policy.md) and
-[downstream integration boundary](docs/downstream-integration.md).
+There is no marketplace registration. The immutable `v0.1.0` tag was published
+by a concurrent extraction before this architecture and release policy were
+reconciled. It remains a supported historical pin for the downstream bundle,
+but no release yet satisfies the current capability gates. See the
+[release policy](docs/release-policy.md),
+[downstream integration boundary](docs/downstream-integration.md), and
+[concurrency reconciliation](docs/migrations/2026-08-30-concurrent-bootstrap-reconciliation.md).
 
 ## Derived capabilities
 
@@ -116,9 +120,11 @@ the domain model, and evaluation artifacts remain canonical; packaging copies
 must be generated from a pinned capability version rather than edited
 independently.
 
-`repository-guidance` remains a downstream integration surface. After a README
-capability has an evidence-backed release, that plugin may consume the released
-artifact while continuing to own AGENTS.md guidance and cross-surface routing.
+`repository-guidance` is already a downstream integration surface: its `v0.2.0`
+release removed the editable README copy and pins the immutable historical
+`readme-labs@v0.1.0` artifact. A future migration may update that lock to a
+release of the current `readme-review` capability after the new gates pass;
+AGENTS.md guidance and cross-surface routing remain locally owned downstream.
 
 ## License
 
