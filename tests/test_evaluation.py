@@ -177,6 +177,72 @@ def test_artifact_binding_rejects_declared_revision_mismatch(tmp_path: Path) -> 
         _artifact_binding(codex_home, plugin, "f" * 40)
 
 
+def test_artifact_binding_rejects_tracked_marketplace_tampering(
+    tmp_path: Path,
+) -> None:
+    codex_home = tmp_path / "codex-home"
+    marketplace = codex_home / ".tmp" / "marketplaces" / "readme-labs"
+    product = marketplace / "product"
+    installed = (
+        codex_home
+        / "plugins"
+        / "cache"
+        / "readme-labs"
+        / "readme-labs"
+        / "0.2.0-rc.1"
+    )
+    product.mkdir(parents=True)
+    (product / "plugin.json").write_text("{}\n", encoding="utf-8")
+    subprocess.run(
+        ["git", "init", "--quiet", "--initial-branch=main"],
+        cwd=marketplace,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.name", "readme-labs"],
+        cwd=marketplace,
+        check=True,
+    )
+    subprocess.run(
+        ["git", "config", "user.email", "eval@readme-labs.invalid"],
+        cwd=marketplace,
+        check=True,
+    )
+    subprocess.run(["git", "add", "."], cwd=marketplace, check=True)
+    subprocess.run(
+        ["git", "commit", "--quiet", "-m", "fixture"],
+        cwd=marketplace,
+        check=True,
+    )
+    revision = subprocess.run(
+        ["git", "rev-parse", "HEAD"],
+        cwd=marketplace,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    (marketplace / ".codex-marketplace-install.json").write_text(
+        json.dumps(
+            {
+                "source_type": "git",
+                "revision": revision,
+            }
+        ),
+        encoding="utf-8",
+    )
+    shutil.copytree(product, installed)
+    (product / "plugin.json").write_text('{"tampered": true}\n', encoding="utf-8")
+    plugin = {
+        "marketplaceName": "readme-labs",
+        "name": "readme-labs",
+        "version": "0.2.0-rc.1",
+        "source": {"path": product.as_posix()},
+    }
+
+    with pytest.raises(RuntimeError, match="tracked modifications"):
+        _artifact_binding(codex_home, plugin, revision)
+
+
 def test_deterministic_scoring_accepts_finding_and_no_finding_runs(
     tmp_path: Path,
 ) -> None:

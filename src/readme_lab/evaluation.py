@@ -83,6 +83,36 @@ def _tree_sha256(root: Path) -> str:
     return digest.hexdigest()
 
 
+def _git_subtree_sha256(repository: Path, revision: str, subtree: Path) -> str:
+    subtree_text = subtree.as_posix().rstrip("/")
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "-z", revision, "--", subtree_text],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    )
+    entries = [entry for entry in result.stdout.split(b"\0") if entry]
+    if not entries:
+        raise RuntimeError("declared artifact revision has no plugin product")
+    digest = hashlib.sha256()
+    for entry in entries:
+        metadata, raw_path = entry.split(b"\t", 1)
+        blob_hash = metadata.split()[-1].decode()
+        path = Path(os.fsdecode(raw_path))
+        relative = path.relative_to(subtree).as_posix().encode()
+        blob = subprocess.run(
+            ["git", "cat-file", "blob", blob_hash],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+        ).stdout
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(blob)
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
 def _command_events(path: Path | None) -> list[dict[str, str]]:
     if path is None:
         return []
@@ -347,7 +377,9 @@ def _artifact_binding(
     artifact_revision: str,
 ) -> dict[str, Any]:
     marketplace_name = plugin["marketplaceName"]
-    marketplace_root = codex_home / ".tmp" / "marketplaces" / marketplace_name
+    marketplace_root = (
+        codex_home / ".tmp" / "marketplaces" / marketplace_name
+    ).resolve()
     install_record_path = marketplace_root / ".codex-marketplace-install.json"
     if not install_record_path.is_file():
         raise FileNotFoundError(
@@ -370,6 +402,15 @@ def _artifact_binding(
     ).stdout.strip()
     if clone_revision != artifact_revision:
         raise RuntimeError("marketplace clone does not match artifact revision")
+    tracked_status = subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=no"],
+        cwd=marketplace_root,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if tracked_status:
+        raise RuntimeError("marketplace clone has tracked modifications")
 
     marketplace_product = Path(plugin["source"]["path"]).resolve()
     if not _is_within(marketplace_product, marketplace_root):
@@ -385,6 +426,14 @@ def _artifact_binding(
     if not marketplace_product.is_dir() or not installed_product.is_dir():
         raise FileNotFoundError("marketplace or installed plugin product is missing")
     marketplace_sha256 = _tree_sha256(marketplace_product)
+    product_relative = marketplace_product.relative_to(marketplace_root)
+    committed_sha256 = _git_subtree_sha256(
+        marketplace_root,
+        artifact_revision,
+        product_relative,
+    )
+    if marketplace_sha256 != committed_sha256:
+        raise RuntimeError("marketplace product differs from declared Git revision")
     installed_sha256 = _tree_sha256(installed_product)
     if marketplace_sha256 != installed_sha256:
         raise RuntimeError("installed plugin differs from the marketplace product")
@@ -394,6 +443,7 @@ def _artifact_binding(
         "marketplace_revision": clone_revision,
         "marketplace_ref": install_record.get("ref_name"),
         "marketplace_install_record_sha256": _sha256(install_record_path),
+        "committed_product_sha256": committed_sha256,
         "marketplace_product_sha256": marketplace_sha256,
         "installed_product_sha256": installed_sha256,
         "installed_product_matches_marketplace": True,
