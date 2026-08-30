@@ -38,6 +38,11 @@ assessed the behavior and evidence:
    independently reproduced the Git-object, marketplace, and installed-cache
    product hash. Its dirty-checkout and direct-Git-object gaps were then
    enforced by the runner before this selected pair was produced.
+3. Task `01a053aa-9651-7620-872e-56390cc1f465` reconstructed the whole vertical
+   from `README.md` in a fresh auth-only, subject-plugin-free, read-only Codex
+   home. It found a mistyped predecessor hash and missing final-product native
+   evidence. The original hold report is preserved unchanged; the transition
+   record and final consumer run record the subsequent dispositions.
 
 The raw reports are preserved under `independent-review/`. Earlier exploratory
 runs are intentionally excluded from this directory: they exposed failure
