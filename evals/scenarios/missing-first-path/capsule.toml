@@ -1,0 +1,16 @@
+schema_version = 1
+id = "missing-first-path"
+title = "A package README loses its first successful path"
+task = "Review this repository README for material reader-facing problems. Support findings with repository evidence and avoid generic template advice."
+scorecard = "scorecard.json"
+
+[environment]
+kind = "local_git"
+fidelity_level = 4
+fixture = "fixture"
+network = "disabled"
+mutation = "mutation.diff"
+
+[metadata]
+target_role = "published_package"
+variable = "first_successful_path_removed"
