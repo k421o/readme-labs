@@ -1,0 +1,4 @@
+interface:
+  display_name: "README Contract Review"
+  short_description: "Review README authority and purpose"
+  default_prompt: "Use $readme-contract-review to review this README's evidenced purpose and remove unsupported or low-signal claims."
