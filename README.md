@@ -92,6 +92,23 @@ uv run readme-lab inspect README.md \
 The emitted record describes structure and provenance. It is not a quality
 score.
 
+## Bootstrap status
+
+The initial milestone now includes:
+
+- v1 README roles, semantic taxonomy, and `READMEObservation` schema;
+- an AST-based inspector and deterministic contract tests;
+- a 16-repository, Git-blob-verified high-exposure pilot with derived
+  observations and descriptive analysis;
+- a local-Git mutation capsule with held-out scoring material;
+- the canonical `readme-review` capability and a transparent author dry run;
+  and
+- a generated, validated `0.1.0-dev.1` experimental Codex plugin adapter.
+
+There is no marketplace registration or evidence-backed capability release
+yet. See the [release policy](docs/release-policy.md) and
+[downstream integration boundary](docs/downstream-integration.md).
+
 ## Derived capabilities
 
 The first experimental capability is `capabilities/readme-review`. Research,

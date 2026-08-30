@@ -1,0 +1,74 @@
+# Evidence-backed release policy
+
+The repository versions domain contracts, capabilities, and product adapters
+separately. A Git commit, valid plugin manifest, or successful local install is
+not by itself a released support promise.
+
+## Artifact classes
+
+- **Domain artifacts:** taxonomies, schemas, and evidence interpretations.
+- **Capability artifacts:** canonical skills derived from a named domain
+  version and evaluated against a published scenario set.
+- **Product adapters:** generated installation surfaces, such as the Codex
+  plugin, that pin a capability revision and content hash.
+- **Data artifacts:** manifests, observations, annotations, and reports with a
+  declared sampling and licensing boundary.
+
+Each release states its artifact class and maturity. Product and domain
+maturity may differ.
+
+## Capability release candidate gates
+
+- Skill and interface metadata pass native validation.
+- Referenced domain contracts and source revision are pinned.
+- Deterministic contract tests pass.
+- At least one relevant mutated scenario and one no-material-finding scenario
+  are executed by a runner that cannot see their scorecards.
+- Results include prompts, executor/model identifiers when available,
+  environment fidelity, scores, failures, and residual risks.
+- An independent run or reviewer separates capability evidence from the
+  author's bootstrap dry run.
+- Change notes describe new instructions, likely behavioral effects, and
+  rollback.
+
+The current `readme-review` capability has only an author dry run. It is
+canonical source and can be packaged experimentally, but it has not crossed
+these release-candidate gates.
+
+## Product promotion gates
+
+- Generated content is byte-identical to the pinned canonical capability.
+- Provenance records include version, source revision, and tree hash.
+- The target product's native validator and discovery checks pass.
+- Installation, update, and rollback paths are exercised in a disposable
+  environment.
+- Marketplace, default-install, authentication, and support policies are
+  intentional and documented.
+- Downstream compatibility is tested against the released artifact rather than
+  a source-tree approximation.
+
+The `0.1.0-dev.1` plugin manifest denotes an experimental adapter. There is no
+marketplace registration or stable product release in the bootstrap milestone.
+
+## Data release gates
+
+- Sampling frame, collection date, exclusions, and units are explicit.
+- Source revisions and derivation code are reproducible.
+- Raw redistribution is supported by license and purpose, or raw files remain
+  external and only permitted derived data is published.
+- Missingness, deduplication, annotation agreement, and important biases are
+  reported.
+- Prevalence, exposure, quality, and training-data claims remain distinct.
+
+## Release record
+
+A release record should include:
+
+- tag and artifact class;
+- maturity and compatibility;
+- source/domain/schema versions;
+- content hashes and generation command;
+- evaluation or analysis evidence;
+- known limitations;
+- downstream consumers; and
+- upgrade and rollback instructions.
