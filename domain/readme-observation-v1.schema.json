@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/domain/readme-observation-v1.schema.json",
+  "title": "READMEObservation v1",
+  "description": "A provenance-preserving structural observation of one README at one revision. It is not a quality score.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "observation_id", "observed_at", "source", "role", "structure", "category_signals", "limitations"],
+  "properties": {
+    "schema_version": {"const": "1.0.0"},
+    "observation_id": {"type": "string", "pattern": "^sha256:[0-9a-f]{64}$"},
+    "observed_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["repository", "revision", "path", "content_sha256"],
+      "properties": {
+        "repository": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "content_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "retrieval_url": {"type": "string", "format": "uri"},
+        "license_spdx": {"type": ["string", "null"]}
+      }
+    },
+    "role": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["primary", "secondary", "assignment"],
+      "properties": {
+        "primary": {"$ref": "#/$defs/role_id"},
+        "secondary": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/role_id"}},
+        "assignment": {"enum": ["declared", "inferred", "annotated"]},
+        "note": {"type": "string"}
+      }
+    },
+    "structure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["line_count", "word_count", "heading_count", "link_count", "code_block_count", "headings"],
+      "properties": {
+        "line_count": {"type": "integer", "minimum": 0},
+        "word_count": {"type": "integer", "minimum": 0},
+        "heading_count": {"type": "integer", "minimum": 0},
+        "link_count": {"type": "integer", "minimum": 0},
+        "code_block_count": {"type": "integer", "minimum": 0},
+        "headings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["level", "text", "line"],
+            "properties": {
+              "level": {"type": "integer", "minimum": 1, "maximum": 6},
+              "text": {"type": "string"},
+              "line": {"type": "integer", "minimum": 1}
+            }
+          }
+        }
+      }
+    },
+    "category_signals": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["category_id", "evidence"],
+        "properties": {
+          "category_id": {"type": "string", "minLength": 1},
+          "evidence": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["kind", "text", "line"],
+              "properties": {
+                "kind": {"enum": ["document_title", "heading_alias"]},
+                "text": {"type": "string"},
+                "line": {"type": "integer", "minimum": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "limitations": {"type": "array", "items": {"type": "string"}}
+  },
+  "$defs": {
+    "role_id": {
+      "enum": [
+        "repository_root",
+        "published_package",
+        "cli_tool",
+        "end_user_application",
+        "framework_or_platform",
+        "source_distribution",
+        "monorepo_root",
+        "component",
+        "experiment",
+        "fixture_or_example",
+        "archive",
+        "profile",
+        "unspecified"
+      ]
+    }
+  }
+}

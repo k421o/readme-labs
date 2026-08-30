@@ -1,0 +1,18 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "pebble-count"
+version = "0.1.0"
+requires-python = ">=3.12"
+license = "MIT"
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[project.scripts]
+pebble-count = "pebble_count:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/pebble_count"]

@@ -1,0 +1,95 @@
+{
+  "kind": "readme-labs-taxonomy",
+  "version": "1.0.0",
+  "description": "Semantic jobs and information categories for README observations. Categories are conditional signals, not a mandatory template.",
+  "jobs": [
+    {"id": "identify", "question": "What is this?"},
+    {"id": "qualify", "question": "Is it for me?"},
+    {"id": "launch", "question": "How do I reach one useful result?"},
+    {"id": "route", "question": "Where is the rest?"},
+    {"id": "bound", "question": "What must I not assume?"},
+    {"id": "invite", "question": "How do I participate or attribute it?"}
+  ],
+  "categories": [
+    {
+      "id": "identity",
+      "order": 1,
+      "jobs": ["identify"],
+      "label": "Identity",
+      "default_treatment": "always_consider",
+      "heading_aliases": []
+    },
+    {
+      "id": "definition_purpose",
+      "order": 2,
+      "jobs": ["identify", "qualify"],
+      "label": "Definition and purpose",
+      "default_treatment": "always_consider",
+      "heading_aliases": ["about", "overview", "why", "features", "motivation", "scope"]
+    },
+    {
+      "id": "status_metadata",
+      "order": 3,
+      "jobs": ["qualify", "bound"],
+      "label": "Status metadata",
+      "default_treatment": "when_decision_relevant",
+      "heading_aliases": ["status", "project status", "compatibility", "platform support", "supported platforms"]
+    },
+    {
+      "id": "first_successful_path",
+      "order": 4,
+      "jobs": ["launch"],
+      "label": "First successful path",
+      "default_treatment": "when_artifact_is_actionable",
+      "heading_aliases": ["quick start", "quickstart", "getting started", "installation", "install", "download", "setup"]
+    },
+    {
+      "id": "minimal_use",
+      "order": 5,
+      "jobs": ["launch", "qualify"],
+      "label": "Minimal use",
+      "default_treatment": "when_interface_is_exercisable",
+      "heading_aliases": ["usage", "example", "examples", "your first program", "basic usage"]
+    },
+    {
+      "id": "depth_choices",
+      "order": 6,
+      "jobs": ["route", "bound"],
+      "label": "Depth and choices",
+      "default_treatment": "when_depth_lives_elsewhere_or_choices_matter",
+      "heading_aliases": ["documentation", "docs", "api", "api reference", "configuration", "config", "options", "reference", "guides"]
+    },
+    {
+      "id": "boundaries",
+      "order": 7,
+      "jobs": ["bound"],
+      "label": "Boundaries",
+      "default_treatment": "when_constraints_are_consequential",
+      "heading_aliases": ["requirements", "prerequisites", "compatibility", "security", "troubleshooting", "limitations", "caveats", "known issues"]
+    },
+    {
+      "id": "development_participation",
+      "order": 8,
+      "jobs": ["invite", "launch"],
+      "label": "Development and participation",
+      "default_treatment": "when_contribution_is_supported",
+      "heading_aliases": ["development", "developing", "building", "build", "testing", "tests", "contributing", "contribute", "hacking"]
+    },
+    {
+      "id": "help_structure",
+      "order": 9,
+      "jobs": ["route", "invite"],
+      "label": "Help and project structure",
+      "default_treatment": "when_channels_or_structure_are_not_obvious",
+      "heading_aliases": ["support", "help", "community", "governance", "maintainers", "project structure", "repository structure", "packages"]
+    },
+    {
+      "id": "legal_provenance",
+      "order": 10,
+      "jobs": ["invite", "bound"],
+      "label": "Legal and provenance",
+      "default_treatment": "when_distribution_or_attribution_requires_it",
+      "heading_aliases": ["license", "licence", "citation", "cite", "credits", "acknowledgements", "acknowledgments", "trademark"]
+    }
+  ]
+}

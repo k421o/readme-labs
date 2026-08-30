@@ -1,0 +1,28 @@
+{
+  "run_schema_version": "1.0.0",
+  "run_id": "bootstrap-readme-review-v1",
+  "scenario_id": "missing-first-path",
+  "capability": "readme-review",
+  "capability_revision": "3db4df5f8b217a98358f94c527c57dfa888deec5",
+  "executed_at": "2026-08-30T02:25:00Z",
+  "execution_class": "author_dry_run",
+  "blinded": false,
+  "environment": {
+    "kind": "local_git",
+    "fidelity_level": 4,
+    "network_policy": "disabled",
+    "network_policy_enforced_by_harness": false,
+    "base_commit": "d6434ee347cc2342fb2949a654b64bb66a554db3",
+    "mutation_commit": "5991cafc729508d6a8f47cca7e19ae6ca3e77c7f"
+  },
+  "verification": {
+    "fixture_tests": "1 passed",
+    "console_entry_point": "pebble-count executed successfully"
+  },
+  "limitations": [
+    "The capability author performed and scored this dry run.",
+    "The expected mutation was known during repository construction.",
+    "The materializer records network policy but does not yet enforce process isolation.",
+    "This run checks scenario and scoring plumbing, not capability efficacy."
+  ]
+}

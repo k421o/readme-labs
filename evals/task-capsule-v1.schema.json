@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/evals/task-capsule-v1.schema.json",
+  "title": "README task capsule v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "id", "title", "task", "scorecard", "environment"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "title": {"type": "string", "minLength": 1},
+    "task": {"type": "string", "minLength": 1},
+    "scorecard": {"type": "string", "minLength": 1},
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "fidelity_level", "fixture", "network"],
+      "properties": {
+        "kind": {"const": "local_git"},
+        "fidelity_level": {"const": 4},
+        "fixture": {"type": "string", "minLength": 1},
+        "network": {"const": "disabled"},
+        "mutation": {"type": "string", "minLength": 1}
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "target_role": {"type": "string"},
+        "variable": {"type": "string"}
+      }
+    }
+  }
+}

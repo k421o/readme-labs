@@ -1,0 +1,67 @@
+{
+  "analysis_version": "1.0.0",
+  "category_signal_counts": {
+    "boundaries": 1,
+    "definition_purpose": 1,
+    "depth_choices": 1,
+    "development_participation": 7,
+    "first_successful_path": 6,
+    "help_structure": 3,
+    "identity": 10,
+    "legal_provenance": 7,
+    "minimal_use": 2,
+    "status_metadata": 0
+  },
+  "category_signal_rates": {
+    "boundaries": 0.0625,
+    "definition_purpose": 0.0625,
+    "depth_choices": 0.0625,
+    "development_participation": 0.4375,
+    "first_successful_path": 0.375,
+    "help_structure": 0.1875,
+    "identity": 0.625,
+    "legal_provenance": 0.4375,
+    "minimal_use": 0.125,
+    "status_metadata": 0.0
+  },
+  "interpretation": "Descriptive results for a purposive high-exposure pilot; not a population prevalence or training-data estimate.",
+  "observation_schema_versions": [
+    "1.0.0"
+  ],
+  "role_counts": {
+    "cli_tool": 1,
+    "end_user_application": 1,
+    "framework_or_platform": 4,
+    "monorepo_root": 1,
+    "published_package": 3,
+    "source_distribution": 6
+  },
+  "sample_count": 16,
+  "source_observations": "corpus/observations/pilot-high-exposure-v1.jsonl",
+  "structure": {
+    "code_block_count": {
+      "maximum": 106,
+      "mean": 9.31,
+      "median": 1.0,
+      "minimum": 0
+    },
+    "heading_count": {
+      "maximum": 96,
+      "mean": 15.19,
+      "median": 9.0,
+      "minimum": 1
+    },
+    "link_count": {
+      "maximum": 683,
+      "mean": 73.31,
+      "median": 20.0,
+      "minimum": 0
+    },
+    "word_count": {
+      "maximum": 12672,
+      "mean": 1902.69,
+      "median": 687.0,
+      "minimum": 222
+    }
+  }
+}

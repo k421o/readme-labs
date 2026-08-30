@@ -1,0 +1,4 @@
+interface:
+  display_name: "README Review"
+  short_description: "Review README signal, structure, and accuracy."
+  default_prompt: "Use $readme-review to review this repository's README files."

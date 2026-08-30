@@ -11,9 +11,20 @@ permissions:
 jobs:
   deterministic-validation:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v10.0.1
+        with:
+          enable-cache: true
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - run: python3 tools/validate_repository.py
+      - run: uv sync --locked --dev
+      - run: uv run ruff check .
+      - run: uv run pytest
+      - run: uv run python scripts/check_markdown_links.py
+      - run: uv run python scripts/build_plugin.py --check
+      - run: uv build

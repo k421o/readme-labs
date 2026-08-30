@@ -1,0 +1,13 @@
+{
+  "score_schema_version": "1.0.0",
+  "run_id": "bootstrap-readme-review-v1",
+  "expected_findings": 1,
+  "matched_findings": 1,
+  "anti_findings_triggered": 0,
+  "result": "plumbing_pass_not_efficacy_evidence",
+  "match": {
+    "expected_id": "consumer-path-missing",
+    "matched": true,
+    "reason": "The response identified the missing consumer install-and-use path, separated it from contributor setup, cited the manifest entry point, and verified the executable behavior."
+  }
+}

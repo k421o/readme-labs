@@ -1,5 +1,12 @@
 # README domain extraction from Repository Guidance — 2026-08-29
 
+> **Historical migration record.** This document describes the concurrent
+> `v0.1.0` extraction as it was released. PR #1 later reconciles that
+> plugin-first snapshot with the domain-first repository architecture. The tag
+> remains immutable, but current source authority, capability paths, and release
+> gates are defined by the root README, `docs/domain-charter.md`, and
+> `docs/release-policy.md`.
+
 This is the repository-local migration record for the first README Labs
 release. The cross-repository decision model and validation live in
 [Agent Ops issue #44](https://github.com/k421o/agent-ops/issues/44).
