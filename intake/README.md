@@ -20,3 +20,27 @@ compatible, or authoritative.
 Checked-in snapshots live under `snapshots/`. Large, restricted, or
 third-party bodies should remain in external storage with immutable references
 and permitted derived observations in Git.
+
+The [managed repository ingestion controller](../docs/repository-ingestion.md)
+acquires and isolates Git URLs, local Git workspaces, and non-Git directories
+before producing these records. Its operational job logs live in a non-Git
+domain-container yard rather than this repository. A receipt under `receipts/`
+is durable only after selected material lands and verifies. Owned Git-to-Git
+migrations may instead use a receipt under `migrations/` that links equal
+source and destination content plus the physical source-deletion commit; they
+do not retain a redundant artifact snapshot.
+
+The first real controller replay is recorded in
+[`receipts/reademe-temp-controller-v1.json`](receipts/reademe-temp-controller-v1.json).
+It links the already-landed `reademe-temp` intake, candidate, experiment plan,
+and agent-review run, then proves that only the isolated managed checkout was
+deleted.
+
+The versioned controller contracts are:
+
+- [`ingestion-job-v1.schema.json`](ingestion-job-v1.schema.json)
+- [`ingestion-inventory-v1.schema.json`](ingestion-inventory-v1.schema.json)
+- [`ingestion-selection-v1.schema.json`](ingestion-selection-v1.schema.json)
+- [`external-action-plan-v1.schema.json`](external-action-plan-v1.schema.json)
+- [`finalization-receipt-v1.schema.json`](finalization-receipt-v1.schema.json)
+- [`git-migration-receipt-v1.schema.json`](git-migration-receipt-v1.schema.json)

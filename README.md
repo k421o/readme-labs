@@ -20,6 +20,8 @@ eventually executable environments to test that model.
   repositories.
 - Ingest outside research, methods, skills, bundles, and trial evidence without
   prematurely making them canonical.
+- Acquire repositories and local work through an isolated, disposition-aware
+  ingestion yard before admitting selected domain artifacts.
 - Compare isolated candidate capabilities through complete experimental runs,
   soft agent perspectives, and eventually privacy-bounded user-response work.
 - Derive agent capabilities from the domain evidence and test them before
@@ -97,6 +99,18 @@ uv run readme-lab candidate verify \
 uv run readme-lab experiment validate \
   experiments/plans/reademe-temp-modular-readme-v1.json
 ```
+
+Initialize a managed ingestion yard outside the repository and inspect its
+commands:
+
+```console
+uv run readme-lab ingest init --domain-root /path/to/readme-domain
+uv run readme-lab ingest --help
+```
+
+The [repository-ingestion architecture](docs/repository-ingestion.md) defines
+clone isolation, remote severing, preservation policies, owned Git migration,
+private publication, archival, physical source cleanup, and finalization.
 
 Inspect one README as a local observation:
 

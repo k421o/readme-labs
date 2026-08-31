@@ -12,8 +12,29 @@ from readme_lab.capsule import materialize_capsule
 from readme_lab.corpus import collect_corpus, summarize_observations, write_summary
 from readme_lab.evaluation import run_codex_capsule, score_review_response
 from readme_lab.experiments import load_experiment_plan
+from readme_lab.ingestion import (
+    add_ingestion_selection,
+    admit_ingestion,
+    begin_ingestion,
+    create_external_action_plan,
+    finalize_ingestion,
+    initialize_ingestion_yard,
+    link_existing_admission,
+    load_ingestion_job,
+    quarantine_ingestion,
+    refresh_ingestion_inventory,
+    verify_ingestion,
+)
+from readme_lab.ingestion_actions import (
+    execute_github_action,
+    execute_source_cleanup,
+)
 from readme_lab.inspect import ROLE_IDS, inspect_readme
 from readme_lab.intake import fingerprint_git_path, verify_intake_manifest
+from readme_lab.migration import (
+    build_git_migration_receipt,
+    write_git_migration_receipt,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -99,6 +120,208 @@ def build_parser() -> argparse.ArgumentParser:
     )
     intake_verify_parser.add_argument("manifest", type=Path)
     intake_verify_parser.add_argument("--source-root", type=Path)
+
+    ingest_parser = subparsers.add_parser(
+        "ingest", help="manage isolated repository and directory ingestion"
+    )
+    ingest_subparsers = ingest_parser.add_subparsers(
+        dest="ingest_command", required=True
+    )
+    ingest_init = ingest_subparsers.add_parser(
+        "init", help="initialize a non-Git README domain ingestion yard"
+    )
+    ingest_init.add_argument("--domain-root", type=Path, required=True)
+    ingest_begin = ingest_subparsers.add_parser(
+        "begin", help="acquire and inventory one isolated source"
+    )
+    ingest_begin.add_argument("source")
+    ingest_begin.add_argument("--domain-root", type=Path, required=True)
+    ingest_begin.add_argument("--job-id", required=True)
+    ingest_begin.add_argument(
+        "--remote-policy",
+        choices=("sever", "fetch_only", "preserve"),
+        default="sever",
+    )
+    ingest_begin.add_argument(
+        "--ownership", choices=("owned", "external", "unknown"), default="unknown"
+    )
+    ingest_begin.add_argument("--repository-id")
+    ingest_begin.add_argument("--include-ignored", action="store_true")
+    ingest_begin.add_argument(
+        "--lfs-policy", choices=("pointers", "fetch"), default="pointers"
+    )
+    ingest_begin.add_argument(
+        "--submodule-policy", choices=("record", "fetch"), default="record"
+    )
+    ingest_inventory = ingest_subparsers.add_parser(
+        "inventory", help="refresh a managed checkout inventory"
+    )
+    ingest_inventory.add_argument("--yard", type=Path, required=True)
+    ingest_inventory.add_argument("--job-id", required=True)
+    ingest_status = ingest_subparsers.add_parser(
+        "status", help="show one ingestion job"
+    )
+    ingest_status.add_argument("--yard", type=Path, required=True)
+    ingest_status.add_argument("--job-id", required=True)
+    ingest_select = ingest_subparsers.add_parser(
+        "select", help="add one exact artifact selection"
+    )
+    ingest_select.add_argument("--yard", type=Path, required=True)
+    ingest_select.add_argument("--job-id", required=True)
+    ingest_select.add_argument("--selection-id", required=True)
+    ingest_select.add_argument("--path", required=True)
+    ingest_select.add_argument(
+        "--role",
+        required=True,
+        choices=(
+            "readme_artifact",
+            "skill",
+            "skill_bundle",
+            "research_content",
+            "research_method",
+            "research_protocol",
+            "research_data",
+            "evaluation_method",
+            "trial_evidence",
+            "whole_solution",
+        ),
+    )
+    ingest_select.add_argument(
+        "--preservation",
+        required=True,
+        choices=("reference", "selected", "replayable", "archive", "git_migration"),
+    )
+    ingest_select.add_argument("--context", action="append", default=[])
+    ingest_select.add_argument("--candidate-id")
+    ingest_select.add_argument(
+        "--candidate-kind",
+        choices=(
+            "skill",
+            "skill_bundle",
+            "plugin",
+            "research_method",
+            "evaluation_method",
+            "workflow",
+            "repository_solution",
+            "other",
+        ),
+    )
+    ingest_select.add_argument("--candidate-format")
+    ingest_select.add_argument("--candidate-entrypoint")
+    ingest_admit = ingest_subparsers.add_parser(
+        "admit", help="generate domain records or link already-landed records"
+    )
+    ingest_admit.add_argument("--yard", type=Path, required=True)
+    ingest_admit.add_argument("--job-id", required=True)
+    ingest_admit.add_argument("--domain-repository", type=Path, required=True)
+    ingest_admit.add_argument("--manifest-id")
+    ingest_admit.add_argument("--title")
+    ingest_admit.add_argument(
+        "--link-target",
+        action="append",
+        default=[],
+        metavar="KIND=REPOSITORY_PATH",
+    )
+    ingest_verify = ingest_subparsers.add_parser(
+        "verify", help="verify source selections and durable targets"
+    )
+    ingest_verify.add_argument("--yard", type=Path, required=True)
+    ingest_verify.add_argument("--job-id", required=True)
+    ingest_verify.add_argument("--domain-repository", type=Path, required=True)
+    ingest_finalize = ingest_subparsers.add_parser(
+        "finalize", help="settle a verified checkout and emit a receipt"
+    )
+    ingest_finalize.add_argument("--yard", type=Path, required=True)
+    ingest_finalize.add_argument("--job-id", required=True)
+    ingest_finalize.add_argument("--domain-repository", type=Path, required=True)
+    ingest_finalize.add_argument(
+        "--workspace-disposition",
+        choices=("retain", "delete", "archive_local"),
+        required=True,
+    )
+    ingest_finalize.add_argument(
+        "--remote-disposition",
+        choices=("none", "publish_private", "archive_owned", "owned_git_migration"),
+        default="none",
+    )
+    ingest_finalize.add_argument("--migration-receipt", action="append", default=[])
+    ingest_finalize.add_argument("--limitation", action="append", default=[])
+    ingest_finalize.add_argument("--no-export-receipt", action="store_true")
+    ingest_quarantine = ingest_subparsers.add_parser(
+        "quarantine", help="move an unfinished job aside without rejecting it"
+    )
+    ingest_quarantine.add_argument("--yard", type=Path, required=True)
+    ingest_quarantine.add_argument("--job-id", required=True)
+    ingest_quarantine.add_argument("--reason", required=True)
+    ingest_plan = ingest_subparsers.add_parser(
+        "plan-action", help="record a dry-run-first external or cleanup action"
+    )
+    ingest_plan.add_argument("--yard", type=Path, required=True)
+    ingest_plan.add_argument("--job-id", required=True)
+    ingest_plan.add_argument("--action-id", required=True)
+    ingest_plan.add_argument(
+        "--action",
+        choices=("publish_private", "archive_owned", "source_cleanup"),
+        required=True,
+    )
+    ingest_plan.add_argument("--parameters", type=Path, required=True)
+    ingest_execute_github = ingest_subparsers.add_parser(
+        "execute-github", help="dry-run or explicitly execute a GitHub action plan"
+    )
+    ingest_execute_github.add_argument("--yard", type=Path, required=True)
+    ingest_execute_github.add_argument("--plan", type=Path, required=True)
+    ingest_execute_github.add_argument("--execute", action="store_true")
+    ingest_execute_github.add_argument("--gh-executable", default="gh")
+    ingest_execute_cleanup = ingest_subparsers.add_parser(
+        "execute-source-cleanup",
+        help="dry-run or physically remove and settle exact owned source paths",
+    )
+    ingest_execute_cleanup.add_argument("--yard", type=Path, required=True)
+    ingest_execute_cleanup.add_argument("--plan", type=Path, required=True)
+    ingest_execute_cleanup.add_argument("--authorized-source", type=Path, required=True)
+    ingest_execute_cleanup.add_argument("--domain-repository", type=Path, required=True)
+    ingest_execute_cleanup.add_argument("--execute", action="store_true")
+    ingest_execute_cleanup.add_argument("--gh-executable", default="gh")
+    ingest_migration = ingest_subparsers.add_parser(
+        "migration-receipt",
+        help="record an already-settled Git-to-Git migration without duplicate bytes",
+    )
+    ingest_migration.add_argument("--receipt-id", required=True)
+    ingest_migration.add_argument("--output", type=Path, required=True)
+    ingest_migration.add_argument("--source-repository", type=Path, required=True)
+    ingest_migration.add_argument("--source-repository-id", required=True)
+    ingest_migration.add_argument("--source-revision", required=True)
+    ingest_migration.add_argument("--source-path", required=True)
+    ingest_migration.add_argument("--source-deletion-revision", required=True)
+    ingest_migration.add_argument("--destination-repository", type=Path, required=True)
+    ingest_migration.add_argument("--destination-repository-id", required=True)
+    ingest_migration.add_argument("--destination-revision", required=True)
+    ingest_migration.add_argument("--destination-path", required=True)
+    ingest_migration.add_argument(
+        "--artifact-type", choices=("file", "tree"), required=True
+    )
+    ingest_migration.add_argument(
+        "--source-settlement",
+        choices=("local_commit", "pushed", "pr_open", "merged"),
+        required=True,
+    )
+    ingest_migration.add_argument(
+        "--destination-settlement",
+        choices=("local_commit", "pushed", "pr_open", "merged"),
+        required=True,
+    )
+    ingest_migration.add_argument(
+        "--source-ownership-basis",
+        choices=("explicit_owner_assertion", "github_admin_verified"),
+        default="explicit_owner_assertion",
+    )
+    ingest_migration.add_argument(
+        "--destination-ownership-basis",
+        choices=("explicit_owner_assertion", "github_admin_verified"),
+        default="explicit_owner_assertion",
+    )
+    ingest_migration.add_argument("--reference", action="append", default=[])
+    ingest_migration.add_argument("--limitation", action="append", default=[])
 
     candidate_parser = subparsers.add_parser(
         "candidate", help="verify or materialize an experimental candidate"
@@ -224,14 +447,168 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(verification, indent=2, sort_keys=True))
         return 0 if verification["verified"] else 1
+    if args.command == "ingest" and args.ingest_command == "init":
+        yard = initialize_ingestion_yard(args.domain_root)
+        print(json.dumps({"yard": yard.as_posix()}, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "begin":
+        job = begin_ingestion(
+            domain_root=args.domain_root,
+            job_id=args.job_id,
+            source=args.source,
+            remote_policy=args.remote_policy,
+            ownership=args.ownership,
+            repository_id=args.repository_id,
+            include_ignored=args.include_ignored,
+            lfs_policy=args.lfs_policy,
+            submodule_policy=args.submodule_policy,
+        )
+        print(json.dumps(job, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "inventory":
+        inventory = refresh_ingestion_inventory(yard=args.yard, job_id=args.job_id)
+        print(json.dumps(inventory, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "status":
+        job = load_ingestion_job(args.yard, args.job_id)
+        print(json.dumps(job, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "select":
+        selection = add_ingestion_selection(
+            yard=args.yard,
+            job_id=args.job_id,
+            selection_id=args.selection_id,
+            source_path=args.path,
+            role=args.role,
+            preservation=args.preservation,
+            context_paths=args.context,
+            candidate_id=args.candidate_id,
+            candidate_kind=args.candidate_kind,
+            candidate_format=args.candidate_format,
+            candidate_entrypoint=args.candidate_entrypoint,
+        )
+        print(json.dumps(selection, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "admit":
+        if args.link_target:
+            targets = []
+            for raw in args.link_target:
+                if "=" not in raw:
+                    raise ValueError("linked targets use KIND=REPOSITORY_PATH")
+                targets.append(tuple(raw.split("=", 1)))
+            admission = link_existing_admission(
+                yard=args.yard,
+                job_id=args.job_id,
+                domain_repository=args.domain_repository,
+                targets=targets,
+            )
+        else:
+            if not args.manifest_id or not args.title:
+                raise ValueError(
+                    "generated admission requires --manifest-id and --title"
+                )
+            admission = admit_ingestion(
+                yard=args.yard,
+                job_id=args.job_id,
+                domain_repository=args.domain_repository,
+                manifest_id=args.manifest_id,
+                title=args.title,
+            )
+        print(json.dumps(admission, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "verify":
+        result = verify_ingestion(
+            yard=args.yard,
+            job_id=args.job_id,
+            domain_repository=args.domain_repository,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "finalize":
+        result = finalize_ingestion(
+            yard=args.yard,
+            job_id=args.job_id,
+            domain_repository=args.domain_repository,
+            workspace_disposition=args.workspace_disposition,
+            remote_disposition=args.remote_disposition,
+            export_receipt=not args.no_export_receipt,
+            migration_receipts=args.migration_receipt,
+            limitations=args.limitation,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "quarantine":
+        destination = quarantine_ingestion(
+            yard=args.yard, job_id=args.job_id, reason=args.reason
+        )
+        print(
+            json.dumps(
+                {"job_id": args.job_id, "quarantined_at": destination.as_posix()},
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+    if args.command == "ingest" and args.ingest_command == "plan-action":
+        parameters = json.loads(args.parameters.read_text(encoding="utf-8"))
+        plan = create_external_action_plan(
+            yard=args.yard,
+            job_id=args.job_id,
+            action_id=args.action_id,
+            action=args.action,
+            parameters=parameters,
+        )
+        print(json.dumps(plan, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "execute-github":
+        result = execute_github_action(
+            yard=args.yard,
+            plan_path=args.plan,
+            execute=args.execute,
+            gh_executable=args.gh_executable,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "execute-source-cleanup":
+        result = execute_source_cleanup(
+            yard=args.yard,
+            plan_path=args.plan,
+            authorized_source=args.authorized_source,
+            domain_repository=args.domain_repository,
+            execute=args.execute,
+            gh_executable=args.gh_executable,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "ingest" and args.ingest_command == "migration-receipt":
+        receipt = build_git_migration_receipt(
+            receipt_id=args.receipt_id,
+            source_repository=args.source_repository,
+            source_repository_id=args.source_repository_id,
+            source_revision=args.source_revision,
+            source_path=args.source_path,
+            source_deletion_revision=args.source_deletion_revision,
+            destination_repository=args.destination_repository,
+            destination_repository_id=args.destination_repository_id,
+            destination_revision=args.destination_revision,
+            destination_path=args.destination_path,
+            artifact_type=args.artifact_type,
+            source_settlement=args.source_settlement,
+            destination_settlement=args.destination_settlement,
+            source_ownership_basis=args.source_ownership_basis,
+            destination_ownership_basis=args.destination_ownership_basis,
+            references=args.reference,
+            limitations=args.limitation,
+        )
+        write_git_migration_receipt(args.output, receipt)
+        print(json.dumps(receipt, indent=2, sort_keys=True))
+        return 0
     if args.command == "candidate" and args.candidate_command == "verify":
         verification = verify_candidate(args.candidate)
         print(json.dumps(verification, indent=2, sort_keys=True))
         return 0 if verification["verified"] else 1
     if args.command == "candidate" and args.candidate_command == "materialize":
-        materialization = materialize_candidate(
-            args.candidate, args.destination
-        )
+        materialization = materialize_candidate(args.candidate, args.destination)
         print(json.dumps(materialization, indent=2, sort_keys=True))
         return 0
     if args.command == "experiment" and args.experiment_command == "validate":

@@ -199,6 +199,12 @@ particular, corpus analysis belongs here while it directly tests README claims;
 large redistributable datasets or a genuinely general evaluation engine may
 later move behind versioned interfaces.
 
+The repository-ingestion controller follows the same rule. Its operational
+yard is outside Git, while its implementation remains here until a second
+domain demonstrates reuse. At that point generic clone, isolation, GitHub, and
+disposition mechanics may move to Agent Ops or a dedicated project; README
+roles, intake interpretation, candidates, and promotion remain local.
+
 ## Change procedure
 
 When complexity increases:

@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/intake/ingestion-selection-v1.schema.json",
+  "title": "README Labs ingestion selections v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "job_id", "selections"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "job_id": {"$ref": "#/$defs/id"},
+    "selections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "path",
+          "artifact_type",
+          "role",
+          "preservation",
+          "sha256",
+          "source_state",
+          "context_paths",
+          "candidate"
+        ],
+        "properties": {
+          "id": {"$ref": "#/$defs/id"},
+          "path": {"type": "string", "minLength": 1},
+          "artifact_type": {"enum": ["file", "tree"]},
+          "role": {
+            "enum": [
+              "readme_artifact",
+              "skill",
+              "skill_bundle",
+              "research_content",
+              "research_method",
+              "research_protocol",
+              "research_data",
+              "evaluation_method",
+              "trial_evidence",
+              "whole_solution"
+            ]
+          },
+          "preservation": {
+            "enum": [
+              "reference",
+              "selected",
+              "replayable",
+              "archive",
+              "git_migration"
+            ]
+          },
+          "sha256": {"$ref": "#/$defs/digest"},
+          "source_state": {"enum": ["committed", "workspace", "directory"]},
+          "context_paths": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {"type": "string", "minLength": 1}
+          },
+          "candidate": {
+            "anyOf": [
+              {"type": "null"},
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "kind", "format", "entrypoint"],
+                "properties": {
+                  "id": {"$ref": "#/$defs/id"},
+                  "kind": {
+                    "enum": [
+                      "skill",
+                      "skill_bundle",
+                      "plugin",
+                      "research_method",
+                      "evaluation_method",
+                      "workflow",
+                      "repository_solution",
+                      "other"
+                    ]
+                  },
+                  "format": {"type": "string", "minLength": 1},
+                  "entrypoint": {"type": "string", "minLength": 1}
+                }
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    }
+  }
+}

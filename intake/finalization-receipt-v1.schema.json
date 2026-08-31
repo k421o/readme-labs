@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/intake/finalization-receipt-v1.schema.json",
+  "title": "README Labs ingestion finalization receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "id",
+    "job_id",
+    "completed_at",
+    "source",
+    "remote_policy",
+    "selections",
+    "admission_targets",
+    "workspace_disposition",
+    "remote_disposition",
+    "checkout_present",
+    "status",
+    "migration_receipts",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "id": {"type": "string", "minLength": 1},
+    "job_id": {"type": "string", "minLength": 1},
+    "completed_at": {"type": "string", "format": "date-time"},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "repository_id", "git_head", "git_tree", "remote"],
+      "properties": {
+        "kind": {"enum": ["git_url", "local_git", "local_directory"]},
+        "repository_id": {"type": ["string", "null"]},
+        "git_head": {"type": ["string", "null"]},
+        "git_tree": {"type": ["string", "null"]},
+        "remote": {"type": ["string", "null"]}
+      }
+    },
+    "remote_policy": {"enum": ["sever", "fetch_only", "preserve"]},
+    "selections": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "role", "preservation", "sha256"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "role": {"type": "string", "minLength": 1},
+          "preservation": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "admission_targets": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path", "sha256"],
+        "properties": {
+          "kind": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "workspace_disposition": {
+      "enum": ["retain", "delete", "archive_local", "quarantine"]
+    },
+    "remote_disposition": {
+      "enum": ["none", "publish_private", "archive_owned", "owned_git_migration"]
+    },
+    "checkout_present": {"type": "boolean"},
+    "status": {"enum": ["completed", "quarantined"]},
+    "migration_receipts": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  }
+}
