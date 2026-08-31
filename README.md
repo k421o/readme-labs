@@ -18,6 +18,10 @@ eventually executable environments to test that model.
   or copying an unbounded raw corpus into Git.
 - Evaluate README review and authoring behavior on both controlled and natural
   repositories.
+- Ingest outside research, methods, skills, bundles, and trial evidence without
+  prematurely making them canonical.
+- Compare isolated candidate capabilities through complete experimental runs,
+  soft agent perspectives, and eventually privacy-bounded user-response work.
 - Derive agent capabilities from the domain evidence and test them before
   treating them as products.
 
@@ -34,10 +38,10 @@ interesting repositories without prematurely treating them as evidence.
 ```text
 Sources                         Stable domain core                   Consumers
 ──────────────────────          ──────────────────────────           ─────────────────────
-Synthetic fixtures ─┐           README roles and taxonomy      ┌─ Review capability
-Real repositories ──┤─ ingest → READMEObservation records →    ├─ Evaluation harness
-Package registries ─┤           evidence and scoring rules      ├─ Corpus analysis
-Repository history ─┘                                             └─ Derived products
+Synthetic fixtures ─┐           README roles and taxonomy      ┌─ Candidate library
+Real repositories ──┤─ ingest → READMEObservation records →    ├─ Experimental evaluation
+Outside research ───┤           evidence and interpretation     ├─ Canonical capabilities
+Skills and methods ─┘                                             └─ Derived products
 ```
 
 The middle is intended to remain stable while sources and consumers grow
@@ -61,6 +65,9 @@ and dependency rules are in
 domain/         README roles, taxonomy, and observation schemas
 research/       Findings, sources, examples, and interpretation
 corpus/         Versioned manifests, labels, and sampling plans
+intake/         Outside research, methods, artifacts, and provenance
+candidates/     Reproducible non-authoritative skills, bundles, and methods
+experiments/    Hypotheses, advisory evaluators, runs, and user-response envelopes
 evals/          Task capsules, mutations, environments, and scorecards
 capabilities/   Agent-facing projections derived from the domain model
 products/       Packaging adapters created only when a capability earns them
@@ -79,6 +86,16 @@ Python 3.12+ and [`uv`](https://docs.astral.sh/uv/) are required.
 uv sync --dev
 uv run ruff check .
 uv run pytest
+```
+
+Verify an admitted source, candidate, and experiment plan:
+
+```console
+uv run readme-lab intake verify intake/manifests/reademe-temp-v1.json
+uv run readme-lab candidate verify \
+  candidates/reademe-temp-modular-readme-v1/candidate.json
+uv run readme-lab experiment validate \
+  experiments/plans/reademe-temp-modular-readme-v1.json
 ```
 
 Inspect one README as a local observation:
@@ -126,6 +143,12 @@ The first experimental capability is `capabilities/readme-review`. Research,
 the domain model, and evaluation artifacts remain canonical; packaging copies
 must be generated from a pinned capability version rather than edited
 independently.
+
+Candidate trees under `candidates/` are intentionally different: they are
+testable experimental specimens with immutable provenance, not editable forks
+or current products. The
+[adaptive domain laboratory](docs/experimental-architecture.md) defines intake,
+candidate, experiment, observation, promotion, and regression boundaries.
 
 `repository-guidance` is already a downstream integration surface: its `v0.2.0`
 release removed the editable README copy and pins the immutable historical

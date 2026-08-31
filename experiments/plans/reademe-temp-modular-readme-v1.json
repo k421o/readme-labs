@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "id": "reademe-temp-modular-readme-v1",
+  "title": "Initial modular README candidate inquiry",
+  "question": "Does the imported modular README skill produce a useful, evidence-backed README through isolated component delegation, and what properties should README Labs investigate further?",
+  "candidate_ids": [
+    "reademe-temp-modular-readme-v1"
+  ],
+  "method": {
+    "id": "holistic-deployment-with-soft-review",
+    "version": "1",
+    "parameters": {
+      "source_repository": "local:reademe-temp",
+      "profile": "minimal",
+      "soft_evaluator": "popular-linux-open-source-maintainer-v1"
+    }
+  },
+  "planned_trials": [
+    {
+      "id": "three-worker-forward-test",
+      "kind": "holistic_skill_deployment",
+      "status": "completed",
+      "candidate_ids": [
+        "reademe-temp-modular-readme-v1"
+      ],
+      "measurements": [
+        "worker ownership isolation",
+        "evidence report completion",
+        "deterministic assembly",
+        "resulting README artifact"
+      ],
+      "run_records": [
+        "intake/snapshots/reademe-temp-forward-test/forward-test"
+      ]
+    },
+    {
+      "id": "linux-maintainer-soft-review",
+      "kind": "soft_agent_review",
+      "status": "completed",
+      "candidate_ids": [
+        "reademe-temp-modular-readme-v1"
+      ],
+      "measurements": [
+        "advisory merge recommendation",
+        "evidence-backed strengths",
+        "blocking and non-blocking concerns",
+        "perspective limitations"
+      ],
+      "run_records": [
+        "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json"
+      ]
+    }
+  ],
+  "completion_policy": {
+    "mode": "complete_planned_run",
+    "automated_results_authority": "evidence_only",
+    "candidate_admission_gate": "none",
+    "allowed_early_stops": [
+      "safety",
+      "authorization",
+      "infrastructure"
+    ],
+    "early_stop_disposition": "incomplete_not_rejected"
+  },
+  "decision": {
+    "authority": "owner_or_designated_review",
+    "timing": "after_planned_trials_complete",
+    "allowed_outcomes": [
+      "iterate",
+      "combine",
+      "retain",
+      "reject",
+      "promote"
+    ]
+  }
+}

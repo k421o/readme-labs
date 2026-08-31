@@ -13,6 +13,8 @@ The repository begins as a **domain module with an evaluation lab**:
 - evidence and provenance for that model;
 - a manifest-driven corpus that can support reproducible analysis;
 - executable observations and evaluation scenarios; and
+- a provenance-bearing intake and candidate library;
+- advisory agent-response evaluation; and
 - one installable capability derived from the domain work.
 
 It is intentionally not yet a marketplace product, a general evaluation
@@ -93,7 +95,7 @@ Extract reusable evaluation infrastructure only after repeated use has made a
 stable contract visible. A future `guidance-eval` project should be the result
 of demonstrated reuse, not an initial abstraction target.
 
-## Source-side growth
+## Source-side growth and feedback
 
 The source tree should progress in the same evidence-led order:
 
@@ -113,9 +115,17 @@ generated or pinned product adapters
 downstream bundles
 ```
 
-Each arrow is a dependency direction. Research may motivate domain changes;
-products must not silently redefine the domain model, and downstream bundles
-must not become editable forks of the capability.
+Each downward arrow is a promotion dependency, not a restriction on inquiry.
+Outside research, methods, skills, and whole solutions first enter as
+provenance-bearing evidence or candidates. Experimental results may flow back
+to replace the research method, domain definitions, capability shape, skill
+count, or progressive disclosure. Products must not silently redefine the
+domain model, and downstream bundles must not become editable forks of an
+accepted capability.
+
+Candidate admission and release promotion are separate decisions. Existing
+regression checks may diagnose compatibility but cannot prevent a candidate
+from completing a declared experiment solely because its structure differs.
 
 ## Consumer progression
 
@@ -150,6 +160,10 @@ A result must state its fidelity level. A higher level is justified when a
 lower level hides an important failure mode, not merely because it feels more
 realistic.
 
+Soft agent reviews and human/user-response methods are measurements layered on
+these environments. They remain advisory evidence and report their perspective
+and limitations.
+
 ## Gates for adding a product
 
 Add or promote a product adapter only when all applicable statements are true:
@@ -166,6 +180,9 @@ A repository-owned local/Git marketplace and native installation are
 mechanical delivery choices, not evidence of domain correctness. They may be
 required to verify a product adapter without claiming public, verified, or
 stable marketplace status.
+
+These are product-promotion gates. They do not govern candidate admission or
+authorize an automated system to discard a hypothesis before its planned run.
 
 ## Gates for extracting another repository
 

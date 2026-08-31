@@ -1,0 +1,12 @@
+{
+  "component_id": "project-title",
+  "status": "ready",
+  "source_files": [
+    "README.md"
+  ],
+  "verified": [
+    "The root README identifies the project as NotebookLM saved-page extraction."
+  ],
+  "unverified": [],
+  "notes": "Applied the shared-context display capitalization: NotebookLM Saved-Page Extraction."
+}

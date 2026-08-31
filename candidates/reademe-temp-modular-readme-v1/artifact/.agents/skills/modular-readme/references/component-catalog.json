@@ -1,0 +1,278 @@
+{
+  "schema_version": 1,
+  "always_on": [
+    "relative-links"
+  ],
+  "profiles": {
+    "minimal": {
+      "description": "The shortest useful reader path; add license when repository evidence supports it.",
+      "components": ["project-title", "short-description", "usage-quickstart"]
+    },
+    "reusable-library": {
+      "description": "A package or library with installation, usage, and a public API.",
+      "components": ["project-title", "github-badges", "short-description", "key-features", "installation", "usage-quickstart", "api-reference", "contributing"]
+    },
+    "cli-tool": {
+      "description": "A command-line project with setup, configuration, commands, and recovery guidance.",
+      "components": ["project-title", "github-badges", "short-description", "prerequisites", "installation", "configuration", "usage-quickstart", "cli-reference", "troubleshooting"]
+    },
+    "application": {
+      "description": "An end-user application whose value benefits from visual explanation.",
+      "components": ["project-title", "banner-or-logo", "short-description", "key-features", "visual-demo", "installation", "configuration", "usage-quickstart", "security"]
+    },
+    "service-platform": {
+      "description": "A service or platform with architecture, configuration, API, and governance context.",
+      "components": ["project-title", "github-badges", "short-description", "architecture-overview", "prerequisites", "configuration", "usage-quickstart", "api-reference", "security", "contributing"]
+    },
+    "custom": {
+      "description": "No preset components; every worker component is selected with --include.",
+      "components": []
+    }
+  },
+  "components": [
+    {
+      "id": "project-title",
+      "label": "Project title",
+      "order": 10,
+      "guide": "modular-templates/modules/01-header-and-identity/01-project-title-h1.md",
+      "mode": "worker",
+      "heading": "h1",
+      "applicability": "required"
+    },
+    {
+      "id": "repository-alias",
+      "label": "Repository alias",
+      "order": 11,
+      "guide": "modular-templates/modules/01-header-and-identity/02-repository-alias.md",
+      "mode": "owner-extension",
+      "owner": "project-title",
+      "heading": "none",
+      "applicability": "when display name and repository slug differ"
+    },
+    {
+      "id": "banner-or-logo",
+      "label": "Banner or logo",
+      "order": 20,
+      "guide": "modular-templates/modules/01-header-and-identity/03-banner-or-logo.md",
+      "mode": "worker",
+      "heading": "none",
+      "applicability": "optional"
+    },
+    {
+      "id": "github-badges",
+      "label": "GitHub and status badges",
+      "order": 30,
+      "guide": "modular-templates/modules/01-header-and-identity/04-github-badges.md",
+      "mode": "worker",
+      "heading": "none",
+      "applicability": "optional"
+    },
+    {
+      "id": "short-description",
+      "label": "Short description",
+      "order": 40,
+      "guide": "modular-templates/modules/01-header-and-identity/05-short-description.md",
+      "mode": "worker",
+      "heading": "none",
+      "applicability": "required"
+    },
+    {
+      "id": "long-description",
+      "label": "Long description",
+      "order": 50,
+      "guide": "modular-templates/modules/01-header-and-identity/06-long-description.md",
+      "mode": "worker",
+      "heading": "none",
+      "applicability": "optional"
+    },
+    {
+      "id": "table-of-contents",
+      "label": "Table of contents",
+      "order": 60,
+      "guide": "modular-templates/modules/02-navigation-and-context/01-table-of-contents.md",
+      "mode": "derived",
+      "heading": "h2",
+      "applicability": "long or complex READMEs"
+    },
+    {
+      "id": "key-features",
+      "label": "Key features",
+      "order": 70,
+      "guide": "modular-templates/modules/02-navigation-and-context/02-key-features.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "recommended"
+    },
+    {
+      "id": "visual-demo",
+      "label": "Visual demo",
+      "order": 80,
+      "guide": "modular-templates/modules/02-navigation-and-context/03-visual-demo.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "optional"
+    },
+    {
+      "id": "architecture-overview",
+      "label": "Architecture overview",
+      "order": 90,
+      "guide": "modular-templates/modules/02-navigation-and-context/04-architecture-overview.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "projects whose parts or data flow need explanation"
+    },
+    {
+      "id": "relative-links",
+      "label": "Relative links",
+      "order": 91,
+      "guide": "modular-templates/modules/02-navigation-and-context/05-relative-links.md",
+      "mode": "policy",
+      "heading": "none",
+      "applicability": "required pattern"
+    },
+    {
+      "id": "collapsible-details",
+      "label": "Collapsible details",
+      "order": 92,
+      "guide": "modular-templates/modules/02-navigation-and-context/06-collapsible-details.md",
+      "mode": "policy",
+      "heading": "none",
+      "applicability": "optional pattern"
+    },
+    {
+      "id": "prerequisites",
+      "label": "Prerequisites",
+      "order": 100,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/01-prerequisites.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "when setup has external requirements"
+    },
+    {
+      "id": "installation",
+      "label": "Installation",
+      "order": 110,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/02-installation.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "installable projects"
+    },
+    {
+      "id": "configuration",
+      "label": "Configuration",
+      "order": 120,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/03-configuration.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "projects with user-set configuration"
+    },
+    {
+      "id": "usage-quickstart",
+      "label": "Usage / quickstart",
+      "order": 130,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/04-usage-quickstart.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "required"
+    },
+    {
+      "id": "cli-reference",
+      "label": "CLI reference",
+      "order": 140,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/05-cli-reference.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "projects with a command-line interface"
+    },
+    {
+      "id": "api-reference",
+      "label": "API reference",
+      "order": 150,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/06-api-reference.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "projects with a programmatic API"
+    },
+    {
+      "id": "troubleshooting",
+      "label": "Troubleshooting",
+      "order": 160,
+      "guide": "modular-templates/modules/03-operational-walkthroughs/07-troubleshooting.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "optional"
+    },
+    {
+      "id": "security",
+      "label": "Security",
+      "order": 170,
+      "guide": "modular-templates/modules/04-governance-and-legal/01-security.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "recommended for public projects"
+    },
+    {
+      "id": "maintainers",
+      "label": "Maintainers",
+      "order": 180,
+      "guide": "modular-templates/modules/04-governance-and-legal/02-maintainers.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "optional"
+    },
+    {
+      "id": "contributing",
+      "label": "Contributing",
+      "order": 190,
+      "guide": "modular-templates/modules/04-governance-and-legal/03-contributing.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "collaborative projects"
+    },
+    {
+      "id": "code-of-conduct",
+      "label": "Code of conduct",
+      "order": 200,
+      "guide": "modular-templates/modules/04-governance-and-legal/04-code-of-conduct.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "when a conduct policy exists"
+    },
+    {
+      "id": "acknowledgments",
+      "label": "Acknowledgments",
+      "order": 210,
+      "guide": "modular-templates/modules/04-governance-and-legal/05-acknowledgments.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "optional"
+    },
+    {
+      "id": "agents-sidecar-pointer",
+      "label": "Agent instructions pointer",
+      "order": 220,
+      "guide": "modular-templates/modules/05-agent-readiness/01-agents-sidecar-pointer.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "when a maintained AGENTS.md should be discoverable"
+    },
+    {
+      "id": "llms-index-pointer",
+      "label": "LLM documentation index pointer",
+      "order": 230,
+      "guide": "modular-templates/modules/05-agent-readiness/02-llms-index-pointer.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "when a maintained llms.txt-style index exists"
+    },
+    {
+      "id": "license",
+      "label": "License",
+      "order": 999,
+      "guide": "modular-templates/modules/04-governance-and-legal/06-license.md",
+      "mode": "worker",
+      "heading": "h2",
+      "applicability": "when repository license evidence exists"
+    }
+  ]
+}

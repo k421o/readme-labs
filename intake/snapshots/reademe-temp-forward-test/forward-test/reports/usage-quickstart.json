@@ -1,0 +1,18 @@
+{
+  "component_id": "usage-quickstart",
+  "status": "ready",
+  "source_files": [
+    "README.md",
+    "scripts/extract_notebooklm_save.py",
+    "docs/sources.md",
+    "docs/chat-transcript.md"
+  ],
+  "verified": [
+    "The root README documents Python 3 and lxml as prerequisites and provides the repository-root extraction command.",
+    "The extractor accepts a saved HTML path and an output directory, then writes sources.md and chat-transcript.md.",
+    "The canonical generated documents exist at docs/sources.md and docs/chat-transcript.md.",
+    "Original source URL recovery depends on macOS extended attributes from the saved page's companion files."
+  ],
+  "unverified": [],
+  "notes": "The minimal profile has no separate prerequisites component, so the quickstart lead-in carries the verified Python 3 and lxml requirements."
+}

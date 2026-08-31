@@ -1,0 +1,4 @@
+interface:
+  display_name: "Modular README"
+  short_description: "Parallel README section orchestration"
+  default_prompt: "Use $modular-readme to build this repository's README with one Codex subagent per selected section."

@@ -36,6 +36,12 @@ packages = ["src/readme_lab"]
 "evals/review-response-v1.schema.json" = "readme_lab/data/review-response-v1.schema.json"
 "evals/review-scorecard-v1.schema.json" = "readme_lab/data/review-scorecard-v1.schema.json"
 "corpus/manifest-item-v1.schema.json" = "readme_lab/data/manifest-item-v1.schema.json"
+"intake/source-manifest-v1.schema.json" = "readme_lab/data/source-manifest-v1.schema.json"
+"candidates/candidate-v1.schema.json" = "readme_lab/data/candidate-v1.schema.json"
+"experiments/schemas/evaluator-v1.schema.json" = "readme_lab/data/evaluator-v1.schema.json"
+"experiments/schemas/soft-agent-review-response-v1.schema.json" = "readme_lab/data/soft-agent-review-response-v1.schema.json"
+"experiments/schemas/experiment-plan-v1.schema.json" = "readme_lab/data/experiment-plan-v1.schema.json"
+"experiments/schemas/user-response-observation-v1.schema.json" = "readme_lab/data/user-response-observation-v1.schema.json"
 
 [tool.pytest.ini_options]
 addopts = "-q"
@@ -44,6 +50,10 @@ testpaths = ["tests"]
 [tool.ruff]
 line-length = 88
 target-version = "py312"
+extend-exclude = [
+  "candidates/**/artifact",
+  "intake/snapshots",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B", "SIM"]

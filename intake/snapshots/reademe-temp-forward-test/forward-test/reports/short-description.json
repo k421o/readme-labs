@@ -1,0 +1,14 @@
+{
+  "component_id": "short-description",
+  "status": "ready",
+  "source_files": [
+    "README.md",
+    "scripts/extract_notebooklm_save.py"
+  ],
+  "verified": [
+    "The root README establishes that the project documents saved NotebookLM source, chat, and Studio metadata while intentionally excluding the private original HTML.",
+    "The extractor establishes a reproducible path for recovering source and chat documentation from a NotebookLM saved page."
+  ],
+  "unverified": [],
+  "notes": "The fragment is a heading-free identity sentence and introduces no internal link targets."
+}

@@ -3,6 +3,11 @@
 The evaluation lab tests README-facing capabilities against controlled tasks
 without confusing a Markdown fixture with a real repository.
 
+These task capsules currently protect and measure the released
+`readme-review` job. Open-ended candidate inquiry lives under `experiments/`.
+Failure against a capsule may diagnose compatibility with this job, but it does
+not prevent a structurally different candidate from completing its own plan.
+
 ## Fidelity ladder
 
 1. **Static fixture** — parser and schema behavior.
@@ -84,6 +89,8 @@ never rewrites the denial as an exact command event.
 - Human judgments should be blinded to treatment and report agreement.
 - Automatic category matching is a gate, not a semantic judgment; an
   independent reviewer checks evidence, anti-findings, and unexpected claims.
+- Automatic gates apply to the release or regression contract that names them,
+  never to candidate admission or hypothesis truth.
 
 See the [factory runbook](../docs/factory-runbook.md) for installation,
 evaluation, packaging, and rollback commands. Material failures and their

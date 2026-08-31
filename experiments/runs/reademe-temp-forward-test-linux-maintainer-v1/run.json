@@ -1,0 +1,46 @@
+{
+  "artifacts": {
+    "events": "events.jsonl",
+    "events_sha256": "e908fa7d288ba983447434f6eeff910ce6f4ea33f175b1eb0b72f257bcbe62e0",
+    "response": "response.json",
+    "response_sha256": "6f1e4f3dc85168ea8d5a81641bbf5b49f2f169f60b9faa19c6860e2830fdb916",
+    "stderr": "stderr.log",
+    "stderr_sha256": "1e76c8707645154725208d7233cd10fd7bd276058e2af4739f5f4a18d2470334"
+  },
+  "automated_authority": "evidence_only",
+  "candidate_id": "reademe-temp-modular-readme-v1",
+  "confidence": "high",
+  "evaluator": {
+    "authority": "advisory",
+    "id": "popular-linux-open-source-maintainer-v1",
+    "instructions_sha256": "b134105ac91903256172ac99de9f77b9fc09f21dd52eb756b3c2f5eb87e895ce",
+    "spec_sha256": "4d7d9fda0ec7aa4fbd19ee76bb4453c7a994ae0c839e7c5af52b9604ec74693a"
+  },
+  "execution": {
+    "finished_at": "2026-08-30T22:12:55.007491Z",
+    "prompt_sha256": "ee019d1d6d400b95ed299e5c8926eb2c7f5957033975a235b7d313600948c47c",
+    "return_code": 0,
+    "started_at": "2026-08-30T22:12:05.097893Z",
+    "timed_out": false
+  },
+  "executor": {
+    "ephemeral": true,
+    "kind": "codex_cli",
+    "model": "gpt-5.6-terra",
+    "reasoning_effort": "high",
+    "sandbox": "read-only",
+    "user_config_ignored": true
+  },
+  "hypothesis_disposition": "not_decided",
+  "recommendation": "request_changes",
+  "result": "completed",
+  "run_id": "reademe-temp-forward-test-linux-maintainer-v1",
+  "run_schema_version": "1.0.0",
+  "subject": {
+    "readme_path": "README.md",
+    "readme_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+    "repository_head": "e59a6bbb67f7e6d2f6182bed8c627f6ac9dcdb38",
+    "repository_tree": "c434456d4b0026722ea72fdcbfc55e3dafaa84b6",
+    "worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}
