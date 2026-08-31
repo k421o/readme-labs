@@ -20,6 +20,13 @@ Raw third-party README bodies are fetched into an untracked cache. The
 collector verifies each body against its Git blob SHA before extracting an
 observation.
 
+Selected corpus documents may also receive reference-only artifact packages
+under `readmes/records/`. Those packages retain the immutable locator, revision,
+content digest, occurrence, and derived evidence without committing the raw
+third-party body or treating collection membership as a quality label. The
+first such package is the
+[`pallets/flask` record](../readmes/records/rm-1f2de14735b1ee9d/report.md).
+
 The same verified cache can serve static-analyzer calibration without turning
 the corpus into a quality label. The first derived run is documented under
 [`experiments/runs/pilot-high-exposure-markdown-structure-v1/`](../experiments/runs/pilot-high-exposure-markdown-structure-v1/).

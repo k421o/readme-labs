@@ -54,6 +54,7 @@ def load_evaluator(path: Path) -> dict[str, Any]:
         raise FileNotFoundError("evaluator instructions or response schema is missing")
     return {
         **evaluator,
+        "_spec_path": path,
         "_instructions_path": instructions_path,
         "_response_schema_path": response_schema_path,
     }

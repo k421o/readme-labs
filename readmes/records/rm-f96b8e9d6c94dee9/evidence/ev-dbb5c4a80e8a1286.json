@@ -1,0 +1,162 @@
+{
+  "artifact_id": "sha256:f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+  "authority": "evidence_only",
+  "decision_disposition": "not_decided",
+  "evidence_id": "ev-dbb5c4a80e8a1286",
+  "kind": "soft_agent_review",
+  "limitations": [
+    "This is a simulated maintainer review based only on the checked-out repository and its Git history; no upstream issue, release policy, CI configuration, or real Linux user environment was available.",
+    "The original saved NotebookLM HTML and macOS companion directory are intentionally absent, so end-to-end extraction and URL-recovery behavior could not be verified.",
+    "No claim is made about whether the removed documentation was intentionally relocated outside this repository."
+  ],
+  "occurrence_id": "occ-32fff3ea0f76b14f",
+  "payload": {
+    "candidate_id": "reademe-temp-modular-readme-v1",
+    "confidence": "high",
+    "evaluator": {
+      "authority": "advisory",
+      "id": "popular-linux-open-source-maintainer-v1",
+      "instructions_sha256": "b134105ac91903256172ac99de9f77b9fc09f21dd52eb756b3c2f5eb87e895ce",
+      "spec_sha256": "4d7d9fda0ec7aa4fbd19ee76bb4453c7a994ae0c839e7c5af52b9604ec74693a"
+    },
+    "execution": {
+      "finished_at": "2026-08-30T22:12:55.007491Z",
+      "prompt_sha256": "ee019d1d6d400b95ed299e5c8926eb2c7f5957033975a235b7d313600948c47c",
+      "return_code": 0,
+      "started_at": "2026-08-30T22:12:05.097893Z",
+      "timed_out": false
+    },
+    "executor": {
+      "ephemeral": true,
+      "kind": "codex_cli",
+      "model": "gpt-5.6-terra",
+      "reasoning_effort": "high",
+      "sandbox": "read-only",
+      "user_config_ignored": true
+    },
+    "recommendation": "request_changes",
+    "response": {
+      "concerns": [
+        {
+          "evidence": [
+            "The previous README linked the notebook overview, source inventory, chat transcript, Studio inventory, recovered documents, and template system; the current README links only `docs/sources.md` and `docs/chat-transcript.md`.",
+            "The repository still contains `docs/notebook-overview.md`, `docs/studio-items.md`, `related-documents/README.md`, and `modular-templates/README.md`, none of which are discoverable from the new README.",
+            "The previous README documented that the original HTML is deliberately excluded because it contains Google account and application bootstrap data; the new README only says it is kept private, without explaining the privacy boundary or where the recovery limits are documented."
+          ],
+          "rationale": "A root README in a long-lived project should preserve the basic map of what is in the repository and the operational/privacy constraints of its primary artifact. The new opening sentence says Studio metadata is documented, yet offers no route to that documentation. This is a substantive regression in discoverability and provenance, not a preference for a longer README.",
+          "severity": "blocking",
+          "suggested_change": "Keep the concise usage section, but restore a short repository overview and links to the overview/recovery limits, Studio inventory, related recovered documents, and template system. State clearly that the original saved HTML is intentionally untracked because it may contain private account/application data.",
+          "title": "The replacement removes essential project context and documentation navigation"
+        },
+        {
+          "evidence": [
+            "The README requires Python 3 and `lxml` but provides no installation or environment setup command.",
+            "`scripts/extract_notebooklm_save.py` uses macOS extended attributes (`com.apple.metadata:kMDItemWhereFroms`) only to recover source URLs; on other platforms it catches the resulting OS error and omits those URLs.",
+            "The README says URL recovery needs the original macOS companion directory, but does not explicitly distinguish the cross-platform extraction path from this macOS-only enhancement."
+          ],
+          "rationale": "For maintainers and users on Linux, the advertised command should have an actionable dependency path and a crisp statement of what succeeds without macOS-specific metadata. Otherwise a first run can fail before extraction due to a missing dependency, and users cannot tell whether incomplete URL recovery is expected.",
+          "severity": "blocking",
+          "suggested_change": "Add a supported way to obtain `lxml` (or link to the project\u2019s dependency manifest if one is added) and state that source/chat extraction works from the saved HTML, while original-URL recovery is an optional macOS-only capability requiring the companion directory and its extended attributes.",
+          "title": "Linux support and dependency setup are underspecified"
+        }
+      ],
+      "confidence": "high",
+      "evaluator_id": "popular-linux-open-source-maintainer-v1",
+      "limitations": [
+        "This is a simulated maintainer review based only on the checked-out repository and its Git history; no upstream issue, release policy, CI configuration, or real Linux user environment was available.",
+        "The original saved NotebookLM HTML and macOS companion directory are intentionally absent, so end-to-end extraction and URL-recovery behavior could not be verified.",
+        "No claim is made about whether the removed documentation was intentionally relocated outside this repository."
+      ],
+      "questions": [],
+      "recommendation": "request_changes",
+      "schema_version": "1.0.0",
+      "strengths": [
+        {
+          "claim": "The documented extraction command matches the executable interface.",
+          "evidence": [
+            "`scripts/extract_notebooklm_save.py --help` accepts one saved HTML positional argument and `--output-dir`; the README invocation supplies both correctly.",
+            "The script defaults `--output-dir` to `docs` and writes `sources.md` and `chat-transcript.md`, matching the README\u2019s stated regenerated files."
+          ]
+        },
+        {
+          "claim": "The README\u2019s internal links point to present repository files.",
+          "evidence": [
+            "`docs/sources.md` and `docs/chat-transcript.md` both exist in the repository.",
+            "`git diff --check HEAD^ HEAD -- README.md` reports no whitespace errors."
+          ]
+        }
+      ],
+      "summary": "Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository\u2019s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project."
+    },
+    "run_id": "reademe-temp-forward-test-linux-maintainer-v1",
+    "subject": {
+      "readme_path": "README.md",
+      "readme_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+      "repository_head": "e59a6bbb67f7e6d2f6182bed8c627f6ac9dcdb38",
+      "repository_tree": "c434456d4b0026722ea72fdcbfc55e3dafaa84b6",
+      "worktree_diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "producer": {
+    "id": "popular-linux-open-source-maintainer-v1",
+    "kind": "soft_agent_evaluator",
+    "spec_sha256": "4d7d9fda0ec7aa4fbd19ee76bb4453c7a994ae0c839e7c5af52b9604ec74693a",
+    "version": null
+  },
+  "record_id": "rm-f96b8e9d6c94dee9",
+  "recorded_at": "2026-08-30T22:12:55.007491Z",
+  "result": "completed",
+  "schema_version": 1,
+  "source_records": [
+    {
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json",
+      "role": "review_run",
+      "selector": null,
+      "sha256": "ff0e15f7a230427d16b3762f349ef22e9a798f8a91a62ed7ae924fc7444ba9e8"
+    },
+    {
+      "path": "experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json",
+      "role": "evaluator_spec",
+      "selector": null,
+      "sha256": "4d7d9fda0ec7aa4fbd19ee76bb4453c7a994ae0c839e7c5af52b9604ec74693a"
+    },
+    {
+      "path": "experiments/evaluators/popular-linux-open-source-maintainer-v1/instructions.md",
+      "role": "evaluator_instructions",
+      "selector": null,
+      "sha256": "b134105ac91903256172ac99de9f77b9fc09f21dd52eb756b3c2f5eb87e895ce"
+    },
+    {
+      "path": "experiments/schemas/soft-agent-review-response-v1.schema.json",
+      "role": "evaluator_response_schema",
+      "selector": null,
+      "sha256": "440530c54422fd3021da10563748f3f9ec59099346fe3960c45e6ef94547374b"
+    },
+    {
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.schema.json",
+      "role": "execution_response_schema",
+      "selector": null,
+      "sha256": "440530c54422fd3021da10563748f3f9ec59099346fe3960c45e6ef94547374b"
+    },
+    {
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/events.jsonl",
+      "role": "events",
+      "selector": null,
+      "sha256": "e908fa7d288ba983447434f6eeff910ce6f4ea33f175b1eb0b72f257bcbe62e0"
+    },
+    {
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.json",
+      "role": "response",
+      "selector": null,
+      "sha256": "6f1e4f3dc85168ea8d5a81641bbf5b49f2f169f60b9faa19c6860e2830fdb916"
+    },
+    {
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/stderr.log",
+      "role": "stderr",
+      "selector": null,
+      "sha256": "1e76c8707645154725208d7233cd10fd7bd276058e2af4739f5f4a18d2470334"
+    }
+  ],
+  "subject_scope": "occurrence",
+  "summary": "Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository\u2019s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project."
+}

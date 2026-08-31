@@ -1,0 +1,122 @@
+{
+  "artifact_id": "sha256:1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+  "authority": "evidence_only",
+  "decision_disposition": "not_decided",
+  "evidence_id": "ev-b6dc435cdbefd9d6",
+  "kind": "structural_observation",
+  "limitations": [
+    "Category signals use exact normalized heading aliases and do not infer semantic coverage from prose.",
+    "This structural observation is not a README quality score."
+  ],
+  "occurrence_id": "occ-816fff1bb4d0defe",
+  "payload": {
+    "category_signals": [
+      {
+        "category_id": "development_participation",
+        "evidence": [
+          {
+            "kind": "heading_alias",
+            "line": 47,
+            "text": "Contributing"
+          }
+        ]
+      },
+      {
+        "category_id": "identity",
+        "evidence": [
+          {
+            "kind": "document_title",
+            "line": 3,
+            "text": "Flask"
+          }
+        ]
+      }
+    ],
+    "derivation": {
+      "annotation": {
+        "annotator": "bootstrap-corpus-author",
+        "protocol": "bootstrap-role-annotation",
+        "protocol_version": "1.0.0"
+      },
+      "extractor": {
+        "name": "readme-lab-inspect",
+        "version": "2.0.0"
+      },
+      "taxonomy": {
+        "kind": "readme-labs-taxonomy",
+        "sha256": "678a4339b2b4ec96e40ec732d8b33811ab5a05d6c3182826a3937f0615794115",
+        "version": "1.0.0"
+      }
+    },
+    "document_id": "sha256:dafb7d44ce088cc2e7e4c88c52ce29eb432c5d135aab6d7144efd3441720a6ef",
+    "limitations": [
+      "Category signals use exact normalized heading aliases and do not infer semantic coverage from prose.",
+      "This structural observation is not a README quality score."
+    ],
+    "observation_id": "sha256:2882d7079cc34eece45488c1a099eb1a301f3f195ec78570322498e48c1472b3",
+    "observed_at": "2026-08-30T02:10:00Z",
+    "role": {
+      "assignment": "annotated",
+      "primary": "framework_or_platform",
+      "secondary": []
+    },
+    "schema_version": "2.0.0",
+    "source": {
+      "content_sha256": "1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+      "license_spdx": "BSD-3-Clause",
+      "path": "README.md",
+      "repository": "pallets/flask",
+      "retrieval_url": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+      "revision": "d318b683471101618febed18996405ad26462110"
+    },
+    "structure": {
+      "code_block_count": 2,
+      "heading_count": 4,
+      "headings": [
+        {
+          "level": 1,
+          "line": 3,
+          "text": "Flask"
+        },
+        {
+          "level": 2,
+          "line": 20,
+          "text": "A Simple Example"
+        },
+        {
+          "level": 2,
+          "line": 38,
+          "text": "Donate"
+        },
+        {
+          "level": 2,
+          "line": 47,
+          "text": "Contributing"
+        }
+      ],
+      "line_count": 53,
+      "link_count": 5,
+      "word_count": 241
+    }
+  },
+  "producer": {
+    "id": "readme-lab-inspect",
+    "kind": "structural_inspector",
+    "spec_sha256": "678a4339b2b4ec96e40ec732d8b33811ab5a05d6c3182826a3937f0615794115",
+    "version": "2.0.0"
+  },
+  "record_id": "rm-1f2de14735b1ee9d",
+  "recorded_at": "2026-08-30T02:10:00Z",
+  "result": "completed",
+  "schema_version": 1,
+  "source_records": [
+    {
+      "path": "corpus/observations/pilot-high-exposure-v1.jsonl",
+      "role": "observation_collection",
+      "selector": "document_id=sha256:dafb7d44ce088cc2e7e4c88c52ce29eb432c5d135aab6d7144efd3441720a6ef",
+      "sha256": "e5c3fcc1f329d207b035bac30dd5b17a5082516576b4f3f3597623f8bc924522"
+    }
+  ],
+  "subject_scope": "occurrence",
+  "summary": "53 lines, 241 words, 4 headings, and 5 links observed."
+}

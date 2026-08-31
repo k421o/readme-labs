@@ -12,8 +12,9 @@ The repository begins as a **domain module with an evaluation lab**:
 - a canonical model of README roles and information categories;
 - evidence and provenance for that model;
 - a manifest-driven corpus that can support reproducible analysis;
-- executable observations and evaluation scenarios; and
+- executable observations and evaluation scenarios;
 - a provenance-bearing intake and candidate library;
+- content-addressed README artifact and evidence records;
 - advisory agent-response evaluation; and
 - one installable capability derived from the domain work.
 
@@ -106,7 +107,9 @@ domain definitions and schemas
     ↓
 corpus manifests and structural observations
     ↓
-evaluation scenarios and results
+captured README artifacts and document-centered evidence
+    ↓
+evaluation scenarios, runs, and synthesis
     ↓
 canonical capability source
     ↓

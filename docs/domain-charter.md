@@ -71,10 +71,12 @@ The stable middle of the project consists of:
 
 1. A vocabulary for repository and document roles.
 2. A semantic taxonomy for README information.
-3. `READMEObservation`, the interchange format between collectors, annotators,
-   analyzers, evaluators, and capabilities.
-4. Evidence and confidence rules.
-5. Evaluation outcomes that distinguish structural, behavioral, and human
+3. A captured README artifact model that separates immutable bytes, provenance,
+   repository occurrence, collection purpose, lineage, and evidence.
+4. `READMEObservation`, the structural interchange format between collectors,
+   annotators, analyzers, evaluators, and capabilities.
+5. Evidence and confidence rules.
+6. Evaluation outcomes that distinguish structural, behavioral, and human
    judgments.
 
 Collectors and consumers may change independently when they preserve these

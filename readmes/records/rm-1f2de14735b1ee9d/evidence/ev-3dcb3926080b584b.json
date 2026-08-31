@@ -1,0 +1,81 @@
+{
+  "artifact_id": "sha256:1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+  "authority": "evidence_only",
+  "decision_disposition": "not_decided",
+  "evidence_id": "ev-3dcb3926080b584b",
+  "kind": "static_analysis",
+  "limitations": [
+    "The analyzer reads CommonMark tokens and does not reproduce every hosting platform's Markdown extensions.",
+    "Diagnostics identify inspectable properties; they do not measure README usefulness, correctness, or fitness for a specific audience.",
+    "Repository links, rendered HTML, and prose semantics are outside this first analyzer.",
+    "Corpus diagnostics describe this pinned sample and do not estimate population prevalence or README quality."
+  ],
+  "occurrence_id": null,
+  "payload": {
+    "analyzer": {
+      "adapter_kind": "builtin_python",
+      "id": "markdown-structure-v1",
+      "spec_sha256": "fc86aef9cc08ea381b3bdcf6ac0e705c706332d5e730f33e206eacbe22b19c07",
+      "version": "1.0.0"
+    },
+    "configuration": {
+      "enabled_rule_ids": [
+        "duplicate-heading-text",
+        "empty-heading",
+        "heading-level-jump",
+        "image-missing-alt"
+      ],
+      "profile": "all"
+    },
+    "mode": "corpus_characterization",
+    "run_id": "pilot-high-exposure-markdown-structure-v1",
+    "subject": {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 4,
+        "image_count": 0,
+        "line_count": 53
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "pallets/flask",
+        "retrieval_url": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+        "revision": "d318b683471101618febed18996405ad26462110"
+      },
+      "subject_id": "pallets-flask-root"
+    }
+  },
+  "producer": {
+    "id": "markdown-structure-v1",
+    "kind": "static_analyzer",
+    "spec_sha256": "fc86aef9cc08ea381b3bdcf6ac0e705c706332d5e730f33e206eacbe22b19c07",
+    "version": "1.0.0"
+  },
+  "record_id": "rm-1f2de14735b1ee9d",
+  "recorded_at": "2026-08-31T02:40:33.089462Z",
+  "result": "completed",
+  "schema_version": 1,
+  "source_records": [
+    {
+      "path": "experiments/runs/pilot-high-exposure-markdown-structure-v1/run.json",
+      "role": "static_analysis_run",
+      "selector": "subject_id=pallets-flask-root",
+      "sha256": "ef7a9cca33f9e5aa050358ae4dbe7d5fec1c94edc23779ca9125bbf673b4c4f5"
+    },
+    {
+      "path": "experiments/analyzers/markdown-structure-v1/analyzer.json",
+      "role": "analyzer_spec",
+      "selector": null,
+      "sha256": "fc86aef9cc08ea381b3bdcf6ac0e705c706332d5e730f33e206eacbe22b19c07"
+    }
+  ],
+  "subject_scope": "artifact",
+  "summary": "0 diagnostics from markdown-structure-v1 using the all profile."
+}

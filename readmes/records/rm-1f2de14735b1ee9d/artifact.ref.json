@@ -1,0 +1,8 @@
+{
+  "artifact_id": "sha256:1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+  "locator": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+  "path": "README.md",
+  "repository": "pallets/flask",
+  "revision": "d318b683471101618febed18996405ad26462110",
+  "schema_version": 1
+}

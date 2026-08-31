@@ -1,0 +1,111 @@
+{
+  "artifact": {
+    "byte_length": 698,
+    "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+    "id": "sha256:f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+    "media_type": "text/markdown",
+    "original_name": "README.md",
+    "storage": {
+      "mode": "embedded",
+      "path": "artifact.md",
+      "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+    }
+  },
+  "capture": {
+    "boundary": "completed_generation",
+    "captured_at": "2026-08-31T04:08:31Z",
+    "pre_capture_editability": "mutable",
+    "state": "captured"
+  },
+  "custody": {
+    "body_policy": "embedded",
+    "ownership": "owned",
+    "visibility": "local_only"
+  },
+  "limitations": [
+    "The original forward-test workspace was uncommitted; intake preserves its exact content digest and observation time."
+  ],
+  "lineage": [],
+  "memberships": [
+    {
+      "collection_id": "reademe-temp-forward-test",
+      "purpose": "generated_output",
+      "recorded_at": "2026-08-31T04:08:31Z"
+    },
+    {
+      "collection_id": "reademe-temp-modular-readme-v1",
+      "purpose": "candidate_output",
+      "recorded_at": "2026-08-31T04:08:31Z"
+    },
+    {
+      "collection_id": "reademe-temp-static-diagnostics-v1",
+      "purpose": "experiment_subject",
+      "recorded_at": "2026-08-31T04:08:31Z"
+    }
+  ],
+  "occurrences": [
+    {
+      "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+      "id": "occ-32fff3ea0f76b14f",
+      "path": "README.md",
+      "repository": "local:reademe-temp-evaluation",
+      "revision": "e59a6bbb67f7e6d2f6182bed8c627f6ac9dcdb38",
+      "role": "repository_root",
+      "tree": "c434456d4b0026722ea72fdcbfc55e3dafaa84b6"
+    },
+    {
+      "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+      "id": "occ-3bb7dbd8e9470ae5",
+      "path": "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md",
+      "repository": "k421o/readme-labs",
+      "revision": "b10ff9c1ad032c6861b7d03463f52d9ac5d8e208",
+      "role": "experiment"
+    },
+    {
+      "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+      "id": "occ-57d63ad408b7be4c",
+      "path": ".agents/skills/modular-readme/work/forward-test/assembled/README.md",
+      "repository": "local:reademe-temp",
+      "revision": "workspace@2026-08-30T22:02:58Z",
+      "role": "experiment"
+    }
+  ],
+  "provenance": [
+    {
+      "id": "prov-73f766b72adbae0a",
+      "kind": "generated",
+      "limitations": [
+        "The original forward-test workspace was uncommitted; intake preserves its exact content digest and observation time."
+      ],
+      "producer": {
+        "id": "reademe-temp-modular-readme-v1",
+        "kind": "candidate",
+        "run_id": "reademe-temp-forward-test",
+        "version": null
+      },
+      "recorded_at": "2026-08-31T04:08:31Z",
+      "source": {
+        "locator": null,
+        "path": "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md",
+        "repository": "k421o/readme-labs",
+        "revision": "b10ff9c1ad032c6861b7d03463f52d9ac5d8e208"
+      }
+    },
+    {
+      "id": "prov-c252498fd71bb9a8",
+      "kind": "ingested",
+      "limitations": [
+        "The originating forward-test tree was workspace state and is identified by observation time and content digest rather than a Git revision."
+      ],
+      "recorded_at": "2026-08-30T22:02:58Z",
+      "source": {
+        "locator": "intake/manifests/reademe-temp-v1.json",
+        "path": ".agents/skills/modular-readme/work/forward-test/assembled/README.md",
+        "repository": "local:reademe-temp",
+        "revision": "workspace@2026-08-30T22:02:58Z"
+      }
+    }
+  ],
+  "record_id": "rm-f96b8e9d6c94dee9",
+  "schema_version": 1
+}
