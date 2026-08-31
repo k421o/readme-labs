@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 
 from readme_lab.agent_evaluation import run_agent_evaluation
@@ -34,6 +35,11 @@ from readme_lab.intake import fingerprint_git_path, verify_intake_manifest
 from readme_lab.migration import (
     build_git_migration_receipt,
     write_git_migration_receipt,
+)
+from readme_lab.readme_artifacts import (
+    capture_readme_artifact,
+    load_artifact_record,
+    register_reference_artifact,
 )
 from readme_lab.static_analysis import (
     load_static_analysis_run,
@@ -416,7 +422,139 @@ def build_parser() -> argparse.ArgumentParser:
         default="high",
     )
     agent_eval_run_parser.add_argument("--codex-executable", default="codex")
+
+    artifact_parser = subparsers.add_parser(
+        "artifact", help="capture and verify document-centered README records"
+    )
+    artifact_subparsers = artifact_parser.add_subparsers(
+        dest="artifact_command", required=True
+    )
+    artifact_capture = artifact_subparsers.add_parser(
+        "capture", help="capture a selected completed README without editing its source"
+    )
+    artifact_capture.add_argument("source", type=Path)
+    artifact_capture.add_argument("--registry", type=Path, required=True)
+    artifact_capture.add_argument(
+        "--provenance-kind",
+        choices=("generated", "ingested", "authored", "synthetic"),
+        required=True,
+    )
+    artifact_capture.add_argument(
+        "--boundary",
+        choices=(
+            "completed_generation",
+            "ingestion_selection",
+            "explicit_manual_capture",
+        ),
+        required=True,
+    )
+    artifact_capture.add_argument(
+        "--pre-capture-editability",
+        choices=("mutable", "not_applicable", "unknown"),
+        required=True,
+    )
+    artifact_capture.add_argument(
+        "--ownership", choices=("owned", "third_party", "unknown"), required=True
+    )
+    artifact_capture.add_argument(
+        "--visibility",
+        choices=("public", "private", "local_only", "unknown"),
+        required=True,
+    )
+    artifact_capture.add_argument("--repository")
+    artifact_capture.add_argument("--revision")
+    artifact_capture.add_argument("--recorded-path")
+    artifact_capture.add_argument("--role", default="unspecified")
+    artifact_capture.add_argument("--tree")
+    artifact_capture.add_argument(
+        "--producer-kind",
+        choices=("skill", "candidate", "workflow", "human", "other"),
+    )
+    artifact_capture.add_argument("--producer-id")
+    artifact_capture.add_argument("--producer-version")
+    artifact_capture.add_argument("--producer-run-id")
+    artifact_capture.add_argument(
+        "--membership", action="append", default=[], metavar="COLLECTION=PURPOSE"
+    )
+    artifact_capture.add_argument("--captured-at")
+    artifact_capture.add_argument("--license-spdx")
+    artifact_capture.add_argument("--limitation", action="append", default=[])
+
+    artifact_reference = artifact_subparsers.add_parser(
+        "reference",
+        help="register pinned source identity without copying the README body",
+    )
+    artifact_reference.add_argument("--registry", type=Path, required=True)
+    artifact_reference.add_argument("--content-sha256", required=True)
+    artifact_reference.add_argument("--locator", required=True)
+    artifact_reference.add_argument("--repository", required=True)
+    artifact_reference.add_argument("--revision", required=True)
+    artifact_reference.add_argument("--recorded-path", required=True)
+    artifact_reference.add_argument("--role", required=True)
+    artifact_reference.add_argument(
+        "--ownership",
+        choices=("owned", "third_party", "unknown"),
+        default="third_party",
+    )
+    artifact_reference.add_argument(
+        "--visibility",
+        choices=("public", "private", "local_only", "unknown"),
+        default="public",
+    )
+    artifact_reference.add_argument("--byte-length", type=int)
+    artifact_reference.add_argument("--original-name", default="README.md")
+    artifact_reference.add_argument(
+        "--membership", action="append", default=[], metavar="COLLECTION=PURPOSE"
+    )
+    artifact_reference.add_argument("--captured-at")
+    artifact_reference.add_argument("--license-spdx")
+    artifact_reference.add_argument("--limitation", action="append", default=[])
+
+    artifact_verify = artifact_subparsers.add_parser(
+        "verify", help="verify artifact identity, storage, and metadata"
+    )
+    artifact_verify.add_argument("record", type=Path)
     return parser
+
+
+def _memberships(values: list[str]) -> list[tuple[str, str]]:
+    memberships = []
+    for value in values:
+        if "=" not in value:
+            raise ValueError("memberships use COLLECTION=PURPOSE")
+        collection, purpose = value.split("=", 1)
+        if not collection or not purpose:
+            raise ValueError("memberships require both collection and purpose")
+        memberships.append((collection, purpose))
+    return memberships
+
+
+def _optional_datetime(value: str | None) -> datetime | None:
+    if value is None:
+        return None
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
+def _producer(args: argparse.Namespace) -> dict[str, str | None] | None:
+    supplied = any(
+        value is not None
+        for value in (
+            args.producer_kind,
+            args.producer_id,
+            args.producer_version,
+            args.producer_run_id,
+        )
+    )
+    if not supplied:
+        return None
+    if args.producer_kind is None or args.producer_id is None:
+        raise ValueError("producer metadata requires --producer-kind and --producer-id")
+    return {
+        "kind": args.producer_kind,
+        "id": args.producer_id,
+        "version": args.producer_version,
+        "run_id": args.producer_run_id,
+    }
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -733,6 +871,87 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(run, indent=2, sort_keys=True))
         return 0 if run["result"] == "completed" else 1
+    if args.command == "artifact" and args.artifact_command == "capture":
+        record_dir = capture_readme_artifact(
+            args.source,
+            registry=args.registry,
+            provenance_kind=args.provenance_kind,
+            boundary=args.boundary,
+            pre_capture_editability=args.pre_capture_editability,
+            ownership=args.ownership,
+            visibility=args.visibility,
+            repository=args.repository,
+            revision=args.revision,
+            recorded_path=args.recorded_path,
+            role=args.role,
+            tree=args.tree,
+            producer=_producer(args),
+            memberships=_memberships(args.membership),
+            captured_at=_optional_datetime(args.captured_at),
+            license_spdx=args.license_spdx,
+            limitations=args.limitation,
+        )
+        record = load_artifact_record(record_dir)
+        print(
+            json.dumps(
+                {
+                    "record_dir": record_dir.as_posix(),
+                    "record_id": record["record_id"],
+                    "artifact_id": record["artifact"]["id"],
+                    "valid": True,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+    if args.command == "artifact" and args.artifact_command == "reference":
+        record_dir = register_reference_artifact(
+            registry=args.registry,
+            content_sha256=args.content_sha256,
+            locator=args.locator,
+            repository=args.repository,
+            revision=args.revision,
+            recorded_path=args.recorded_path,
+            role=args.role,
+            ownership=args.ownership,
+            visibility=args.visibility,
+            byte_length=args.byte_length,
+            original_name=args.original_name,
+            memberships=_memberships(args.membership),
+            captured_at=_optional_datetime(args.captured_at),
+            license_spdx=args.license_spdx,
+            limitations=args.limitation,
+        )
+        record = load_artifact_record(record_dir)
+        print(
+            json.dumps(
+                {
+                    "record_dir": record_dir.as_posix(),
+                    "record_id": record["record_id"],
+                    "artifact_id": record["artifact"]["id"],
+                    "valid": True,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+    if args.command == "artifact" and args.artifact_command == "verify":
+        record = load_artifact_record(args.record)
+        print(
+            json.dumps(
+                {
+                    "record_id": record["record_id"],
+                    "artifact_id": record["artifact"]["id"],
+                    "storage_mode": record["artifact"]["storage"]["mode"],
+                    "valid": True,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
     raise AssertionError(f"unhandled command: {args.command}")
 
 

@@ -50,6 +50,8 @@ packages = ["src/readme_lab"]
 "experiments/schemas/static-analyzer-v1.schema.json" = "readme_lab/data/static-analyzer-v1.schema.json"
 "experiments/schemas/static-analysis-run-v1.schema.json" = "readme_lab/data/static-analysis-run-v1.schema.json"
 "experiments/schemas/user-response-observation-v1.schema.json" = "readme_lab/data/user-response-observation-v1.schema.json"
+"readmes/artifact-record-v1.schema.json" = "readme_lab/data/artifact-record-v1.schema.json"
+"readmes/evidence-record-v1.schema.json" = "readme_lab/data/evidence-record-v1.schema.json"
 
 [tool.pytest.ini_options]
 addopts = "-q"

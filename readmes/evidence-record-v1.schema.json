@@ -1,0 +1,117 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/readmes/evidence-record-v1.schema.json",
+  "title": "README Labs document evidence record v1",
+  "description": "A single-subject, document-centric projection of one observation or evaluation result. It remains evidence and does not decide artifact quality, experiment disposition, or promotion.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "evidence_id",
+    "record_id",
+    "artifact_id",
+    "kind",
+    "subject_scope",
+    "occurrence_id",
+    "recorded_at",
+    "producer",
+    "source_records",
+    "result",
+    "authority",
+    "decision_disposition",
+    "summary",
+    "payload",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "evidence_id": {"type": "string", "pattern": "^ev-[0-9a-f]{16}$"},
+    "record_id": {"type": "string", "pattern": "^rm-[0-9a-f]{16}$"},
+    "artifact_id": {
+      "type": "string",
+      "pattern": "^sha256:[0-9a-f]{64}$"
+    },
+    "kind": {
+      "enum": [
+        "structural_observation",
+        "static_analysis",
+        "soft_agent_review",
+        "user_response",
+        "other"
+      ]
+    },
+    "subject_scope": {"enum": ["artifact", "occurrence"]},
+    "occurrence_id": {
+      "anyOf": [
+        {"type": "null"},
+        {"type": "string", "pattern": "^occ-[0-9a-f]{16}$"}
+      ]
+    },
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "id", "version", "spec_sha256"],
+      "properties": {
+        "kind": {
+          "enum": [
+            "structural_inspector",
+            "static_analyzer",
+            "soft_agent_evaluator",
+            "user_response_method",
+            "other"
+          ]
+        },
+        "id": {"type": "string", "minLength": 1},
+        "version": {"type": ["string", "null"]},
+        "spec_sha256": {
+          "anyOf": [
+            {"type": "null"},
+            {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          ]
+        }
+      }
+    },
+    "source_records": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["role", "path", "sha256"],
+        "properties": {
+          "role": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "selector": {"type": ["string", "null"]}
+        }
+      }
+    },
+    "result": {"enum": ["completed", "incomplete"]},
+    "authority": {"const": "evidence_only"},
+    "decision_disposition": {"const": "not_decided"},
+    "summary": {"type": "string", "minLength": 1},
+    "payload": {"type": "object"},
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"subject_scope": {"const": "artifact"}}},
+      "then": {"properties": {"occurrence_id": {"type": "null"}}}
+    },
+    {
+      "if": {"properties": {"subject_scope": {"const": "occurrence"}}},
+      "then": {
+        "properties": {
+          "occurrence_id": {
+            "type": "string",
+            "pattern": "^occ-[0-9a-f]{16}$"
+          }
+        }
+      }
+    }
+  ]
+}
