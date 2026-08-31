@@ -14,7 +14,8 @@ The corpus profile evaluates all four rules. Initial calibration found repeated
 heading labels concentrated in a long API-reference README where repetition is
 plausibly intentional, so `duplicate-heading-text` is retained for inquiry but
 excluded from the default document-feedback profile. A caller can still select
-the `all` profile when that signal is relevant.
+the `all` profile when that signal is relevant. The complete calibration is in
+the [pinned corpus run](../../runs/pilot-high-exposure-markdown-structure-v1/README.md).
 
 The initial corpus characterization exists to show how these rules behave on
 real, high-exposure README documents before their feedback is incorporated into

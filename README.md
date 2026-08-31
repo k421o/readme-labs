@@ -23,7 +23,8 @@ eventually executable environments to test that model.
 - Acquire repositories and local work through an isolated, disposition-aware
   ingestion yard before admitting selected domain artifacts.
 - Compare isolated candidate capabilities through complete experimental runs,
-  soft agent perspectives, and eventually privacy-bounded user-response work.
+  static diagnostics, soft agent perspectives, and eventually privacy-bounded
+  user-response work.
 - Derive agent capabilities from the domain evidence and test them before
   treating them as products.
 
@@ -69,7 +70,7 @@ research/       Findings, sources, examples, and interpretation
 corpus/         Versioned manifests, labels, and sampling plans
 intake/         Outside research, methods, artifacts, and provenance
 candidates/     Reproducible non-authoritative skills, bundles, and methods
-experiments/    Hypotheses, advisory evaluators, runs, and user-response envelopes
+experiments/    Hypotheses, static analyzers, advisory evaluators, and runs
 evals/          Task capsules, mutations, environments, and scorecards
 capabilities/   Agent-facing projections derived from the domain model
 products/       Packaging adapters created only when a capability earns them
@@ -163,6 +164,9 @@ testable experimental specimens with immutable provenance, not editable forks
 or current products. The
 [adaptive domain laboratory](docs/experimental-architecture.md) defines intake,
 candidate, experiment, observation, promotion, and regression boundaries.
+Its [static-analysis subsystem](docs/static-analysis.md) characterizes analyzers
+on the corpus before exposing calibrated diagnostics for generated or ingested
+README artifacts.
 
 `repository-guidance` is already a downstream integration surface: its `v0.2.0`
 release removed the editable README copy and pins the immutable historical

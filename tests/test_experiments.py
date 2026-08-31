@@ -27,6 +27,19 @@ def test_initial_plan_makes_automated_results_evidence_only() -> None:
     assert plan["decision"]["timing"] == "after_planned_trials_complete"
 
 
+def test_static_diagnostic_plan_preserves_owner_decision_authority() -> None:
+    plan = load_experiment_plan(
+        Path("experiments/plans/reademe-temp-static-diagnostics-v1.json")
+    )
+
+    assert plan["planned_trials"][0]["kind"] == "static_analysis"
+    assert plan["completion_policy"]["automated_results_authority"] == (
+        "evidence_only"
+    )
+    assert plan["completion_policy"]["candidate_admission_gate"] == "none"
+    assert plan["decision"]["authority"] == "owner_or_designated_review"
+
+
 def test_plan_rejects_an_automated_hypothesis_veto(tmp_path: Path) -> None:
     source = Path(
         "experiments/plans/reademe-temp-modular-readme-v1.json"

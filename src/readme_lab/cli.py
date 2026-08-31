@@ -36,6 +36,7 @@ from readme_lab.migration import (
     write_git_migration_receipt,
 )
 from readme_lab.static_analysis import (
+    load_static_analysis_run,
     run_corpus_static_analysis,
     run_document_static_analysis,
 )
@@ -387,6 +388,11 @@ def build_parser() -> argparse.ArgumentParser:
     static_analysis_corpus.add_argument("--cache", type=Path, required=True)
     static_analysis_corpus.add_argument("--output", type=Path, required=True)
     static_analysis_corpus.add_argument("--run-id", required=True)
+    static_analysis_verify = static_analysis_subparsers.add_parser(
+        "verify", help="validate a run envelope against its exact analyzer spec"
+    )
+    static_analysis_verify.add_argument("analyzer", type=Path)
+    static_analysis_verify.add_argument("run", type=Path)
 
     agent_eval_parser = subparsers.add_parser(
         "agent-eval", help="run a soft advisory agent evaluator"
@@ -694,6 +700,25 @@ def main(argv: list[str] | None = None) -> int:
         )
         print(json.dumps(run, indent=2, sort_keys=True))
         return 0 if run["result"] == "completed" else 1
+    if (
+        args.command == "static-analysis"
+        and args.static_analysis_command == "verify"
+    ):
+        run = load_static_analysis_run(args.run, analyzer_path=args.analyzer)
+        print(
+            json.dumps(
+                {
+                    "run_id": run["run_id"],
+                    "mode": run["mode"],
+                    "result": run["result"],
+                    "summary": run["summary"],
+                    "valid": True,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
     if args.command == "agent-eval" and args.agent_eval_command == "run":
         run = run_agent_evaluation(
             args.evaluator,

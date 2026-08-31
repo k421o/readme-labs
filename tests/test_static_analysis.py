@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 from datetime import UTC, datetime
 from pathlib import Path
@@ -17,6 +18,15 @@ from readme_lab.static_analysis import (
 
 ANALYZER = Path(
     "experiments/analyzers/markdown-structure-v1/analyzer.json"
+)
+CORPUS_RUN = Path(
+    "experiments/runs/pilot-high-exposure-markdown-structure-v1/run.json"
+)
+GENERATED_RUN = Path(
+    "experiments/runs/reademe-temp-forward-test-markdown-structure-v1/run.json"
+)
+GENERATED_README = Path(
+    "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md"
 )
 
 
@@ -257,3 +267,57 @@ def test_static_analysis_run_rejects_a_tampered_summary(tmp_path: Path) -> None:
 
     with pytest.raises(ValueError, match="summary does not match"):
         load_static_analysis_run(output, analyzer_path=ANALYZER)
+
+
+def test_committed_corpus_characterization_is_pinned_and_non_normative() -> None:
+    run = load_static_analysis_run(CORPUS_RUN, analyzer_path=ANALYZER)
+    manifest = load_manifest(
+        Path("corpus/manifests/pilot-high-exposure-v1.jsonl")
+    )
+
+    assert run["mode"] == "corpus_characterization"
+    assert run["configuration"]["profile"] == "all"
+    assert run["summary"] == {
+        "subject_count": 16,
+        "completed_subject_count": 16,
+        "incomplete_subject_count": 0,
+        "diagnostic_count": 17,
+        "diagnostics_by_rule": {
+            "duplicate-heading-text": 10,
+            "heading-level-jump": 7,
+        },
+    }
+    expected_sources = {
+        (item["sample_id"], item["repository"], item["revision"], item["path"])
+        for item in manifest
+    }
+    actual_sources = {
+        (
+            subject["subject_id"],
+            subject["source"]["repository"],
+            subject["source"]["revision"],
+            subject["source"]["path"],
+        )
+        for subject in run["subjects"]
+    }
+    assert actual_sources == expected_sources
+    assert run["automated_authority"] == "evidence_only"
+    assert run["hypothesis_disposition"] == "not_decided"
+
+
+def test_committed_generated_diagnostic_complements_soft_review() -> None:
+    run = load_static_analysis_run(GENERATED_RUN, analyzer_path=ANALYZER)
+    soft_review = json.loads(
+        Path(
+            "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json"
+        ).read_text(encoding="utf-8")
+    )
+
+    assert run["subjects"][0]["source"]["content_sha256"] == hashlib.sha256(
+        GENERATED_README.read_bytes()
+    ).hexdigest()
+    assert run["summary"]["diagnostic_count"] == 0
+    assert run["configuration"]["profile"] == "feedback"
+    assert soft_review["recommendation"] == "request_changes"
+    assert run["hypothesis_disposition"] == "not_decided"
+    assert soft_review["hypothesis_disposition"] == "not_decided"
