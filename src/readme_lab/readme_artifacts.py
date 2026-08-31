@@ -12,7 +12,11 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from readme_lab.agent_evaluation import load_agent_review_response, load_evaluator
 from readme_lab.artifacts import resolve_contained
+from readme_lab.domain import validate_observation
+from readme_lab.inspect import inspect_readme
+from readme_lab.static_analysis import load_static_analysis_run
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = REPOSITORY_ROOT / "readmes"
@@ -134,6 +138,14 @@ def _write_new_json(path: Path, value: dict[str, Any]) -> None:
     path.write_text(
         json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+
+
+def _replace_json(path: Path, value: dict[str, Any]) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    temporary.replace(path)
 
 
 def _base_record(
@@ -436,3 +448,543 @@ def load_artifact_record(record_dir: Path) -> dict[str, Any]:
         if item["content_sha256"] != digest:
             raise ValueError("occurrence content digest does not match artifact")
     return record
+
+
+def add_artifact_occurrence(
+    record_dir: Path,
+    *,
+    repository: str,
+    revision: str,
+    recorded_path: str,
+    role: str,
+    tree: str | None = None,
+    retrieval_url: str | None = None,
+) -> dict[str, Any]:
+    """Attach another repository placement without changing captured bytes."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    occurrence = _occurrence(
+        repository=repository,
+        revision=revision,
+        recorded_path=recorded_path,
+        role=role,
+        content_sha256=record["artifact"]["content_sha256"],
+        tree=tree,
+        retrieval_url=retrieval_url,
+    )
+    if any(item["id"] == occurrence["id"] for item in record["occurrences"]):
+        raise ValueError(f"occurrence already exists: {occurrence['id']}")
+    record["occurrences"].append(occurrence)
+    record["occurrences"].sort(key=lambda item: item["id"])
+    _replace_json(record_dir / "record.json", record)
+    load_artifact_record(record_dir)
+    return occurrence
+
+
+def _repository_source(
+    path: Path, *, repository_root: Path, role: str, selector: str | None = None
+) -> dict[str, Any]:
+    repository_root = repository_root.resolve()
+    path = path.resolve()
+    try:
+        relative = path.relative_to(repository_root)
+    except ValueError as error:
+        raise ValueError(
+            f"evidence source is outside repository root: {path}"
+        ) from error
+    if path.is_symlink() or not path.is_file():
+        raise FileNotFoundError(path)
+    return {
+        "role": role,
+        "path": relative.as_posix(),
+        "sha256": _file_sha256(path),
+        "selector": selector,
+    }
+
+
+def _occurrence_by_id(record: dict[str, Any], occurrence_id: str) -> dict[str, Any]:
+    matches = [
+        occurrence
+        for occurrence in record["occurrences"]
+        if occurrence["id"] == occurrence_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"unknown artifact occurrence: {occurrence_id}")
+    return matches[0]
+
+
+def _matching_occurrence(
+    record: dict[str, Any], *, repository: str, revision: str, path: str
+) -> dict[str, Any]:
+    matches = [
+        occurrence
+        for occurrence in record["occurrences"]
+        if occurrence["repository"] == repository
+        and occurrence["revision"] == revision
+        and occurrence["path"] == path
+    ]
+    if len(matches) != 1:
+        raise ValueError(
+            "evidence must match exactly one recorded repository occurrence"
+        )
+    return matches[0]
+
+
+def _write_evidence(record_dir: Path, value: dict[str, Any]) -> Path:
+    evidence = {**value}
+    evidence["evidence_id"] = f"ev-{_canonical_sha256(value)[:16]}"
+    Draft202012Validator(
+        _load_schema(EVIDENCE_SCHEMA), format_checker=FormatChecker()
+    ).validate(evidence)
+    evidence_dir = record_dir.resolve() / "evidence"
+    evidence_dir.mkdir(exist_ok=True)
+    path = evidence_dir / f"{evidence['evidence_id']}.json"
+    _write_new_json(path, evidence)
+    return path
+
+
+def _evidence_base(
+    record: dict[str, Any],
+    *,
+    kind: str,
+    subject_scope: str,
+    occurrence_id: str | None,
+    recorded_at: str,
+    producer: dict[str, Any],
+    source_records: list[dict[str, Any]],
+    result: str,
+    summary: str,
+    payload: dict[str, Any],
+    limitations: list[str],
+) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "record_id": record["record_id"],
+        "artifact_id": record["artifact"]["id"],
+        "kind": kind,
+        "subject_scope": subject_scope,
+        "occurrence_id": occurrence_id,
+        "recorded_at": recorded_at,
+        "producer": producer,
+        "source_records": source_records,
+        "result": result,
+        "authority": "evidence_only",
+        "decision_disposition": "not_decided",
+        "summary": summary,
+        "payload": payload,
+        "limitations": limitations,
+    }
+
+
+def inspect_captured_artifact(
+    record_dir: Path,
+    *,
+    occurrence_id: str,
+    repository_root: Path,
+    observed_at: datetime | None = None,
+) -> Path:
+    """Create one structural observation for an embedded captured artifact."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    storage = record["artifact"]["storage"]
+    if storage["mode"] != "embedded":
+        raise ValueError("structural inspection requires available README bytes")
+    occurrence = _occurrence_by_id(record, occurrence_id)
+    artifact_path = resolve_contained(record_dir, storage["path"])
+    timestamp = observed_at or datetime.fromisoformat(
+        record["capture"]["captured_at"].replace("Z", "+00:00")
+    )
+    observation = inspect_readme(
+        artifact_path,
+        repository=occurrence["repository"],
+        revision=occurrence["revision"],
+        role=occurrence["role"],
+        role_assignment="declared",
+        observed_at=timestamp,
+        source_path=occurrence["path"],
+        retrieval_url=occurrence.get("retrieval_url"),
+        license_spdx=record["custody"].get("license_spdx"),
+    )
+    structure = observation["structure"]
+    value = _evidence_base(
+        record,
+        kind="structural_observation",
+        subject_scope="occurrence",
+        occurrence_id=occurrence_id,
+        recorded_at=observation["observed_at"],
+        producer={
+            "kind": "structural_inspector",
+            "id": observation["derivation"]["extractor"]["name"],
+            "version": observation["derivation"]["extractor"]["version"],
+            "spec_sha256": observation["derivation"]["taxonomy"]["sha256"],
+        },
+        source_records=[
+            _repository_source(
+                artifact_path, repository_root=repository_root, role="artifact"
+            )
+        ],
+        result="completed",
+        summary=(
+            f"{structure['line_count']} lines, {structure['word_count']} words, "
+            f"{structure['heading_count']} headings, and "
+            f"{structure['link_count']} links observed."
+        ),
+        payload=observation,
+        limitations=observation["limitations"],
+    )
+    return _write_evidence(record_dir, value)
+
+
+def _load_observation_source(
+    path: Path, *, document_id: str | None, artifact_digest: str
+) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    try:
+        parsed = json.loads(text)
+    except json.JSONDecodeError:
+        candidates = [json.loads(line) for line in text.splitlines() if line.strip()]
+    else:
+        candidates = parsed if isinstance(parsed, list) else [parsed]
+    matches = [
+        item
+        for item in candidates
+        if item.get("source", {}).get("content_sha256") == artifact_digest
+        and (document_id is None or item.get("document_id") == document_id)
+    ]
+    if len(matches) != 1:
+        raise ValueError("observation source must identify exactly one artifact record")
+    validate_observation(matches[0])
+    return matches[0]
+
+
+def attach_observation_evidence(
+    record_dir: Path,
+    *,
+    observations_path: Path,
+    repository_root: Path,
+    document_id: str | None = None,
+) -> Path:
+    """Project one existing READMEObservation into its document package."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    observation = _load_observation_source(
+        observations_path,
+        document_id=document_id,
+        artifact_digest=record["artifact"]["content_sha256"],
+    )
+    source = observation["source"]
+    occurrence = _matching_occurrence(
+        record,
+        repository=source["repository"],
+        revision=source["revision"],
+        path=source["path"],
+    )
+    structure = observation["structure"]
+    value = _evidence_base(
+        record,
+        kind="structural_observation",
+        subject_scope="occurrence",
+        occurrence_id=occurrence["id"],
+        recorded_at=observation["observed_at"],
+        producer={
+            "kind": "structural_inspector",
+            "id": observation["derivation"]["extractor"]["name"],
+            "version": observation["derivation"]["extractor"]["version"],
+            "spec_sha256": observation["derivation"]["taxonomy"]["sha256"],
+        },
+        source_records=[
+            _repository_source(
+                observations_path,
+                repository_root=repository_root,
+                role="observation_collection",
+                selector=f"document_id={observation['document_id']}",
+            )
+        ],
+        result="completed",
+        summary=(
+            f"{structure['line_count']} lines, {structure['word_count']} words, "
+            f"{structure['heading_count']} headings, and "
+            f"{structure['link_count']} links observed."
+        ),
+        payload=observation,
+        limitations=observation["limitations"],
+    )
+    return _write_evidence(record_dir, value)
+
+
+def attach_static_analysis_evidence(
+    record_dir: Path,
+    *,
+    run_path: Path,
+    analyzer_path: Path,
+    subject_id: str,
+    repository_root: Path,
+) -> Path:
+    """Project one subject from a static-analysis run into a document package."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    run = load_static_analysis_run(run_path, analyzer_path=analyzer_path)
+    matches = [
+        subject for subject in run["subjects"] if subject["subject_id"] == subject_id
+    ]
+    if len(matches) != 1:
+        raise ValueError(f"static run has no unique subject {subject_id!r}")
+    subject = matches[0]
+    if subject["source"]["content_sha256"] != record["artifact"]["content_sha256"]:
+        raise ValueError("static-analysis subject does not match README artifact")
+    diagnostic_count = len(subject["diagnostics"])
+    value = _evidence_base(
+        record,
+        kind="static_analysis",
+        subject_scope="artifact",
+        occurrence_id=None,
+        recorded_at=run["recorded_at"],
+        producer={
+            "kind": "static_analyzer",
+            "id": run["analyzer"]["id"],
+            "version": run["analyzer"]["version"],
+            "spec_sha256": run["analyzer"]["spec_sha256"],
+        },
+        source_records=[
+            _repository_source(
+                run_path,
+                repository_root=repository_root,
+                role="static_analysis_run",
+                selector=f"subject_id={subject_id}",
+            ),
+            _repository_source(
+                analyzer_path, repository_root=repository_root, role="analyzer_spec"
+            ),
+        ],
+        result=subject["result"],
+        summary=(
+            f"{diagnostic_count} diagnostics from {run['analyzer']['id']} "
+            f"using the {run['configuration']['profile']} profile."
+        ),
+        payload={
+            "run_id": run["run_id"],
+            "mode": run["mode"],
+            "analyzer": run["analyzer"],
+            "configuration": run["configuration"],
+            "subject": subject,
+        },
+        limitations=run["limitations"],
+    )
+    return _write_evidence(record_dir, value)
+
+
+def _soft_run_sources(
+    run_dir: Path,
+    run: dict[str, Any],
+    evaluator: dict[str, Any],
+    *,
+    repository_root: Path,
+) -> list[dict[str, Any]]:
+    sources = [
+        _repository_source(
+            run_dir / "run.json", repository_root=repository_root, role="review_run"
+        ),
+        _repository_source(
+            evaluator["_spec_path"],
+            repository_root=repository_root,
+            role="evaluator_spec",
+        ),
+        _repository_source(
+            evaluator["_instructions_path"],
+            repository_root=repository_root,
+            role="evaluator_instructions",
+        ),
+        _repository_source(
+            evaluator["_response_schema_path"],
+            repository_root=repository_root,
+            role="evaluator_response_schema",
+        ),
+    ]
+    run_response_schema = run_dir / "response.schema.json"
+    if run_response_schema.is_file():
+        sources.append(
+            _repository_source(
+                run_response_schema,
+                repository_root=repository_root,
+                role="execution_response_schema",
+            )
+        )
+    seen = {source["path"] for source in sources}
+    for role, name in sorted(run["artifacts"].items()):
+        if not isinstance(name, str) or role.endswith("_sha256"):
+            continue
+        path = run_dir / name
+        if path.resolve().relative_to(repository_root.resolve()).as_posix() in seen:
+            continue
+        sources.append(
+            _repository_source(path, repository_root=repository_root, role=role)
+        )
+        seen.add(sources[-1]["path"])
+    return sources
+
+
+def attach_soft_review_evidence(
+    record_dir: Path,
+    *,
+    run_dir: Path,
+    evaluator_path: Path,
+    occurrence_id: str,
+    repository_root: Path,
+) -> Path:
+    """Attach a repository-contextual advisory review to one occurrence."""
+
+    record_dir = record_dir.resolve()
+    run_dir = run_dir.resolve()
+    record = load_artifact_record(record_dir)
+    occurrence = _occurrence_by_id(record, occurrence_id)
+    run = json.loads((run_dir / "run.json").read_text(encoding="utf-8"))
+    evaluator = load_evaluator(evaluator_path)
+    if run.get("automated_authority") != "evidence_only" or run.get(
+        "hypothesis_disposition"
+    ) != "not_decided":
+        raise ValueError("soft-review run exceeds evidence-only authority")
+    if run["evaluator"]["id"] != evaluator["id"]:
+        raise ValueError("soft-review run does not match evaluator id")
+    if run["evaluator"]["spec_sha256"] != _file_sha256(
+        evaluator["_spec_path"]
+    ):
+        raise ValueError("soft-review run does not match evaluator spec")
+    if run["evaluator"]["instructions_sha256"] != _file_sha256(
+        evaluator["_instructions_path"]
+    ):
+        raise ValueError("soft-review run does not match evaluator instructions")
+    for role in ("events", "stderr", "response"):
+        name = run["artifacts"].get(role)
+        if not isinstance(name, str):
+            continue
+        if _file_sha256(run_dir / name) != run["artifacts"].get(f"{role}_sha256"):
+            raise ValueError(f"soft-review {role} artifact digest mismatch")
+    subject = run["subject"]
+    if subject["readme_sha256"] != record["artifact"]["content_sha256"]:
+        raise ValueError("soft-review subject does not match README artifact")
+    if (
+        occurrence["revision"] != subject["repository_head"]
+        or occurrence["path"] != subject["readme_path"]
+        or (
+            occurrence.get("tree") is not None
+            and occurrence["tree"] != subject["repository_tree"]
+        )
+    ):
+        raise ValueError("soft-review context does not match recorded occurrence")
+    response_path = run_dir / "response.json"
+    response = (
+        load_agent_review_response(response_path, evaluator)
+        if run["result"] == "completed"
+        else None
+    )
+    if response is not None:
+        if run.get("recommendation") != response["recommendation"]:
+            raise ValueError("soft-review run recommendation does not match response")
+        if run.get("confidence") != response["confidence"]:
+            raise ValueError("soft-review run confidence does not match response")
+        summary = response["summary"]
+        limitations = response["limitations"]
+    else:
+        summary = f"Soft review incomplete: {run.get('incomplete_reason', 'unknown')}"
+        limitations = ["The evaluator did not produce a completed response."]
+    value = _evidence_base(
+        record,
+        kind="soft_agent_review",
+        subject_scope="occurrence",
+        occurrence_id=occurrence_id,
+        recorded_at=run["execution"]["finished_at"],
+        producer={
+            "kind": "soft_agent_evaluator",
+            "id": evaluator["id"],
+            "version": None,
+            "spec_sha256": _file_sha256(evaluator["_spec_path"]),
+        },
+        source_records=_soft_run_sources(
+            run_dir, run, evaluator, repository_root=repository_root
+        ),
+        result=run["result"],
+        summary=summary,
+        payload={
+            "run_id": run["run_id"],
+            "candidate_id": run["candidate_id"],
+            "evaluator": run["evaluator"],
+            "subject": subject,
+            "executor": run["executor"],
+            "execution": run["execution"],
+            "recommendation": run.get("recommendation"),
+            "confidence": run.get("confidence"),
+            "response": response,
+        },
+        limitations=limitations,
+    )
+    return _write_evidence(record_dir, value)
+
+
+def load_evidence_record(
+    path: Path, *, record: dict[str, Any], repository_root: Path
+) -> dict[str, Any]:
+    """Validate one document evidence record and its immutable source bindings."""
+
+    evidence = json.loads(path.read_text(encoding="utf-8"))
+    Draft202012Validator(
+        _load_schema(EVIDENCE_SCHEMA), format_checker=FormatChecker()
+    ).validate(evidence)
+    value = {
+        key: content for key, content in evidence.items() if key != "evidence_id"
+    }
+    expected_id = f"ev-{_canonical_sha256(value)[:16]}"
+    if evidence["evidence_id"] != expected_id or path.stem != expected_id:
+        raise ValueError("evidence record identity mismatch")
+    if evidence["record_id"] != record["record_id"]:
+        raise ValueError("evidence record points to another artifact record")
+    if evidence["artifact_id"] != record["artifact"]["id"]:
+        raise ValueError("evidence record points to another README artifact")
+    if evidence["subject_scope"] == "occurrence":
+        _occurrence_by_id(record, evidence["occurrence_id"])
+    repository_root = repository_root.resolve()
+    for source in evidence["source_records"]:
+        source_path = resolve_contained(repository_root, source["path"])
+        if source_path.is_symlink() or not source_path.is_file():
+            raise ValueError(f"evidence source is missing: {source['path']}")
+        if _file_sha256(source_path) != source["sha256"]:
+            raise ValueError(f"evidence source digest mismatch: {source['path']}")
+    return evidence
+
+
+def load_artifact_evidence(
+    record_dir: Path, *, repository_root: Path
+) -> list[dict[str, Any]]:
+    """Load every attached evidence result in stable identity order."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    evidence_dir = record_dir / "evidence"
+    if not evidence_dir.exists():
+        return []
+    return [
+        load_evidence_record(
+            path, record=record, repository_root=repository_root.resolve()
+        )
+        for path in sorted(evidence_dir.glob("ev-*.json"))
+    ]
+
+
+def verify_artifact_package(
+    record_dir: Path, *, repository_root: Path
+) -> dict[str, Any]:
+    """Verify artifact bytes or reference plus every document-centered result."""
+
+    record = load_artifact_record(record_dir)
+    evidence = load_artifact_evidence(record_dir, repository_root=repository_root)
+    return {
+        "record_id": record["record_id"],
+        "artifact_id": record["artifact"]["id"],
+        "storage_mode": record["artifact"]["storage"]["mode"],
+        "evidence_count": len(evidence),
+        "evidence_kinds": sorted({item["kind"] for item in evidence}),
+        "valid": True,
+    }

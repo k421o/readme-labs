@@ -37,10 +37,17 @@ from readme_lab.migration import (
     write_git_migration_receipt,
 )
 from readme_lab.readme_artifacts import (
+    add_artifact_occurrence,
+    attach_observation_evidence,
+    attach_soft_review_evidence,
+    attach_static_analysis_evidence,
     capture_readme_artifact,
+    inspect_captured_artifact,
     load_artifact_record,
     register_reference_artifact,
+    verify_artifact_package,
 )
+from readme_lab.readme_catalog import build_sqlite_catalog, write_artifact_report
 from readme_lab.static_analysis import (
     load_static_analysis_run,
     run_corpus_static_analysis,
@@ -514,6 +521,84 @@ def build_parser() -> argparse.ArgumentParser:
         "verify", help="verify artifact identity, storage, and metadata"
     )
     artifact_verify.add_argument("record", type=Path)
+    artifact_verify.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+
+    artifact_occurrence = artifact_subparsers.add_parser(
+        "add-occurrence",
+        help="record another repository placement for the same captured bytes",
+    )
+    artifact_occurrence.add_argument("record", type=Path)
+    artifact_occurrence.add_argument("--repository", required=True)
+    artifact_occurrence.add_argument("--revision", required=True)
+    artifact_occurrence.add_argument("--recorded-path", required=True)
+    artifact_occurrence.add_argument("--role", required=True)
+    artifact_occurrence.add_argument("--tree")
+    artifact_occurrence.add_argument("--retrieval-url")
+
+    artifact_inspect = artifact_subparsers.add_parser(
+        "inspect", help="attach a structural observation of captured artifact bytes"
+    )
+    artifact_inspect.add_argument("record", type=Path)
+    artifact_inspect.add_argument("--occurrence-id", required=True)
+    artifact_inspect.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+    artifact_inspect.add_argument("--observed-at")
+
+    artifact_attach_observation = artifact_subparsers.add_parser(
+        "attach-observation",
+        help="attach one existing READMEObservation by exact content identity",
+    )
+    artifact_attach_observation.add_argument("record", type=Path)
+    artifact_attach_observation.add_argument("observation", type=Path)
+    artifact_attach_observation.add_argument("--document-id")
+    artifact_attach_observation.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+
+    artifact_attach_static = artifact_subparsers.add_parser(
+        "attach-static",
+        help="attach one subject from a verified static-analysis run",
+    )
+    artifact_attach_static.add_argument("record", type=Path)
+    artifact_attach_static.add_argument("run", type=Path)
+    artifact_attach_static.add_argument("--analyzer", type=Path, required=True)
+    artifact_attach_static.add_argument("--subject-id", required=True)
+    artifact_attach_static.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+
+    artifact_attach_review = artifact_subparsers.add_parser(
+        "attach-review",
+        help="attach a soft review to its exact repository occurrence",
+    )
+    artifact_attach_review.add_argument("record", type=Path)
+    artifact_attach_review.add_argument("run_dir", type=Path)
+    artifact_attach_review.add_argument("--evaluator", type=Path, required=True)
+    artifact_attach_review.add_argument("--occurrence-id", required=True)
+    artifact_attach_review.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+
+    artifact_report = artifact_subparsers.add_parser(
+        "report", help="generate or check the human-readable evidence projection"
+    )
+    artifact_report.add_argument("record", type=Path)
+    artifact_report.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
+    artifact_report.add_argument("--check", action="store_true")
+
+    artifact_catalog = artifact_subparsers.add_parser(
+        "catalog", help="rebuild a disposable SQLite index from JSON records"
+    )
+    artifact_catalog.add_argument("records", type=Path)
+    artifact_catalog.add_argument("--output", type=Path, required=True)
+    artifact_catalog.add_argument(
+        "--repository-root", type=Path, default=Path.cwd()
+    )
     return parser
 
 
@@ -555,6 +640,22 @@ def _producer(args: argparse.Namespace) -> dict[str, str | None] | None:
         "version": args.producer_version,
         "run_id": args.producer_run_id,
     }
+
+
+def _print_evidence(path: Path) -> None:
+    evidence = json.loads(path.read_text(encoding="utf-8"))
+    print(
+        json.dumps(
+            {
+                "evidence_path": path.as_posix(),
+                "evidence_id": evidence["evidence_id"],
+                "kind": evidence["kind"],
+                "result": evidence["result"],
+            },
+            indent=2,
+            sort_keys=True,
+        )
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -937,20 +1038,86 @@ def main(argv: list[str] | None = None) -> int:
             )
         )
         return 0
-    if args.command == "artifact" and args.artifact_command == "verify":
-        record = load_artifact_record(args.record)
+    if args.command == "artifact" and args.artifact_command == "add-occurrence":
+        occurrence = add_artifact_occurrence(
+            args.record,
+            repository=args.repository,
+            revision=args.revision,
+            recorded_path=args.recorded_path,
+            role=args.role,
+            tree=args.tree,
+            retrieval_url=args.retrieval_url,
+        )
+        print(json.dumps(occurrence, indent=2, sort_keys=True))
+        return 0
+    if args.command == "artifact" and args.artifact_command == "inspect":
+        evidence_path = inspect_captured_artifact(
+            args.record,
+            occurrence_id=args.occurrence_id,
+            repository_root=args.repository_root,
+            observed_at=_optional_datetime(args.observed_at),
+        )
+        _print_evidence(evidence_path)
+        return 0
+    if (
+        args.command == "artifact"
+        and args.artifact_command == "attach-observation"
+    ):
+        evidence_path = attach_observation_evidence(
+            args.record,
+            observations_path=args.observation,
+            repository_root=args.repository_root,
+            document_id=args.document_id,
+        )
+        _print_evidence(evidence_path)
+        return 0
+    if args.command == "artifact" and args.artifact_command == "attach-static":
+        evidence_path = attach_static_analysis_evidence(
+            args.record,
+            run_path=args.run,
+            analyzer_path=args.analyzer,
+            subject_id=args.subject_id,
+            repository_root=args.repository_root,
+        )
+        _print_evidence(evidence_path)
+        return 0
+    if args.command == "artifact" and args.artifact_command == "attach-review":
+        evidence_path = attach_soft_review_evidence(
+            args.record,
+            run_dir=args.run_dir,
+            evaluator_path=args.evaluator,
+            occurrence_id=args.occurrence_id,
+            repository_root=args.repository_root,
+        )
+        _print_evidence(evidence_path)
+        return 0
+    if args.command == "artifact" and args.artifact_command == "report":
+        report = write_artifact_report(
+            args.record,
+            repository_root=args.repository_root,
+            check=args.check,
+        )
         print(
             json.dumps(
-                {
-                    "record_id": record["record_id"],
-                    "artifact_id": record["artifact"]["id"],
-                    "storage_mode": record["artifact"]["storage"]["mode"],
-                    "valid": True,
-                },
+                {"report": report.as_posix(), "checked": args.check},
                 indent=2,
                 sort_keys=True,
             )
         )
+        return 0
+    if args.command == "artifact" and args.artifact_command == "catalog":
+        result = build_sqlite_catalog(
+            args.records,
+            output=args.output,
+            repository_root=args.repository_root,
+        )
+        print(json.dumps(result, indent=2, sort_keys=True))
+        return 0
+    if args.command == "artifact" and args.artifact_command == "verify":
+        verification = verify_artifact_package(
+            args.record, repository_root=args.repository_root
+        )
+        print(json.dumps(verification, indent=2, sort_keys=True))
         return 0
     raise AssertionError(f"unhandled command: {args.command}")
 
