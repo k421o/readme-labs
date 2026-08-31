@@ -13,6 +13,8 @@ class and its recorded state determine what it may influence.
 | Candidate | Make a skill, bundle, method, or other treatment reproducible and testable. | Experimental only. It may intentionally conflict with current contracts. |
 | Experiment plan | State a question, planned trials, measurements, and completion policy. | Governs the run, not the answer. |
 | Observation | Preserve agent behavior, user response, diagnostics, metrics, and failures. | Evidence for later interpretation. |
+| README artifact record | Identify captured Markdown bytes, custody, provenance, occurrences, collection purposes, and lineage. | Artifact identity only. Capture does not establish quality or constrain pre-capture authoring. |
+| Document evidence record | Project one observation or evaluation subject beside its README artifact while retaining hashes for the original run. | Evidence only; never a combined score or decision. |
 | Canonical domain artifact | Record an owner-selected model, method, or capability. | Editable README-domain authority. |
 | Regression contract | Protect an explicitly accepted property or compatibility promise. | May gate only the scope and release that claim the contract. |
 | Product adapter | Deliver a pinned canonical capability through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
@@ -24,8 +26,10 @@ outside work or current design
     -> provenance-bearing intake
     -> one or more isolated candidates
     -> complete experiment plan
-    -> trials and advisory evaluators
-    -> evidence bundle, including failures and surprises
+    -> freely editable generated README work
+    -> explicit capture of selected completed artifacts
+    -> trials, analyzers, and advisory evaluators
+    -> document-centered evidence records, including failures and surprises
     -> owner or designated-review synthesis
     -> iterate, retain, combine, reject, or promote
     -> redefine canonical artifacts and their declared compatibility
@@ -61,6 +65,13 @@ feedback then names an explicit calibrated rule profile. Zero diagnostics means
 only that the enabled rules emitted no diagnostics. It is not a quality score,
 merge recommendation, or substitute for contextual evaluation. See
 [`static-analysis.md`](static-analysis.md).
+
+Artifact capture is likewise outside the authoring agent's decision loop. The
+working `README.md` remains editable until a selected completed output crosses
+the explicit capture boundary. The captured bytes then receive a digest-derived
+identity; later revision creates another artifact and optional lineage rather
+than mutating prior evidence. See
+[`readme-artifact-records.md`](readme-artifact-records.md).
 
 ## Soft evaluators
 

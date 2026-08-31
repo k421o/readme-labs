@@ -182,6 +182,32 @@ Verification recomputes selection digests, target file hashes, intake source
 and snapshot bindings, candidate contracts, experiment plans, and migration
 receipts as applicable.
 
+### Landing selected README artifacts
+
+Selecting or admitting a README does not silently freeze it. When the intended
+result is a completed document artifact, a separate explicit capture uses the
+verified selection and records `ingestion_selection` as its boundary:
+
+```console
+uv run readme-lab artifact capture /path/to/selected/README.md \
+  --registry readmes/records \
+  --provenance-kind ingested \
+  --boundary ingestion_selection \
+  --pre-capture-editability not_applicable \
+  --ownership owned \
+  --visibility local_only \
+  --repository <source-id> \
+  --revision <verified-revision> \
+  --recorded-path README.md
+```
+
+A third-party selection may instead use `artifact reference` with its verified
+content digest and immutable locator. The artifact record complements rather
+than replaces the intake manifest: intake owns acquisition and admission;
+`readmes/records/` owns the selected README's document identity and attached
+evidence. See
+[`readme-artifact-records.md`](readme-artifact-records.md).
+
 ### Recorded controller exercise
 
 The checked-in

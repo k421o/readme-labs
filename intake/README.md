@@ -21,6 +21,12 @@ Checked-in snapshots live under `snapshots/`. Large, restricted, or
 third-party bodies should remain in external storage with immutable references
 and permitted derived observations in Git.
 
+When selected material is itself a completed README, intake provenance can feed
+a document artifact package under `readmes/records/`. Intake continues to record
+source admission; the artifact package records exact README identity,
+occurrences, collection purposes, and attached analysis. Generated work remains
+editable until a separate explicit capture chooses the completed bytes.
+
 The [managed repository ingestion controller](../docs/repository-ingestion.md)
 acquires and isolates Git URLs, local Git workspaces, and non-Git directories
 before producing these records. Its operational job logs live in a non-Git

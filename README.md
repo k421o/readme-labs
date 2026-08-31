@@ -14,6 +14,8 @@ eventually executable environments to test that model.
 - Build an evidence-backed anatomy for root, package, component, experiment,
   fixture, and archive READMEs.
 - Represent individual documents as versioned `READMEObservation` records.
+- Capture completed README outputs and pinned reference snapshots as
+  content-addressed artifact records with document-centered evidence packages.
 - Collect reproducible corpus manifests without treating popularity as quality
   or copying an unbounded raw corpus into Git.
 - Evaluate README review and authoring behavior on both controlled and natural
@@ -42,9 +44,9 @@ interesting repositories without prematurely treating them as evidence.
 Sources                         Stable domain core                   Consumers
 ──────────────────────          ──────────────────────────           ─────────────────────
 Synthetic fixtures ─┐           README roles and taxonomy      ┌─ Candidate library
-Real repositories ──┤─ ingest → READMEObservation records →    ├─ Experimental evaluation
-Outside research ───┤           evidence and interpretation     ├─ Canonical capabilities
-Skills and methods ─┘                                             └─ Derived products
+Real repositories ──┤─ ingest → artifact + occurrence records ─┼─ Experimental evaluation
+Outside research ───┤           observations and evidence       ├─ Canonical capabilities
+Skills and methods ─┘           human/query projections         └─ Derived products
 ```
 
 The middle is intended to remain stable while sources and consumers grow
@@ -69,6 +71,7 @@ domain/         README roles, taxonomy, and observation schemas
 research/       Findings, sources, examples, and interpretation
 corpus/         Versioned manifests, labels, and sampling plans
 intake/         Outside research, methods, artifacts, and provenance
+readmes/        Captured README artifacts, evidence records, and reports
 candidates/     Reproducible non-authoritative skills, bundles, and methods
 experiments/    Hypotheses, static analyzers, advisory evaluators, and runs
 evals/          Task capsules, mutations, environments, and scorecards
@@ -123,6 +126,25 @@ uv run readme-lab inspect README.md \
 
 The emitted record describes structure and provenance. It is not a quality
 score.
+
+Capture one completed output after its authoring workflow ends:
+
+```console
+uv run readme-lab artifact capture /path/to/README.md \
+  --registry readmes/records \
+  --provenance-kind generated \
+  --boundary completed_generation \
+  --pre-capture-editability mutable \
+  --ownership owned \
+  --visibility local_only \
+  --producer-kind workflow \
+  --producer-id example-generator
+```
+
+Capture does not edit or constrain the working README. The
+[artifact-record architecture](docs/readme-artifact-records.md) defines naming,
+custody, provenance, occurrence context, evidence attachment, generated reports,
+and the rebuildable SQLite catalog.
 
 ## First factory status
 

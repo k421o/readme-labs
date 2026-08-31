@@ -20,6 +20,11 @@ versioned advisory perspectives. Selected run evidence may be checked in under
 `runs/`; raw, sensitive, or unusually large artifacts remain in external
 storage behind immutable hashes.
 
+When a run concerns a captured README, a single-subject projection may also
+live beside that artifact under `readmes/records/<record>/evidence/`. This is a
+document-centered index over the original run, not a replacement execution
+record. Source paths and hashes keep both representations verifiable.
+
 User-response protocols live under `user-response/`. Their method payload is
 intentionally extensible so the domain can learn better ways to study readers.
 

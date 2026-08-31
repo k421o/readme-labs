@@ -26,6 +26,13 @@ admitted, or whether a README should be promoted. A later regression contract
 may gate a release on one explicitly accepted property, but that authority
 belongs to that named contract rather than to static analysis in general.
 
+For a captured README, each branch can also produce a single-subject evidence
+record under the artifact package. The original run remains in
+`experiments/runs/`; the document record binds its selected result back to that
+run and analyzer or evaluator by path and digest. This creates a joined README
+view without turning a corpus-wide run into duplicated authority. See the
+[artifact-record architecture](readme-artifact-records.md).
+
 ## Two modes
 
 The same analyzer runs in two modes:
@@ -122,6 +129,14 @@ summary with:
 uv run readme-lab static-analysis verify \
   experiments/analyzers/markdown-structure-v1/analyzer.json \
   experiments/runs/pilot-high-exposure-markdown-structure-v1/run.json
+```
+
+Attach one verified subject to its captured artifact package with:
+
+```console
+uv run readme-lab artifact attach-static readmes/records/<record> <run.json> \
+  --analyzer experiments/analyzers/<analyzer>/analyzer.json \
+  --subject-id <subject>
 ```
 
 ## Growing the checker set

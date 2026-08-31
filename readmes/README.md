@@ -13,9 +13,15 @@ without copying the document.
 
 `record.json` is the canonical JSON metadata record. It keeps artifact identity,
 capture state, custody, provenance, repository occurrences, collection purposes,
-and lineage on separate axes. Analysis and review evidence will be attached as
+and lineage on separate axes. Analysis and review evidence is attached as
 single-subject JSON records under the same package without turning any result
 into a quality verdict.
+
+[`records/`](records/) contains the exercised packages. Each `report.md` is a
+generated human view. `readme-lab artifact catalog` rebuilds an ignored SQLite
+query projection from the canonical JSON; the database is never the source of
+truth. The full model and command workflow are in
+[`docs/readme-artifact-records.md`](../docs/readme-artifact-records.md).
 
 The versioned contracts are:
 
