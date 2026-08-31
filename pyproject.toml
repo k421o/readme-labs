@@ -47,6 +47,8 @@ packages = ["src/readme_lab"]
 "experiments/schemas/evaluator-v1.schema.json" = "readme_lab/data/evaluator-v1.schema.json"
 "experiments/schemas/soft-agent-review-response-v1.schema.json" = "readme_lab/data/soft-agent-review-response-v1.schema.json"
 "experiments/schemas/experiment-plan-v1.schema.json" = "readme_lab/data/experiment-plan-v1.schema.json"
+"experiments/schemas/static-analyzer-v1.schema.json" = "readme_lab/data/static-analyzer-v1.schema.json"
+"experiments/schemas/static-analysis-run-v1.schema.json" = "readme_lab/data/static-analysis-run-v1.schema.json"
 "experiments/schemas/user-response-observation-v1.schema.json" = "readme_lab/data/user-response-observation-v1.schema.json"
 
 [tool.pytest.ini_options]
