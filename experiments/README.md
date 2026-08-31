@@ -37,3 +37,17 @@ for generated, ingested, candidate, or local READMEs. The common run envelope
 preserves subject identity and authority while adapter-specific native output
 keeps its own contract. See the
 [static-analysis architecture](../docs/static-analysis.md).
+
+## Candidate review execution
+
+`readme-lab candidate review-trial` is the reusable execution path for an
+embedded Codex review-skill candidate. The same held-out capsules can exercise
+different candidates through explicit invocation or normal discovery without
+installing them as canonical products. Run records preserve candidate,
+entrypoint, subject, prompt, executor, and score evidence. A score diagnoses
+the declared capsule only; it neither decides the hypothesis nor prevents its
+remaining planned trials.
+
+Review trials are read-only with respect to the subject repository. Candidate
+README generation needs different workspace and write-capture boundaries and
+is intentionally deferred to [issue #14](https://github.com/k421o/readme-labs/issues/14).

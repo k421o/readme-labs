@@ -2,8 +2,9 @@
 
 README Labs separates acquiring a source from admitting a durable domain
 artifact. A clone, local copy, or job log is operational state. It becomes a
-checked-in domain record only after a README artifact, skill, research method,
-protocol, data item, candidate, trial result, or settled Git migration lands.
+checked-in domain record only after a README artifact, skill, plugin, tool,
+automation, script, research method, protocol, data item, candidate, trial
+result, or settled Git migration lands.
 
 ## Three planes
 
@@ -108,6 +109,9 @@ state.
 
 One source may produce several independently typed selections. A selection
 names one exact path, semantic role, content digest, and preservation policy.
+Skills, plugins, tooling, automation, and scripts remain distinct selection
+and candidate kinds; admission must not collapse them into `whole_solution` or
+`other` merely because they came from the same repository.
 
 ```console
 uv run readme-lab ingest select \

@@ -10,7 +10,7 @@ class and its recorded state determine what it may influence.
 | Class | Purpose | Authority |
 | --- | --- | --- |
 | Intake record | Preserve the identity, provenance, and limitations of outside work. | Evidence only. Admission does not endorse a claim or design. |
-| Candidate | Make a skill, bundle, method, or other treatment reproducible and testable. | Experimental only. It may intentionally conflict with current contracts. |
+| Candidate | Make a skill, plugin, tool, automation, script, bundle, method, or other treatment reproducible and testable. | Experimental only. It may intentionally conflict with current contracts. |
 | Experiment plan | State a question, planned trials, measurements, and completion policy. | Governs the run, not the answer. |
 | Observation | Preserve agent behavior, user response, diagnostics, metrics, and failures. | Evidence for later interpretation. |
 | README artifact record | Identify captured Markdown bytes, custody, provenance, occurrences, collection purposes, and lineage. | Artifact identity only. Capture does not establish quality or constrain pre-capture authoring. |
@@ -40,6 +40,13 @@ The current canonical capability is a baseline and comparator. It is not an
 admission schema for candidates. A candidate may use a different `SKILL.md`,
 multiple skills, a different progressive-disclosure structure, or no current
 README Labs interface at all.
+
+Embedded candidates that expose a `codex_skill` entrypoint can use the
+candidate review executor against the same held-out repository capsules as the
+canonical capability. The executor isolates one candidate treatment, supports
+explicit invocation or discovery, and records automatic scores as evidence
+without changing candidate or hypothesis authority. Other candidate forms use
+experiment-specific execution until they earn a reusable adapter.
 
 ## Completion and automated evidence
 

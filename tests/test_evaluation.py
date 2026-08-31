@@ -8,7 +8,7 @@ from pathlib import Path
 import pytest
 from jsonschema import Draft202012Validator
 
-from readme_lab.capsule import load_capsule
+from readme_lab.capsule import load_capsule, materialize_capsule
 from readme_lab.evaluation import (
     RESPONSE_SCHEMA_PATH,
     SCORECARD_SCHEMA_PATH,
@@ -16,7 +16,9 @@ from readme_lab.evaluation import (
     build_executor_permission_profile,
     build_executor_prompt,
     load_scorecard,
+    run_candidate_review_trial,
     score_review_response,
+    stage_candidate_review_skill,
 )
 
 FINDING_CAPSULE = Path("evals/scenarios/missing-first-path/capsule.toml")
@@ -51,6 +53,33 @@ def _write_response(path: Path, *, finding: bool) -> None:
     path.write_text(json.dumps(value), encoding="utf-8")
 
 
+def _write_fake_codex(path: Path) -> None:
+    path.write_text(
+        """#!/usr/bin/env python3
+import json
+import os
+from pathlib import Path
+import shutil
+import sys
+
+arguments = sys.argv[1:]
+if arguments == ["--version"]:
+    print("codex-cli fake-candidate-review")
+    raise SystemExit(0)
+if arguments and arguments[0] == "sandbox":
+    raise SystemExit(0)
+if arguments and arguments[0] == "exec":
+    output = Path(arguments[arguments.index("--output-last-message") + 1])
+    shutil.copyfile(os.environ["README_LABS_FAKE_RESPONSE"], output)
+    print(json.dumps({"type": "turn.completed"}))
+    raise SystemExit(0)
+raise SystemExit(2)
+""",
+        encoding="utf-8",
+    )
+    path.chmod(0o755)
+
+
 def test_evaluation_json_schemas_and_scorecards_are_valid() -> None:
     for path in (RESPONSE_SCHEMA_PATH, SCORECARD_SCHEMA_PATH):
         Draft202012Validator.check_schema(json.loads(path.read_text(encoding="utf-8")))
@@ -72,6 +101,21 @@ def test_executor_prompt_withholds_scenario_and_scorecard_names() -> None:
     assert "readme-review" not in prompt
 
 
+def test_executor_prompt_can_name_only_the_selected_candidate_skill() -> None:
+    capsule = load_capsule(FINDING_CAPSULE)
+
+    prompt = build_executor_prompt(
+        capsule,
+        skill_name="alternate-readme-review",
+        invocation="explicit",
+    )
+
+    assert "$alternate-readme-review" in prompt
+    assert "readme-labs" not in prompt
+    assert capsule["id"] not in prompt
+    assert capsule["scorecard"] not in prompt
+
+
 def test_permission_profile_denies_factory_without_leaking_scenario_name() -> None:
     profile = build_executor_permission_profile(Path("/tmp/factory-checkout"))
 
@@ -80,6 +124,74 @@ def test_permission_profile_denies_factory_without_leaking_scenario_name() -> No
     assert "enabled = false" in profile
     assert Path("/tmp/factory-checkout").resolve().as_posix() in profile
     assert "missing-first-path" not in profile
+
+
+def test_candidate_review_skill_stages_without_changing_subject_git_state(
+    tmp_path: Path,
+) -> None:
+    workspace = tmp_path / "workspace"
+    materialize_capsule(FINDING_CAPSULE, workspace)
+
+    binding = stage_candidate_review_skill(
+        Path("candidates/reademe-temp-modular-readme-v1/candidate.json"),
+        workspace,
+    )
+
+    assert binding["candidate_id"] == "reademe-temp-modular-readme-v1"
+    assert binding["entrypoint"]["id"] == "modular-readme"
+    assert binding["entrypoint"]["skill_name"] == "modular-readme"
+    assert binding["staging"]["surface"] == "repository_local_skill"
+    assert (workspace / ".agents/skills/modular-readme/SKILL.md").is_file()
+    assert (
+        subprocess.run(
+            ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+            cwd=workspace,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout
+        == ""
+    )
+
+
+def test_candidate_review_trial_runs_as_evidence_only(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    codex_home = tmp_path / "codex-home"
+    codex_home.mkdir()
+    response = tmp_path / "response.json"
+    _write_response(response, finding=True)
+    fake_codex = tmp_path / "fake-codex"
+    _write_fake_codex(fake_codex)
+    monkeypatch.setenv("CODEX_HOME", codex_home.as_posix())
+    monkeypatch.setenv("README_LABS_FAKE_RESPONSE", response.as_posix())
+    workspace = tmp_path / "workspace"
+    run_dir = tmp_path / "run"
+
+    run = run_candidate_review_trial(
+        Path("candidates/reademe-temp-modular-readme-v1/candidate.json"),
+        FINDING_CAPSULE,
+        workspace=workspace,
+        run_dir=run_dir,
+        run_id="alternate-review-skill",
+        model="fake-model",
+        reasoning_effort="high",
+        codex_executable=fake_codex.as_posix(),
+    )
+
+    assert run["candidate_id"] == "reademe-temp-modular-readme-v1"
+    assert run["evaluation_role"] == "experimental_candidate_review"
+    assert run["candidate_invocation"] == "explicit"
+    assert run["automated_authority"] == "evidence_only"
+    assert run["hypothesis_disposition"] == "not_decided"
+    assert run["execution"]["subject_unchanged"] is True
+    assert run["result"] == "completed"
+    assert run["automated_score_result"] == (
+        "automatic_pass_requires_independent_review"
+    )
+    assert (run_dir / "run.json").is_file()
+    assert (run_dir / "score.json").is_file()
 
 
 def test_artifact_binding_verifies_marketplace_and_installed_bytes(

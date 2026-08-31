@@ -20,8 +20,9 @@ eventually executable environments to test that model.
   or copying an unbounded raw corpus into Git.
 - Evaluate README review and authoring behavior on both controlled and natural
   repositories.
-- Ingest outside research, methods, skills, bundles, and trial evidence without
-  prematurely making them canonical.
+- Ingest outside research, methods, skills, plugins, tooling, automation,
+  scripts, bundles, and trial evidence without prematurely making them
+  canonical.
 - Acquire repositories and local work through an isolated, disposition-aware
   ingestion yard before admitting selected domain artifacts.
 - Compare isolated candidate capabilities through complete experimental runs,
@@ -46,7 +47,7 @@ Sources                         Stable domain core                   Consumers
 Synthetic fixtures ─┐           README roles and taxonomy      ┌─ Candidate library
 Real repositories ──┤─ ingest → artifact + occurrence records ─┼─ Experimental evaluation
 Outside research ───┤           observations and evidence       ├─ Canonical capabilities
-Skills and methods ─┘           human/query projections         └─ Derived products
+Skills, plugins, tools ─┘        human/query projections         └─ Derived products
 ```
 
 The middle is intended to remain stable while sources and consumers grow
@@ -72,7 +73,7 @@ research/       Findings, sources, examples, and interpretation
 corpus/         Versioned manifests, labels, and sampling plans
 intake/         Outside research, methods, artifacts, and provenance
 readmes/        Captured README artifacts, evidence records, and reports
-candidates/     Reproducible non-authoritative skills, bundles, and methods
+candidates/     Reproducible non-authoritative skills, plugins, tools, and methods
 experiments/    Hypotheses, static analyzers, advisory evaluators, and runs
 evals/          Task capsules, mutations, environments, and scorecards
 capabilities/   Agent-facing projections derived from the domain model
@@ -115,6 +116,26 @@ uv run readme-lab ingest --help
 The [repository-ingestion architecture](docs/repository-ingestion.md) defines
 clone isolation, remote severing, preservation policies, owned Git migration,
 private publication, archival, physical source cleanup, and finalization.
+
+Run one embedded Codex-skill candidate against a held-out README review
+capsule:
+
+```console
+CODEX_HOME=/path/to/clean-disposable-codex-home \
+  uv run readme-lab candidate review-trial \
+  candidates/reademe-temp-modular-readme-v1/candidate.json \
+  --capsule evals/scenarios/missing-first-path/capsule.toml \
+  --workspace /tmp/readme-candidate-workspace \
+  --run-dir /tmp/readme-candidate-run \
+  --run-id modular-readme-finding \
+  --model gpt-5.6-terra
+```
+
+The runner stages only the selected candidate entrypoint as a repository-local
+skill. Explicit invocation is the default, including for manual-only skills;
+`--invocation discovery` instead tests normal skill discovery. Held-out scores
+are diagnostic evidence, not authority to reject a candidate or end its
+hypothesis.
 
 Inspect one README as a local observation:
 
