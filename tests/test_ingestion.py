@@ -273,6 +273,78 @@ def test_selected_skill_lands_as_candidate_then_managed_checkout_is_deleted(
     assert load_ingestion_job(yard, "example-skill")["status"] == "finalized"
 
 
+def test_plugin_tooling_automation_and_script_selections_remain_explicit(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "mixed-source")
+    artifacts = {
+        "plugin": ("plugin", "plugin/plugin.json", "codex_plugin"),
+        "tooling": ("tooling", "tools/check.py", "python_tool"),
+        "automation": (
+            "automation",
+            ".github/workflows/readme.yml",
+            "github_actions_workflow",
+        ),
+        "script": ("script", "scripts/rewrite.py", "python_script"),
+    }
+    for role, (_, relative, _) in artifacts.items():
+        path = source / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{role}\n", encoding="utf-8")
+    git(source, "add", ".")
+    git(source, "commit", "--quiet", "-m", "add mixed README tooling")
+
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="mixed-artifacts",
+        source=source.as_posix(),
+        remote_policy="sever",
+        ownership="external",
+    )
+    for role, (candidate_kind, relative, candidate_format) in artifacts.items():
+        add_ingestion_selection(
+            yard=yard,
+            job_id="mixed-artifacts",
+            selection_id=f"example-{role}",
+            source_path=relative,
+            role=role,
+            preservation="selected",
+            candidate_id=f"example-{role}-candidate",
+            candidate_kind=candidate_kind,
+            candidate_format=candidate_format,
+            candidate_entrypoint=Path(relative).name,
+        )
+
+    admission = admit_ingestion(
+        yard=yard,
+        job_id="mixed-artifacts",
+        domain_repository=domain_repository,
+        manifest_id="mixed-artifacts-intake",
+        title="Mixed README-related artifact intake",
+    )
+    manifest = json.loads(
+        (domain_repository / "intake/manifests/mixed-artifacts-intake.json").read_text()
+    )
+
+    assert {item["kind"] for item in manifest["items"]} == set(artifacts)
+    assert [target["kind"] for target in admission["targets"]].count("candidate") == 4
+    for role in artifacts:
+        descriptor = (
+            domain_repository
+            / f"candidates/example-{role}-candidate/candidate.json"
+        )
+        candidate = json.loads(descriptor.read_text())
+        assert candidate["kind"] == role
+        assert verify_candidate(descriptor)["verified"] is True
+
+    assert verify_ingestion(
+        yard=yard,
+        job_id="mixed-artifacts",
+        domain_repository=domain_repository,
+    )["verified"] is True
+
+
 def test_replayable_selection_preserves_explicit_context_only(tmp_path: Path) -> None:
     domain_root, domain_repository, yard = make_domain(tmp_path)
     source = make_repository(tmp_path / "research-source")

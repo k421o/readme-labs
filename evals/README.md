@@ -3,10 +3,11 @@
 The evaluation lab tests README-facing capabilities against controlled tasks
 without confusing a Markdown fixture with a real repository.
 
-These task capsules currently protect and measure the released
-`readme-review` job. Open-ended candidate inquiry lives under `experiments/`.
-Failure against a capsule may diagnose compatibility with this job, but it does
-not prevent a structurally different candidate from completing its own plan.
+These task capsules protect and measure the released `readme-review` job and
+provide held-out repository subjects for experimental candidate review.
+Open-ended candidate inquiry lives under `experiments/`. Failure against a
+capsule may diagnose compatibility with this job, but it does not prevent a
+structurally different candidate from completing its own plan.
 
 ## Fidelity ladder
 
@@ -62,6 +63,24 @@ The disposable Codex home must already contain an enabled
 `readme-labs@readme-labs` plugin installed from the exact revision supplied to
 `--artifact-revision`. The runner records and checks that inventory; the
 argument is provenance, not an installation shortcut.
+
+An experimental embedded Codex-skill candidate uses the same blinded capsule
+without an installed plugin:
+
+```console
+CODEX_HOME=/path/to/clean-disposable-codex-home \
+  uv run readme-lab candidate review-trial \
+  candidates/example/candidate.json \
+  --capsule evals/scenarios/missing-first-path/capsule.toml \
+  --workspace /tmp/readme-candidate-workspace \
+  --run-dir /tmp/readme-candidate-run \
+  --run-id example-candidate-run \
+  --model gpt-5.6-terra
+```
+
+Candidate mode refuses ambient skills and marketplaces, stages exactly one
+verified repository-local skill, and records the automatic result separately
+as evidence. It cannot reject the candidate or decide hypothesis truth.
 
 The runner enforces the capsule's network policy, denies command access to the
 factory checkout, verifies that boundary before inference, captures structured

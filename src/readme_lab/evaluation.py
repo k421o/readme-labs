@@ -17,6 +17,8 @@ from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from readme_lab.artifacts import resolve_contained, tree_sha256
+from readme_lab.candidates import load_candidate, verify_candidate
 from readme_lab.capsule import load_capsule, materialize_capsule
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -30,6 +32,7 @@ EXECUTION_CLAIM = re.compile(
     re.IGNORECASE,
 )
 SANDBOX_VIOLATION = re.compile(r"recorded sandbox violation", re.IGNORECASE)
+SKILL_NAME = re.compile(r"^name:\s*['\"]?([a-z0-9]+(?:-[a-z0-9]+)*)['\"]?\s*$")
 
 
 def _load_schema(name: str, source_path: Path) -> dict[str, Any]:
@@ -294,13 +297,27 @@ def score_review_response(
     }
 
 
-def build_executor_prompt(capsule: dict[str, Any]) -> str:
+def build_executor_prompt(
+    capsule: dict[str, Any],
+    *,
+    skill_name: str | None = None,
+    invocation: str = "discovery",
+) -> str:
     """Build a task prompt without scenario or scorecard identifiers."""
 
+    if invocation not in {"discovery", "explicit"}:
+        raise ValueError(f"unsupported candidate invocation mode: {invocation}")
+    if invocation == "explicit" and skill_name is None:
+        raise ValueError("explicit candidate invocation requires a skill name")
+    capability_instruction = (
+        f"Use ${skill_name} as the review treatment for this trial."
+        if invocation == "explicit"
+        else "Use any applicable installed capability that Codex discovers normally."
+    )
     return "\n".join(
         (
             "Work only as a reviewer; do not edit repository files.",
-            "Use any applicable installed capability that Codex discovers normally.",
+            capability_instruction,
             "Inspect repository evidence to support or reject material findings.",
             "In commands, list every command you claim was attempted or executed.",
             "Return the requested structured response and nothing outside it.",
@@ -370,6 +387,156 @@ def _explicit_codex_home() -> Path:
     if not codex_home.is_dir():
         raise FileNotFoundError(f"CODEX_HOME does not exist: {codex_home}")
     return codex_home
+
+
+def _assert_candidate_codex_home_isolated(codex_home: Path) -> None:
+    """Reject ambient skills or plugins that would confound a candidate trial."""
+
+    for relative in ("skills", "plugins/cache", ".tmp/marketplaces"):
+        path = codex_home / relative
+        if path.exists() and (not path.is_dir() or any(path.iterdir())):
+            raise RuntimeError(
+                f"candidate review CODEX_HOME contains another treatment: {relative}"
+            )
+    config_path = codex_home / "config.toml"
+    if config_path.is_file():
+        config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+        if config.get("marketplaces"):
+            raise RuntimeError(
+                "candidate review CODEX_HOME contains configured marketplaces"
+            )
+
+
+def _codex_skill_name(skill_file: Path) -> str:
+    lines = skill_file.read_text(encoding="utf-8").splitlines()
+    if not lines or lines[0].strip() != "---":
+        raise ValueError("Codex skill candidate requires YAML frontmatter")
+    try:
+        closing = next(
+            index for index, line in enumerate(lines[1:], start=1) if line == "---"
+        )
+    except StopIteration as error:
+        raise ValueError(
+            "Codex skill candidate has unclosed YAML frontmatter"
+        ) from error
+    names = [
+        match.group(1)
+        for line in lines[1:closing]
+        if (match := SKILL_NAME.fullmatch(line)) is not None
+    ]
+    if len(names) != 1:
+        raise ValueError("Codex skill candidate requires one simple frontmatter name")
+    return names[0]
+
+
+def _candidate_codex_skill_entrypoint(
+    candidate_path: Path,
+    entrypoint_id: str | None,
+) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any], Path]:
+    candidate_path = candidate_path.resolve()
+    verification = verify_candidate(candidate_path)
+    if not verification["verified"]:
+        raise ValueError("candidate failed verification")
+    candidate = load_candidate(candidate_path)
+    if candidate["storage"]["mode"] != "embedded":
+        raise ValueError("candidate review trials require embedded candidate bytes")
+
+    compatible = [
+        entrypoint
+        for entrypoint in candidate["entrypoints"]
+        if entrypoint["format"] == "codex_skill"
+        and entrypoint.get("host") in {None, "codex"}
+    ]
+    if entrypoint_id is not None:
+        compatible = [
+            entrypoint
+            for entrypoint in compatible
+            if entrypoint["id"] == entrypoint_id
+        ]
+        if not compatible:
+            raise ValueError(
+                f"candidate has no Codex skill entrypoint named {entrypoint_id}"
+            )
+    if len(compatible) != 1:
+        raise ValueError(
+            "candidate review requires one Codex skill entrypoint or an explicit "
+            "entrypoint id"
+        )
+    entrypoint = compatible[0]
+    artifact_root = resolve_contained(
+        candidate_path.parent, candidate["storage"]["artifact_root"]
+    )
+    source = resolve_contained(artifact_root, entrypoint["path"])
+    if not source.is_dir() or not (source / "SKILL.md").is_file():
+        raise ValueError("Codex skill candidate entrypoint must contain SKILL.md")
+    _codex_skill_name(source / "SKILL.md")
+    return candidate, verification, entrypoint, source
+
+
+def stage_candidate_review_skill(
+    candidate_path: Path,
+    workspace: Path,
+    *,
+    entrypoint_id: str | None = None,
+) -> dict[str, Any]:
+    """Stage one verified candidate as the sole repository-local review skill."""
+
+    candidate, verification, entrypoint, source = _candidate_codex_skill_entrypoint(
+        candidate_path, entrypoint_id
+    )
+    workspace = workspace.resolve()
+    if not (workspace / ".git").is_dir():
+        raise ValueError(
+            "candidate review workspace must be an isolated Git repository"
+        )
+    skills_root = workspace / ".agents/skills"
+    if skills_root.exists() and any(skills_root.iterdir()):
+        raise ValueError(
+            "candidate review workspace already contains repository skills"
+        )
+    destination = skills_root / entrypoint["id"]
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copytree(source, destination)
+
+    exclude_path = workspace / ".git/info/exclude"
+    exclude_line = f"/.agents/skills/{entrypoint['id']}/"
+    existing_excludes = exclude_path.read_text(encoding="utf-8")
+    if exclude_line not in existing_excludes.splitlines():
+        with exclude_path.open("a", encoding="utf-8") as stream:
+            if existing_excludes and not existing_excludes.endswith("\n"):
+                stream.write("\n")
+            stream.write(exclude_line + "\n")
+
+    visible_status = subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout
+    if visible_status:
+        raise RuntimeError("candidate staging changed the visible subject Git state")
+    return {
+        "candidate_id": candidate["id"],
+        "candidate_kind": candidate["kind"],
+        "authority": candidate["authority"],
+        "descriptor_sha256": _sha256(candidate_path.resolve()),
+        "candidate_tree_sha256": verification["tree_sha256"],
+        "entrypoint": {
+            "id": entrypoint["id"],
+            "path": entrypoint["path"],
+            "format": entrypoint["format"],
+            "host": entrypoint.get("host"),
+            "skill_name": _codex_skill_name(source / "SKILL.md"),
+            "tree_sha256": tree_sha256(source),
+        },
+        "staging": {
+            "surface": "repository_local_skill",
+            "path": destination.relative_to(workspace).as_posix(),
+            "tree_sha256": tree_sha256(destination),
+            "excluded_from_subject_git_status": True,
+        },
+    }
 
 
 def _artifact_binding(
@@ -467,17 +634,21 @@ def _artifact_binding(
     }
 
 
-def _codex_inventory(
-    executable: str,
-    plugin_id: str,
-    artifact_revision: str,
-) -> dict[str, Any]:
-    version = subprocess.run(
+def _codex_version(executable: str) -> str:
+    return subprocess.run(
         [executable, "--version"],
         check=True,
         capture_output=True,
         text=True,
     ).stdout.strip()
+
+
+def _codex_inventory(
+    executable: str,
+    plugin_id: str,
+    artifact_revision: str,
+) -> dict[str, Any]:
+    version = _codex_version(executable)
     result = subprocess.run(
         [executable, "plugin", "list", "--json"],
         check=True,
@@ -553,15 +724,26 @@ def run_codex_capsule(
     workspace: Path,
     run_dir: Path,
     run_id: str,
-    artifact_revision: str,
+    artifact_revision: str | None,
     plugin_id: str,
     model: str,
     reasoning_effort: str,
+    candidate_path: Path | None = None,
+    candidate_entrypoint_id: str | None = None,
+    candidate_invocation: str = "explicit",
     codex_executable: str = "codex",
 ) -> dict[str, Any]:
     """Run one blinded Codex execution and score it after the process exits."""
 
-    if not IMMUTABLE_REVISION.fullmatch(artifact_revision):
+    if (artifact_revision is None) == (candidate_path is None):
+        raise ValueError(
+            "review execution requires exactly one installed plugin revision or "
+            "candidate"
+        )
+    candidate_mode = candidate_path is not None
+    if artifact_revision is not None and not IMMUTABLE_REVISION.fullmatch(
+        artifact_revision
+    ):
         raise ValueError("artifact_revision must be a full 40-character Git commit")
     if workspace.exists() or run_dir.exists():
         raise FileExistsError("workspace and run_dir must not already exist")
@@ -570,14 +752,40 @@ def run_codex_capsule(
     held_out_root = _git_root(capsule_path)
     if _is_within(workspace, held_out_root) or _is_within(run_dir, held_out_root):
         raise ValueError("workspace and run_dir must be outside the held-out checkout")
+    if candidate_path is not None:
+        candidate_path = candidate_path.resolve()
+        if not _is_within(candidate_path, held_out_root):
+            raise ValueError(
+                "candidate descriptor must be inside the held-out domain checkout"
+            )
+        _candidate_codex_skill_entrypoint(
+            candidate_path,
+            candidate_entrypoint_id,
+        )
+        candidate_codex_home = _explicit_codex_home()
+        _assert_candidate_codex_home_isolated(candidate_codex_home)
+    elif candidate_invocation != "explicit":
+        raise ValueError("candidate invocation applies only to candidate trials")
 
     capsule = load_capsule(capsule_path)
-    inventory = _codex_inventory(
-        codex_executable,
-        plugin_id,
-        artifact_revision,
-    )
+    if candidate_mode:
+        inventory: dict[str, Any] = {"codex_version": _codex_version(codex_executable)}
+    else:
+        assert artifact_revision is not None
+        inventory = _codex_inventory(
+            codex_executable,
+            plugin_id,
+            artifact_revision,
+        )
     materialization = materialize_capsule(capsule_path, workspace)
+    candidate_binding = None
+    if candidate_path is not None:
+        candidate_binding = stage_candidate_review_skill(
+            candidate_path,
+            workspace,
+            entrypoint_id=candidate_entrypoint_id,
+        )
+        inventory["candidate_treatment"] = candidate_binding
     run_dir.mkdir(parents=True)
     response_schema = run_dir / RESPONSE_SCHEMA_NAME
     shutil.copy2(RESPONSE_SCHEMA_PATH, response_schema)
@@ -591,7 +799,17 @@ def run_codex_capsule(
     response_path = run_dir / "response.json"
     events_path = run_dir / "events.jsonl"
     stderr_path = run_dir / "stderr.log"
-    prompt = build_executor_prompt(capsule)
+    prompt = build_executor_prompt(
+        capsule,
+        skill_name=(
+            candidate_binding["entrypoint"]["skill_name"]
+            if candidate_binding is not None
+            else None
+        ),
+        invocation=(
+            candidate_invocation if candidate_binding is not None else "discovery"
+        ),
+    )
     started_at = datetime.now(UTC)
     command = [
         codex_executable,
@@ -624,13 +842,39 @@ def run_codex_capsule(
     finished_at = datetime.now(UTC)
     events_path.write_text(result.stdout, encoding="utf-8")
     stderr_path.write_text(result.stderr, encoding="utf-8")
+    subject_status = subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.splitlines()
+    subject_diff = subprocess.run(
+        ["git", "diff", "--binary", "HEAD"],
+        cwd=workspace,
+        check=True,
+        capture_output=True,
+    ).stdout
+    treatment_state = None
+    if candidate_binding is not None:
+        staged_treatment = workspace / candidate_binding["staging"]["path"]
+        treatment_digest = (
+            tree_sha256(staged_treatment) if staged_treatment.is_dir() else None
+        )
+        treatment_state = {
+            "candidate_codex_home_isolated": True,
+            "candidate_treatment_present_after_run": staged_treatment.is_dir(),
+            "candidate_treatment_sha256_after_run": treatment_digest,
+            "candidate_treatment_unchanged": (
+                treatment_digest == candidate_binding["staging"]["tree_sha256"]
+            ),
+        }
 
     run_record: dict[str, Any] = {
         "run_schema_version": "2.0.0",
         "run_id": run_id,
         "scenario_id": capsule["id"],
         "task_sha256": hashlib.sha256(capsule["task"].encode()).hexdigest(),
-        "artifact_revision": artifact_revision,
         "executor": {
             "kind": "codex_cli",
             "model": model,
@@ -648,6 +892,9 @@ def run_codex_capsule(
             "factory_checkout_denied_by_command_sandbox": True,
             "permission_preflight_passed": True,
             "scorecard_read_after_executor_exit": True,
+            "subject_unchanged": not subject_status,
+            "subject_status": subject_status,
+            "subject_diff_sha256": hashlib.sha256(subject_diff).hexdigest(),
         },
         "materialization": materialization,
         "artifacts": {
@@ -658,6 +905,21 @@ def run_codex_capsule(
             "response": response_path.name,
         },
     }
+    if candidate_binding is None:
+        run_record["artifact_revision"] = artifact_revision
+    else:
+        assert treatment_state is not None
+        run_record["execution"].update(treatment_state)
+        run_record.update(
+            {
+                "candidate_id": candidate_binding["candidate_id"],
+                "candidate": candidate_binding,
+                "candidate_invocation": candidate_invocation,
+                "evaluation_role": "experimental_candidate_review",
+                "automated_authority": "evidence_only",
+                "hypothesis_disposition": "not_decided",
+            }
+        )
     if result.returncode != 0:
         run_record["result"] = "executor_failed"
         _write_json(run_dir / "run.json", run_record)
@@ -681,6 +943,46 @@ def run_codex_capsule(
             "held_out_scorecard_sha256": _sha256(scorecard_path),
         }
     )
-    run_record["result"] = score["result"]
+    if candidate_binding is None:
+        run_record["result"] = score["result"]
+    else:
+        run_record["automated_score_result"] = score["result"]
+        run_record["result"] = (
+            "completed"
+            if run_record["execution"]["subject_unchanged"]
+            and run_record["execution"]["candidate_treatment_unchanged"]
+            else "completed_with_boundary_violation"
+        )
     _write_json(run_dir / "run.json", run_record)
     return run_record
+
+
+def run_candidate_review_trial(
+    candidate_path: Path,
+    capsule_path: Path,
+    *,
+    workspace: Path,
+    run_dir: Path,
+    run_id: str,
+    model: str,
+    reasoning_effort: str,
+    entrypoint_id: str | None = None,
+    invocation: str = "explicit",
+    codex_executable: str = "codex",
+) -> dict[str, Any]:
+    """Run one experimental Codex skill candidate against a held-out capsule."""
+
+    return run_codex_capsule(
+        capsule_path,
+        workspace=workspace,
+        run_dir=run_dir,
+        run_id=run_id,
+        artifact_revision=None,
+        plugin_id="",
+        model=model,
+        reasoning_effort=reasoning_effort,
+        candidate_path=candidate_path,
+        candidate_entrypoint_id=entrypoint_id,
+        candidate_invocation=invocation,
+        codex_executable=codex_executable,
+    )

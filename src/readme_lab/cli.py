@@ -11,7 +11,11 @@ from readme_lab.agent_evaluation import run_agent_evaluation
 from readme_lab.candidates import materialize_candidate, verify_candidate
 from readme_lab.capsule import materialize_capsule
 from readme_lab.corpus import collect_corpus, summarize_observations, write_summary
-from readme_lab.evaluation import run_codex_capsule, score_review_response
+from readme_lab.evaluation import (
+    run_candidate_review_trial,
+    run_codex_capsule,
+    score_review_response,
+)
 from readme_lab.experiments import load_experiment_plan
 from readme_lab.ingestion import (
     add_ingestion_selection,
@@ -198,6 +202,10 @@ def build_parser() -> argparse.ArgumentParser:
             "readme_artifact",
             "skill",
             "skill_bundle",
+            "plugin",
+            "tooling",
+            "automation",
+            "script",
             "research_content",
             "research_method",
             "research_protocol",
@@ -220,6 +228,9 @@ def build_parser() -> argparse.ArgumentParser:
             "skill",
             "skill_bundle",
             "plugin",
+            "tooling",
+            "automation",
+            "script",
             "research_method",
             "evaluation_method",
             "workflow",
@@ -359,6 +370,29 @@ def build_parser() -> argparse.ArgumentParser:
     )
     candidate_materialize_parser.add_argument("candidate", type=Path)
     candidate_materialize_parser.add_argument("--destination", type=Path, required=True)
+    candidate_review_parser = candidate_subparsers.add_parser(
+        "review-trial",
+        help="run one Codex skill candidate against a held-out README capsule",
+    )
+    candidate_review_parser.add_argument("candidate", type=Path)
+    candidate_review_parser.add_argument("--entrypoint")
+    candidate_review_parser.add_argument("--capsule", type=Path, required=True)
+    candidate_review_parser.add_argument(
+        "--invocation",
+        choices=("explicit", "discovery"),
+        default="explicit",
+        help="name the candidate skill or test normal automatic discovery",
+    )
+    candidate_review_parser.add_argument("--workspace", type=Path, required=True)
+    candidate_review_parser.add_argument("--run-dir", type=Path, required=True)
+    candidate_review_parser.add_argument("--run-id", required=True)
+    candidate_review_parser.add_argument("--model", required=True)
+    candidate_review_parser.add_argument(
+        "--reasoning-effort",
+        choices=("low", "medium", "high", "xhigh"),
+        default="high",
+    )
+    candidate_review_parser.add_argument("--codex-executable", default="codex")
 
     experiment_parser = subparsers.add_parser(
         "experiment", help="validate an open-ended experiment plan"
@@ -955,6 +989,21 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "candidate" and args.candidate_command == "materialize":
         materialization = materialize_candidate(args.candidate, args.destination)
         print(json.dumps(materialization, indent=2, sort_keys=True))
+        return 0
+    if args.command == "candidate" and args.candidate_command == "review-trial":
+        run = run_candidate_review_trial(
+            args.candidate,
+            args.capsule,
+            workspace=args.workspace,
+            run_dir=args.run_dir,
+            run_id=args.run_id,
+            model=args.model,
+            reasoning_effort=args.reasoning_effort,
+            entrypoint_id=args.entrypoint,
+            invocation=args.invocation,
+            codex_executable=args.codex_executable,
+        )
+        print(json.dumps(run, indent=2, sort_keys=True))
         return 0
     if args.command == "experiment" and args.experiment_command == "validate":
         plan = load_experiment_plan(args.plan)

@@ -32,8 +32,9 @@ made.
   repository tasks?
 - How do people understand, trust, navigate, and use README content, and which
   research methods can support those claims responsibly?
-- Which outside research, methods, skills, and complete solutions improve or
-  challenge the current domain model and capability designs?
+- Which outside research, methods, skills, plugins, tooling, automation,
+  scripts, and complete solutions improve or challenge the current domain
+  model and capability designs?
 
 ## Outputs
 
@@ -45,7 +46,8 @@ The domain may produce:
 - Controlled fixtures, real-repository replays, mutations, and executable task
   capsules.
 - Provenance-bearing intake records and isolated libraries of candidate skills,
-  bundles, methods, and whole-solution snapshots.
+  plugins, tooling, automation, scripts, bundles, methods, and whole-solution
+  snapshots.
 - Soft agent perspectives and privacy-bounded human/user-response observations.
 - Review, authoring, classification, or navigation capabilities.
 - Packaging adapters such as a Codex plugin.

@@ -2,8 +2,8 @@
 
 Intake records outside README work without making it canonical. An intake may
 reference or snapshot README files, repositories, articles, research results,
-research methods, evaluation machinery, skills, bundles, agent responses, or
-user-response evidence.
+research methods, evaluation machinery, skills, plugins, tooling, automation,
+scripts, bundles, agent responses, or user-response evidence.
 
 Each manifest separates:
 
