@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import subprocess
@@ -16,6 +17,7 @@ from readme_lab.ingestion import (
     finalize_ingestion,
     initialize_ingestion_yard,
     link_existing_admission,
+    load_finalization_receipt,
     load_ingestion_job,
     quarantine_ingestion,
     refresh_ingestion_inventory,
@@ -55,6 +57,43 @@ def make_domain(tmp_path: Path) -> tuple[Path, Path, Path]:
     yard = initialize_ingestion_yard(domain_root)
     assert not (domain_root / ".git").exists()
     return domain_root, domain_repository, yard
+
+
+def test_checked_in_reademe_temp_controller_receipt_proves_landed_targets() -> None:
+    receipt = load_finalization_receipt(
+        Path("intake/receipts/reademe-temp-controller-v1.json")
+    )
+
+    assert receipt["source"] == {
+        "git_head": "30775d179343b47e24ae0c7b543332d86802f486",
+        "git_tree": "37cd2a380443f0dd9acbe1f1f5834082733a9c9b",
+        "kind": "local_git",
+        "remote": None,
+        "repository_id": "local:reademe-temp",
+    }
+    assert receipt["remote_policy"] == "sever"
+    assert receipt["workspace_disposition"] == "delete"
+    assert receipt["checkout_present"] is False
+    assert receipt["status"] == "completed"
+    assert all(item["preservation"] == "reference" for item in receipt["selections"])
+    assert {item["id"] for item in receipt["selections"]} == {
+        "current-main-readme",
+        "notebooklm-research-record",
+        "related-research-documents",
+        "notebooklm-extraction-method",
+        "current-main-modular-templates",
+        "modular-readme-forward-test",
+    }
+    assert {target["kind"] for target in receipt["admission_targets"]} == {
+        "intake_manifest",
+        "candidate",
+        "experiment_plan",
+        "experiment_run",
+    }
+    for target in receipt["admission_targets"]:
+        path = Path(target["path"])
+        assert path.is_file()
+        assert hashlib.sha256(path.read_bytes()).hexdigest() == target["sha256"]
 
 
 def test_domain_container_must_not_be_a_git_repository(tmp_path: Path) -> None:
@@ -142,6 +181,27 @@ def test_fetch_only_disables_push_and_git_url_acquisition_works(
     assert git(checkout, "remote", "get-url", "--push", "origin").startswith(
         "disabled://readme-labs/file-url/"
     )
+
+
+def test_non_git_source_severs_nested_repository_remotes(tmp_path: Path) -> None:
+    domain_root, _, yard = make_domain(tmp_path)
+    source = tmp_path / "mixed-directory"
+    source.mkdir()
+    nested = make_repository(source / "nested")
+    git(nested, "remote", "add", "origin", "https://token@github.com/acme/nested.git")
+
+    job = begin_ingestion(
+        domain_root=domain_root,
+        job_id="nested-source",
+        source=source.as_posix(),
+        remote_policy="sever",
+    )
+
+    assert job["source"]["kind"] == "local_directory"
+    assert job["acquisition"]["original_remotes"][0]["fetch_url"] == (
+        "https://github.com/acme/nested.git"
+    )
+    assert git(yard / "active/nested-source/checkout/nested", "remote") == ""
 
 
 def test_selected_skill_lands_as_candidate_then_managed_checkout_is_deleted(
@@ -333,6 +393,49 @@ def test_unfinished_job_can_only_be_quarantined_not_finalized(tmp_path: Path) ->
     assert load_ingestion_job(yard, "unfinished")["status"] == "quarantined"
 
 
+def test_finalization_preflights_receipt_collision_before_deleting_checkout(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "collision-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="collision",
+        source=source.as_posix(),
+    )
+    add_ingestion_selection(
+        yard=yard,
+        job_id="collision",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="reference",
+    )
+    target = domain_repository / "intake/landed.json"
+    target.parent.mkdir(parents=True)
+    target.write_text('{"landed": true}\n', encoding="utf-8")
+    link_existing_admission(
+        yard=yard,
+        job_id="collision",
+        domain_repository=domain_repository,
+        targets=[("other", "intake/landed.json")],
+    )
+    verify_ingestion(yard=yard, job_id="collision", domain_repository=domain_repository)
+    receipt = domain_repository / "intake/receipts/collision.json"
+    receipt.parent.mkdir(parents=True)
+    receipt.write_text("collision\n", encoding="utf-8")
+
+    with pytest.raises(FileExistsError):
+        finalize_ingestion(
+            yard=yard,
+            job_id="collision",
+            domain_repository=domain_repository,
+            workspace_disposition="delete",
+        )
+
+    assert (yard / "active/collision/checkout/README.md").is_file()
+
+
 def test_owned_git_migration_cleans_source_physically_and_uses_history_receipt(
     tmp_path: Path,
 ) -> None:
@@ -424,6 +527,21 @@ def test_owned_git_migration_cleans_source_physically_and_uses_history_receipt(
     assert (source / "skills/example/SKILL.md").is_file()
     assert plan["execution_requires_explicit_authorization"] is True
 
+    receipt_path = domain_repository / "intake/migrations/owned-migration.json"
+    receipt_path.parent.mkdir(parents=True)
+    receipt_path.write_text("collision\n", encoding="utf-8")
+    with pytest.raises(FileExistsError):
+        execute_source_cleanup(
+            yard=yard,
+            plan_path=plan_path,
+            authorized_source=source,
+            domain_repository=domain_repository,
+            execute=True,
+        )
+    assert (source / "skills/example/SKILL.md").is_file()
+    assert git(source, "status", "--short") == ""
+    receipt_path.unlink()
+
     result = execute_source_cleanup(
         yard=yard,
         plan_path=plan_path,
@@ -435,7 +553,6 @@ def test_owned_git_migration_cleans_source_physically_and_uses_history_receipt(
     assert result["paths_absent"] is True
     assert not (source / "skills/example").exists()
     assert "skills/example" not in git(source, "ls-tree", "-r", "--name-only", "HEAD")
-    receipt_path = domain_repository / "intake/migrations/owned-migration.json"
     receipt = load_git_migration_receipt(receipt_path)
     assert receipt["duplicate_snapshot_retained"] is False
     assert receipt["source"]["revision"] == source_revision
@@ -521,3 +638,167 @@ def test_git_migration_rejects_dirty_or_untracked_source_content(
             role="readme_artifact",
             preservation="git_migration",
         )
+
+
+def test_candidate_cannot_be_declared_without_preserved_candidate_bytes(
+    tmp_path: Path,
+) -> None:
+    domain_root, _, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "candidate-reference")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="candidate-reference",
+        source=source.as_posix(),
+    )
+
+    with pytest.raises(ValueError, match="require selected or replayable"):
+        add_ingestion_selection(
+            yard=yard,
+            job_id="candidate-reference",
+            selection_id="readme",
+            source_path="README.md",
+            role="readme_artifact",
+            preservation="reference",
+            candidate_id="readme-candidate",
+            candidate_kind="other",
+            candidate_format="markdown",
+            candidate_entrypoint="README.md",
+        )
+
+
+def test_failed_cleanup_commit_restores_physically_deleted_source(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "hooked-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="hooked-cleanup",
+        source=source.as_posix(),
+        ownership="owned",
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="hooked-cleanup",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    admit_ingestion(
+        yard=yard,
+        job_id="hooked-cleanup",
+        domain_repository=domain_repository,
+        manifest_id="hooked-cleanup",
+        title="Hook rollback fixture",
+    )
+    verify_ingestion(
+        yard=yard,
+        job_id="hooked-cleanup",
+        domain_repository=domain_repository,
+    )
+    parameters = {
+        "source_repository": source.as_posix(),
+        "expected_head": git(source, "rev-parse", "HEAD"),
+        "paths": [
+            {
+                "path": selection["path"],
+                "artifact_type": selection["artifact_type"],
+                "sha256": selection["sha256"],
+            }
+        ],
+        "commit_message": "Remove landed README",
+        "settlement": "local_commit",
+    }
+    create_external_action_plan(
+        yard=yard,
+        job_id="hooked-cleanup",
+        action_id="clean-source",
+        action="source_cleanup",
+        parameters=parameters,
+    )
+    hook = source / ".git/hooks/pre-commit"
+    hook.write_text("#!/bin/sh\nexit 1\n", encoding="utf-8")
+    hook.chmod(0o755)
+
+    with pytest.raises(subprocess.CalledProcessError):
+        execute_source_cleanup(
+            yard=yard,
+            plan_path=(
+                yard / "active/hooked-cleanup/control/actions/clean-source.json"
+            ),
+            authorized_source=source,
+            domain_repository=domain_repository,
+            execute=True,
+        )
+
+    assert (source / "README.md").read_text() == "initial\n"
+    assert git(source, "status", "--short") == ""
+
+
+def test_source_cleanup_cannot_treat_a_reference_record_as_landed_bytes(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "reference-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="reference-cleanup",
+        source=source.as_posix(),
+        ownership="owned",
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="reference-cleanup",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="reference",
+    )
+    record = domain_repository / "intake/reference.json"
+    record.parent.mkdir(parents=True)
+    record.write_text('{"reference": true}\n', encoding="utf-8")
+    link_existing_admission(
+        yard=yard,
+        job_id="reference-cleanup",
+        domain_repository=domain_repository,
+        targets=[("other", "intake/reference.json")],
+    )
+    verify_ingestion(
+        yard=yard,
+        job_id="reference-cleanup",
+        domain_repository=domain_repository,
+    )
+    create_external_action_plan(
+        yard=yard,
+        job_id="reference-cleanup",
+        action_id="clean-source",
+        action="source_cleanup",
+        parameters={
+            "source_repository": source.as_posix(),
+            "expected_head": git(source, "rev-parse", "HEAD"),
+            "paths": [
+                {
+                    "path": selection["path"],
+                    "artifact_type": selection["artifact_type"],
+                    "sha256": selection["sha256"],
+                }
+            ],
+            "commit_message": "Unsafe cleanup",
+            "settlement": "local_commit",
+        },
+    )
+
+    with pytest.raises(ValueError, match="preserved bytes"):
+        execute_source_cleanup(
+            yard=yard,
+            plan_path=(
+                yard / "active/reference-cleanup/control/actions/clean-source.json"
+            ),
+            authorized_source=source,
+            domain_repository=domain_repository,
+            execute=True,
+        )
+
+    assert (source / "README.md").is_file()
+    assert git(source, "status", "--short") == ""

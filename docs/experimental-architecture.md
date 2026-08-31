@@ -83,3 +83,9 @@ repository. Extract another repository only when a persistent independent
 authority, release lifecycle, consumer base, runtime, permission, licensing,
 or storage boundary exists. Temporary repositories and worktrees are execution
 or concurrency substrates, not automatically durable authorities.
+
+Source acquisition uses a non-Git operational yard beside this repository.
+The yard may contain disposable clones, local archives, and uncommitted job
+logs, but it is not another domain authority. Only landed artifacts and
+verified finalization or Git-migration receipts enter durable intake. See
+[`repository-ingestion.md`](repository-ingestion.md).

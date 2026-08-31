@@ -106,6 +106,9 @@ def execute_github_action(
     if plan["action"] not in {"publish_private", "archive_owned"}:
         raise ValueError("this executor only handles GitHub publication and archival")
     job_dir = _job_directory(yard, plan["job_id"], require_active=True)
+    expected_plan = job_dir / "control/actions" / f"{plan['id']}.json"
+    if plan_path.resolve() != expected_plan.resolve():
+        raise PermissionError("action plan is not the registered job plan")
     job = _load_job_from_directory(job_dir)
     if job["status"] != "verified":
         raise ValueError("GitHub execution requires a still-verified job")
@@ -209,6 +212,11 @@ def _matching_selections(
         (job_dir / "control/selections.json").read_text(encoding="utf-8")
     )["selections"]
     matched = []
+    normalized_paths = [Path(item["path"]) for item in paths]
+    for index, path in enumerate(normalized_paths):
+        for other in normalized_paths[index + 1 :]:
+            if path == other or path in other.parents or other in path.parents:
+                raise ValueError("source cleanup paths must not overlap")
     for declared in paths:
         match = next(
             (
@@ -237,6 +245,45 @@ def _verify_github_source_ownership(
     _verify_owned(view, expected_owner)
 
 
+def _durable_selection_landed(
+    *,
+    job: dict[str, Any],
+    selection: dict[str, Any],
+    domain_repository: Path,
+    parameters: dict[str, Any],
+) -> bool:
+    if job["admission"] is not None and job["admission"]["mode"] == "generated":
+        for target in job["admission"]["targets"]:
+            if target["kind"] != "intake_manifest":
+                continue
+            manifest_path = resolve_contained(domain_repository, target["path"])
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+            item = next(
+                (
+                    candidate
+                    for candidate in manifest["items"]
+                    if candidate["id"] == selection["id"]
+                ),
+                None,
+            )
+            if item is None or "snapshot" not in item:
+                continue
+            snapshot = item["snapshot"]
+            snapshot_path = resolve_contained(domain_repository, snapshot["path"])
+            actual = artifact_sha256(snapshot_path, snapshot["artifact_type"])
+            if actual == selection["sha256"] == snapshot["sha256"]:
+                return True
+    proofs = parameters.get("landing_proofs", [])
+    proof = next(
+        (item for item in proofs if item.get("selection_id") == selection["id"]),
+        None,
+    )
+    if proof is None or proof.get("sha256") != selection["sha256"]:
+        return False
+    path = resolve_contained(domain_repository, proof["path"])
+    return artifact_sha256(path, proof["artifact_type"]) == proof["sha256"]
+
+
 def execute_source_cleanup(
     *,
     yard: Path,
@@ -252,6 +299,9 @@ def execute_source_cleanup(
     if plan["action"] != "source_cleanup":
         raise ValueError("source cleanup requires a source_cleanup plan")
     job_dir = _job_directory(yard, plan["job_id"], require_active=True)
+    expected_plan = job_dir / "control/actions" / f"{plan['id']}.json"
+    if plan_path.resolve() != expected_plan.resolve():
+        raise PermissionError("cleanup plan is not the registered job plan")
     job = _load_job_from_directory(job_dir)
     if job["status"] != "verified" or job["source"]["ownership"] != "owned":
         raise PermissionError(
@@ -309,6 +359,7 @@ def execute_source_cleanup(
     ]
     destination_fingerprint = None
     destination = parameters.get("destination")
+    migration_receipt_path = None
     if migration_selections:
         if len(migration_selections) != 1 or destination is None:
             raise ValueError(
@@ -327,64 +378,117 @@ def execute_source_cleanup(
         )
         if destination_fingerprint["sha256"] != migration_selections[0]["sha256"]:
             raise ValueError("destination does not contain the selected source content")
-
-    run_git(source, "rm", "-r", "--", *[item["path"] for item in paths])
-    for item in paths:
-        physical = source / item["path"]
-        if physical.exists() or physical.is_symlink():
-            raise RuntimeError(
-                "git rm did not physically remove the selected source path"
+        migration_receipt_path = resolve_contained(
+            domain_repository, parameters["migration_receipt"]
+        )
+        if migration_receipt_path.exists():
+            raise FileExistsError(migration_receipt_path)
+    for selection in matched:
+        if selection["preservation"] == "git_migration":
+            continue
+        if selection["preservation"] not in {"selected", "replayable"}:
+            raise ValueError(
+                "source cleanup requires preserved bytes or an owned Git migration"
             )
-    run_git(source, "commit", "-m", parameters["commit_message"])
+        if not _durable_selection_landed(
+            job=job,
+            selection=selection,
+            domain_repository=domain_repository,
+            parameters=parameters,
+        ):
+            raise ValueError(
+                f"selection has no verified durable landing: {selection['id']}"
+            )
+
+    selected_paths = [item["path"] for item in paths]
+    run_git(source, "rm", "-r", "--", *selected_paths)
+    try:
+        for item in paths:
+            physical = source / item["path"]
+            if physical.exists() or physical.is_symlink():
+                raise RuntimeError(
+                    "git rm did not physically remove the selected source path"
+                )
+        run_git(source, "commit", "-m", parameters["commit_message"])
+    except Exception:
+        run_git(
+            source,
+            "restore",
+            "--source=HEAD",
+            "--staged",
+            "--worktree",
+            "--",
+            *selected_paths,
+            check=False,
+        )
+        raise
     deletion_revision, _, _ = git_identity(source)
     settlement = parameters["settlement"]
     references: list[str] = []
     if settlement != "local_commit":
-        github_repository = parameters["github_repository"]
-        github_owner = parameters["github_owner"]
-        _verify_github_source_ownership(gh_executable, github_repository, github_owner)
-        remote = parameters.get("remote", "origin")
-        push_branch = parameters.get("branch") or branch
-        if not push_branch:
-            raise ValueError("pushed cleanup requires a named branch")
-        run_git(source, "push", remote, f"HEAD:{push_branch}")
-        references.append(f"git:{github_repository}@{deletion_revision}")
-        if settlement in {"pr_open", "merged"}:
-            result = _run(
-                [
-                    gh_executable,
-                    "pr",
-                    "create",
-                    "--repo",
-                    github_repository,
-                    "--head",
-                    push_branch,
-                    "--base",
-                    parameters["base"],
-                    "--title",
-                    parameters["title"],
-                    "--body",
-                    parameters["body"],
-                ]
+        try:
+            github_repository = parameters["github_repository"]
+            github_owner = parameters["github_owner"]
+            _verify_github_source_ownership(
+                gh_executable, github_repository, github_owner
             )
-            pull_request = result.stdout.strip()
-            references.append(pull_request)
-            if settlement == "merged":
-                _run(
+            remote = parameters.get("remote", "origin")
+            push_branch = parameters.get("branch") or branch
+            if not push_branch:
+                raise ValueError("pushed cleanup requires a named branch")
+            run_git(source, "push", remote, f"HEAD:{push_branch}")
+            references.append(f"git:{github_repository}@{deletion_revision}")
+            if settlement in {"pr_open", "merged"}:
+                result = _run(
                     [
                         gh_executable,
                         "pr",
-                        "merge",
-                        pull_request,
-                        "--merge",
+                        "create",
+                        "--repo",
+                        github_repository,
+                        "--head",
+                        push_branch,
+                        "--base",
+                        parameters["base"],
+                        "--title",
+                        parameters["title"],
+                        "--body",
+                        parameters["body"],
                     ]
                 )
+                pull_request = result.stdout.strip()
+                references.append(pull_request)
+                if settlement == "merged":
+                    _run(
+                        [
+                            gh_executable,
+                            "pr",
+                            "merge",
+                            pull_request,
+                            "--merge",
+                        ]
+                    )
+        except Exception as error:
+            _write_action_result(
+                job_dir,
+                plan,
+                {
+                    "schema_version": 1,
+                    "action_id": plan["id"],
+                    "action": "source_cleanup",
+                    "status": "incomplete",
+                    "deletion_revision": deletion_revision,
+                    "paths_absent": True,
+                    "failed_step": "remote_settlement",
+                    "error_type": type(error).__name__,
+                },
+            )
+            raise
 
     migration_target = None
     if migration_selections:
-        assert destination is not None
+        assert destination is not None and migration_receipt_path is not None
         receipt_relative = parameters["migration_receipt"]
-        receipt_path = resolve_contained(domain_repository, receipt_relative)
         receipt = build_git_migration_receipt(
             receipt_id=parameters["migration_receipt_id"],
             source_repository=source,
@@ -399,11 +503,19 @@ def execute_source_cleanup(
             artifact_type=migration_selections[0]["artifact_type"],
             source_settlement=settlement,
             destination_settlement=destination["settlement"],
+            source_ownership_basis=parameters.get(
+                "source_ownership_basis", "explicit_owner_assertion"
+            ),
+            destination_ownership_basis=destination.get(
+                "ownership_basis", "explicit_owner_assertion"
+            ),
             references=references + destination.get("references", []),
             limitations=destination.get("limitations", []),
         )
-        write_git_migration_receipt(receipt_path, receipt)
-        migration_target = _target("migration_receipt", receipt_path, domain_repository)
+        write_git_migration_receipt(migration_receipt_path, receipt)
+        migration_target = _target(
+            "migration_receipt", migration_receipt_path, domain_repository
+        )
         job = _load_job_from_directory(job_dir)
         assert job["admission"] is not None and job["verification"] is not None
         job["admission"]["targets"].append(migration_target)

@@ -1,0 +1,88 @@
+{
+  "admission_targets": [
+    {
+      "kind": "intake_manifest",
+      "path": "intake/manifests/reademe-temp-v1.json",
+      "sha256": "c5b163c318190ef0c55bc4ea8641ca6c029575867012599a712bb1e08365d1c3"
+    },
+    {
+      "kind": "candidate",
+      "path": "candidates/reademe-temp-modular-readme-v1/candidate.json",
+      "sha256": "587efbef1e596bfd661aa92e2834b9d63ad847fe5c9ce853d264255183333622"
+    },
+    {
+      "kind": "experiment_plan",
+      "path": "experiments/plans/reademe-temp-modular-readme-v1.json",
+      "sha256": "e573052f05086ba18b8d90be40fa301e97b6261597f56fbd351bcbfcefba1f5f"
+    },
+    {
+      "kind": "experiment_run",
+      "path": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json",
+      "sha256": "ff0e15f7a230427d16b3762f349ef22e9a798f8a91a62ed7ae924fc7444ba9e8"
+    }
+  ],
+  "checkout_present": false,
+  "completed_at": "2026-08-31T00:13:04.793627Z",
+  "id": "reademe-temp-controller-v1-finalization",
+  "job_id": "reademe-temp-controller-v1",
+  "limitations": [
+    "The local-only source main branch did not contain the experimental skill commit; the linked intake manifest verifies that commit from cloned Git history and the untracked forward-test from the captured workspace."
+  ],
+  "migration_receipts": [],
+  "remote_disposition": "none",
+  "remote_policy": "sever",
+  "schema_version": 1,
+  "selections": [
+    {
+      "id": "current-main-readme",
+      "path": "README.md",
+      "preservation": "reference",
+      "role": "research_content",
+      "sha256": "f7ef999f1d56ce14bf92fb4c4d8e95263d9f70d8649dfd622d293796566b8d6f"
+    },
+    {
+      "id": "notebooklm-research-record",
+      "path": "docs",
+      "preservation": "reference",
+      "role": "research_content",
+      "sha256": "c61c4aa0fbac149395c5ed27cf2bdbd3976a4486d92a2671d62643121d37fbac"
+    },
+    {
+      "id": "related-research-documents",
+      "path": "related-documents",
+      "preservation": "reference",
+      "role": "research_content",
+      "sha256": "fda09813a00561274d08ced0b0894f470b9d463a38d67e56f9cb05f1ab290ef2"
+    },
+    {
+      "id": "notebooklm-extraction-method",
+      "path": "scripts/extract_notebooklm_save.py",
+      "preservation": "reference",
+      "role": "research_method",
+      "sha256": "1679ee9456b26fcb9395cce7b1f535d0cd19ab1a0693a4e97c684d0ab0aa8bbc"
+    },
+    {
+      "id": "current-main-modular-templates",
+      "path": "modular-templates",
+      "preservation": "reference",
+      "role": "research_method",
+      "sha256": "f9d953629b50d6382104256654e29f9fdcd7de6729ff98a80b227088075326da"
+    },
+    {
+      "id": "modular-readme-forward-test",
+      "path": ".agents/skills/modular-readme/work/forward-test",
+      "preservation": "reference",
+      "role": "trial_evidence",
+      "sha256": "dfcd650ad0c13e1548a39d59a414463aa68675f475b6b7f1d1f3216010bdb8e4"
+    }
+  ],
+  "source": {
+    "git_head": "30775d179343b47e24ae0c7b543332d86802f486",
+    "git_tree": "37cd2a380443f0dd9acbe1f1f5834082733a9c9b",
+    "kind": "local_git",
+    "remote": null,
+    "repository_id": "local:reademe-temp"
+  },
+  "status": "completed",
+  "workspace_disposition": "delete"
+}

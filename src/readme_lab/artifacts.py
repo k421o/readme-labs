@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import os
 from pathlib import Path
 
 
@@ -13,10 +14,16 @@ def tree_sha256(root: Path) -> str:
     if not root.is_dir():
         raise NotADirectoryError(root)
     digest = hashlib.sha256()
-    for path in sorted(root.rglob("*")):
+    files = []
+    for current_root, directories, names in os.walk(root, followlinks=False):
+        current = Path(current_root)
+        directories[:] = [name for name in directories if name != ".git"]
+        files.extend(current / name for name in names)
+        files.extend(
+            current / name for name in directories if (current / name).is_symlink()
+        )
+    for path in sorted(files):
         relative_path = path.relative_to(root)
-        if ".git" in relative_path.parts:
-            continue
         if path.is_symlink():
             raise ValueError(f"artifact trees must not contain symlinks: {path}")
         if not path.is_file():

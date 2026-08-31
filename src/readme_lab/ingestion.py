@@ -64,6 +64,14 @@ def _validate(value: dict[str, Any], schema_name: str) -> None:
     ).validate(value)
 
 
+def load_finalization_receipt(path: Path) -> dict[str, Any]:
+    """Load and validate one durable ingestion finalization receipt."""
+
+    receipt = json.loads(path.read_text(encoding="utf-8"))
+    _validate(receipt, RECEIPT_SCHEMA)
+    return receipt
+
+
 def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
@@ -403,6 +411,7 @@ def begin_ingestion(
     source: str,
     remote_policy: str = "sever",
     ownership: str = "unknown",
+    repository_id: str | None = None,
     include_ignored: bool = False,
     lfs_policy: str = "pointers",
     submodule_policy: str = "record",
@@ -470,12 +479,12 @@ def begin_ingestion(
             assert local_path is not None
             shutil.copytree(local_path, checkout, symlinks=True)
             head = tree = branch = None
-            original_remotes = []
+            original_remotes = _all_remote_records(checkout)
             dirty = untracked = False
             locator = local_path.as_posix()
             mode = "copy"
 
-        if is_git_repository(checkout):
+        if _git_repositories(checkout):
             _apply_remote_policy(checkout, remote_policy, job_id)
         inventory = _inventory(job_id, checkout, include_ignored=include_ignored)
         _write_json(job_dir / "control/inventory.json", inventory)
@@ -495,7 +504,8 @@ def begin_ingestion(
             "source": {
                 "kind": kind,
                 "locator": locator,
-                "repository_id": repository_id_from_locator(repository_locator),
+                "repository_id": repository_id
+                or repository_id_from_locator(repository_locator),
                 "ownership": ownership,
                 "git_head": head,
                 "git_tree": tree,
@@ -662,6 +672,14 @@ def add_ingestion_selection(
     selections = json.loads(path.read_text(encoding="utf-8"))
     if any(item["id"] == selection_id for item in selections["selections"]):
         raise ValueError(f"duplicate selection id: {selection_id}")
+    if candidate is not None:
+        if preservation not in {"selected", "replayable"}:
+            raise ValueError("embedded candidates require selected or replayable bytes")
+        if any(
+            item["candidate"] is not None and item["candidate"]["id"] == candidate["id"]
+            for item in selections["selections"]
+        ):
+            raise ValueError(f"duplicate candidate id: {candidate['id']}")
     selection = {
         "id": selection_id,
         "path": source_path,
@@ -828,6 +846,45 @@ def _write_candidate(
     return snapshot, _target("candidate", descriptor_path, domain_repository)
 
 
+def _preflight_admission(
+    *,
+    domain_repository: Path,
+    manifest_id: str,
+    selections: list[dict[str, Any]],
+    checkout: Path,
+) -> None:
+    outputs: list[Path] = []
+    for selection in selections:
+        artifact = _resolve_artifact(checkout, selection["path"])
+        candidate = selection["candidate"]
+        if candidate is not None:
+            candidate_root = domain_repository / "candidates" / candidate["id"]
+            outputs.append(candidate_root)
+            if artifact.is_dir():
+                entrypoint = _resolve_artifact(artifact, candidate["entrypoint"])
+                if not entrypoint.exists():
+                    raise FileNotFoundError(entrypoint)
+            elif candidate["entrypoint"] not in {".", artifact.name}:
+                raise ValueError("file candidate entrypoint must name its copied file")
+        elif selection["preservation"] in {"selected", "replayable"}:
+            outputs.append(
+                domain_repository / "intake/snapshots" / manifest_id / selection["id"]
+            )
+        for index, _ in enumerate(selection["context_paths"], start=1):
+            outputs.append(
+                domain_repository
+                / "intake/snapshots"
+                / manifest_id
+                / f"{selection['id']}-context-{index}"
+            )
+    normalized = [path.resolve() for path in outputs]
+    if len(normalized) != len(set(normalized)):
+        raise ValueError("admission selections map to duplicate output paths")
+    collision = next((path for path in outputs if path.exists()), None)
+    if collision is not None:
+        raise FileExistsError(collision)
+
+
 def admit_ingestion(
     *,
     yard: Path,
@@ -858,6 +915,12 @@ def admit_ingestion(
     if manifest_path.exists():
         raise FileExistsError(manifest_path)
     checkout = job_dir / "checkout"
+    _preflight_admission(
+        domain_repository=domain_repository,
+        manifest_id=manifest_id,
+        selections=selections["selections"],
+        checkout=checkout,
+    )
     items: list[dict[str, Any]] = []
     relationships: list[dict[str, str]] = []
     candidate_targets: list[dict[str, str]] = []
@@ -1165,22 +1228,53 @@ def finalize_ingestion(
     migration_paths = list(migration_receipts)
     if remote_disposition == "owned_git_migration" and not migration_paths:
         raise ValueError("owned Git migration requires a settled migration receipt")
+    domain_repository = domain_repository.resolve()
+    for relative in migration_paths:
+        load_git_migration_receipt(resolve_contained(domain_repository, relative))
     if remote_disposition in {"publish_private", "archive_owned"}:
-        actions = list((job_dir / "control/actions").glob("*.result.json"))
-        if not actions:
+        expected_action = {
+            "publish_private": "publish_private",
+            "archive_owned": "archive_owned",
+        }[remote_disposition]
+        action_results = [
+            json.loads(path.read_text(encoding="utf-8"))
+            for path in (job_dir / "control/actions").glob("*.result.json")
+        ]
+        if not any(
+            result.get("action") == expected_action
+            and result.get("status") == "completed"
+            for result in action_results
+        ):
             raise ValueError(
                 "external remote disposition has no executed action result"
             )
 
     checkout = job_dir / "checkout"
     checkout_present = True
-    destination: Path | None = None
+    if workspace_disposition == "delete":
+        destination: Path | None = _validate_yard(yard) / "completed" / job_id
+    elif workspace_disposition == "archive_local":
+        ownership = "owned" if job["source"]["ownership"] == "owned" else "external"
+        destination = _validate_yard(yard) / "archive" / ownership / job_id
+    elif workspace_disposition == "retain":
+        destination = None
+    else:
+        raise ValueError(f"unsupported verified disposition: {workspace_disposition}")
+    if destination is not None and destination.exists():
+        raise FileExistsError(destination)
+    exported = (
+        domain_repository / "intake/receipts" / f"{job_id}.json"
+        if export_receipt
+        else None
+    )
+    if exported is not None and exported.exists():
+        raise FileExistsError(exported)
+
     if workspace_disposition == "delete":
         if not checkout.resolve().is_relative_to(job_dir.resolve()):
             raise ValueError("managed checkout escaped its job directory")
         shutil.rmtree(checkout)
         checkout_present = False
-        destination = _validate_yard(yard) / "completed" / job_id
     elif workspace_disposition == "archive_local":
         if is_git_repository(checkout):
             bundle = job_dir / "control/source.bundle"
@@ -1191,12 +1285,6 @@ def finalize_ingestion(
                 capture_output=True,
                 text=True,
             )
-        ownership = "owned" if job["source"]["ownership"] == "owned" else "external"
-        destination = _validate_yard(yard) / "archive" / ownership / job_id
-    elif workspace_disposition == "retain":
-        destination = None
-    else:
-        raise ValueError(f"unsupported verified disposition: {workspace_disposition}")
 
     receipt = {
         "schema_version": 1,
@@ -1236,17 +1324,9 @@ def finalize_ingestion(
     )
     _store_job(job_dir, job)
 
-    if export_receipt:
-        domain_repository = domain_repository.resolve()
-        exported = domain_repository / "intake/receipts" / f"{job_id}.json"
-        if exported.exists():
-            raise FileExistsError(exported)
+    if exported is not None:
         _write_json(exported, receipt)
-    else:
-        exported = None
     if destination is not None:
-        if destination.exists():
-            raise FileExistsError(destination)
         shutil.move(job_dir, destination)
     return {
         "job_id": job_id,
@@ -1292,6 +1372,35 @@ def create_external_action_plan(
         "full",
     }:
         raise ValueError("private publication history must be snapshot or full")
+    if action in {"publish_private", "archive_owned"}:
+        if not parameters["owner"] or not parameters["repository"]:
+            raise ValueError("GitHub owner and repository must not be empty")
+        if "/" in parameters["repository"]:
+            raise ValueError("repository is a name; owner is a separate parameter")
+    if action == "source_cleanup":
+        paths = parameters["paths"]
+        if not isinstance(paths, list) or not paths:
+            raise ValueError("source cleanup requires at least one exact path")
+        if any(item.get("path") in {None, ".", ""} for item in paths):
+            raise ValueError("source cleanup does not accept a repository-root path")
+        settlement = parameters["settlement"]
+        if settlement not in {"local_commit", "pushed", "pr_open", "merged"}:
+            raise ValueError(f"unsupported source settlement: {settlement}")
+        if settlement != "local_commit":
+            remote_keys = {"github_repository", "github_owner", "remote", "branch"}
+            remote_missing = remote_keys - parameters.keys()
+            if remote_missing:
+                raise ValueError(
+                    f"remote cleanup settlement is missing: {sorted(remote_missing)}"
+                )
+        if settlement in {"pr_open", "merged"}:
+            pull_request_keys = {"base", "title", "body"}
+            pull_request_missing = pull_request_keys - parameters.keys()
+            if pull_request_missing:
+                raise ValueError(
+                    "pull-request settlement is missing: "
+                    f"{sorted(pull_request_missing)}"
+                )
     plan = {
         "schema_version": 1,
         "id": action_id,

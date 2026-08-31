@@ -89,6 +89,8 @@ def build_git_migration_receipt(
     artifact_type: str,
     source_settlement: str,
     destination_settlement: str,
+    source_ownership_basis: str = "explicit_owner_assertion",
+    destination_ownership_basis: str = "explicit_owner_assertion",
     references: list[str] | None = None,
     limitations: list[str] | None = None,
 ) -> dict[str, Any]:
@@ -129,6 +131,8 @@ def build_git_migration_receipt(
         "recorded_at": _now(),
         "source": {
             "repository_id": source_repository_id,
+            "ownership": "owned",
+            "ownership_basis": source_ownership_basis,
             "remote": _remote(source_repository),
             "revision": source_revision,
             "path": source_path,
@@ -139,6 +143,8 @@ def build_git_migration_receipt(
         },
         "destination": {
             "repository_id": destination_repository_id,
+            "ownership": "owned",
+            "ownership_basis": destination_ownership_basis,
             "remote": _remote(destination_repository),
             "revision": destination_revision,
             "path": destination_path,

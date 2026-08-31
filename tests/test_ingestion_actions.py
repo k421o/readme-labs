@@ -230,3 +230,56 @@ def test_owned_archival_refuses_repository_administered_by_another_owner(
             execute=True,
             gh_executable=gh.as_posix(),
         )
+
+
+def test_executor_refuses_an_unregistered_copy_of_an_action_plan(
+    tmp_path: Path,
+) -> None:
+    yard, _ = make_verified_job(tmp_path, "registered-plan")
+    gh, _ = make_fake_gh(tmp_path)
+    create_external_action_plan(
+        yard=yard,
+        job_id="registered-plan",
+        action_id="publish-private",
+        action="publish_private",
+        parameters={
+            "owner": "k421o",
+            "repository": "ingested-example",
+            "history": "snapshot",
+        },
+    )
+    registered = yard / "active/registered-plan/control/actions/publish-private.json"
+    copied = tmp_path / "copied-plan.json"
+    copied.write_bytes(registered.read_bytes())
+
+    with pytest.raises(PermissionError, match="registered job plan"):
+        execute_github_action(
+            yard=yard,
+            plan_path=copied,
+            gh_executable=gh.as_posix(),
+        )
+
+
+def test_source_cleanup_plan_rejects_repository_root(tmp_path: Path) -> None:
+    yard, _ = make_verified_job(tmp_path, "root-cleanup")
+
+    with pytest.raises(ValueError, match="repository-root"):
+        create_external_action_plan(
+            yard=yard,
+            job_id="root-cleanup",
+            action_id="clean-root",
+            action="source_cleanup",
+            parameters={
+                "source_repository": "/tmp/example",
+                "expected_head": "a" * 40,
+                "paths": [
+                    {
+                        "path": ".",
+                        "artifact_type": "tree",
+                        "sha256": "b" * 64,
+                    }
+                ],
+                "commit_message": "clean",
+                "settlement": "local_commit",
+            },
+        )

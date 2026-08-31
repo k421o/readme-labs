@@ -145,6 +145,7 @@ def build_parser() -> argparse.ArgumentParser:
     ingest_begin.add_argument(
         "--ownership", choices=("owned", "external", "unknown"), default="unknown"
     )
+    ingest_begin.add_argument("--repository-id")
     ingest_begin.add_argument("--include-ignored", action="store_true")
     ingest_begin.add_argument(
         "--lfs-policy", choices=("pointers", "fetch"), default="pointers"
@@ -309,6 +310,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=("local_commit", "pushed", "pr_open", "merged"),
         required=True,
     )
+    ingest_migration.add_argument(
+        "--source-ownership-basis",
+        choices=("explicit_owner_assertion", "github_admin_verified"),
+        default="explicit_owner_assertion",
+    )
+    ingest_migration.add_argument(
+        "--destination-ownership-basis",
+        choices=("explicit_owner_assertion", "github_admin_verified"),
+        default="explicit_owner_assertion",
+    )
     ingest_migration.add_argument("--reference", action="append", default=[])
     ingest_migration.add_argument("--limitation", action="append", default=[])
 
@@ -447,6 +458,7 @@ def main(argv: list[str] | None = None) -> int:
             source=args.source,
             remote_policy=args.remote_policy,
             ownership=args.ownership,
+            repository_id=args.repository_id,
             include_ignored=args.include_ignored,
             lfs_policy=args.lfs_policy,
             submodule_policy=args.submodule_policy,
@@ -583,6 +595,8 @@ def main(argv: list[str] | None = None) -> int:
             artifact_type=args.artifact_type,
             source_settlement=args.source_settlement,
             destination_settlement=args.destination_settlement,
+            source_ownership_basis=args.source_ownership_basis,
+            destination_ownership_basis=args.destination_ownership_basis,
             references=args.reference,
             limitations=args.limitation,
         )
