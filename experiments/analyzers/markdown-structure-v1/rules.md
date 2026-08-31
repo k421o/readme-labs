@@ -1,0 +1,23 @@
+# Markdown structure v1
+
+This built-in analyzer is the first calibration instrument for README static
+analysis. It deliberately checks context-free Markdown properties rather than
+requiring a particular README section set or progressive-disclosure design.
+
+Its four rules localize heading-level jumps, empty headings, repeated normalized
+heading labels, and Markdown images with empty alternative text. A diagnostic
+means “inspect this property in context.” It does not mean the README failed,
+that a hypothesis should stop, or that an agent should mechanically rewrite the
+document.
+
+The corpus profile evaluates all four rules. Initial calibration found repeated
+heading labels concentrated in a long API-reference README where repetition is
+plausibly intentional, so `duplicate-heading-text` is retained for inquiry but
+excluded from the default document-feedback profile. A caller can still select
+the `all` profile when that signal is relevant. The complete calibration is in
+the [pinned corpus run](../../runs/pilot-high-exposure-markdown-structure-v1/README.md).
+
+The initial corpus characterization exists to show how these rules behave on
+real, high-exposure README documents before their feedback is incorporated into
+iteration. The same adapter can then run on a generated or ingested README and
+place a diagnostic record beside soft agent-review evidence.

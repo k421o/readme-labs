@@ -20,6 +20,10 @@ Raw third-party README bodies are fetched into an untracked cache. The
 collector verifies each body against its Git blob SHA before extracting an
 observation.
 
+The same verified cache can serve static-analyzer calibration without turning
+the corpus into a quality label. The first derived run is documented under
+[`experiments/runs/pilot-high-exposure-markdown-structure-v1/`](../experiments/runs/pilot-high-exposure-markdown-structure-v1/).
+
 ## Reproduce the pilot
 
 ```console

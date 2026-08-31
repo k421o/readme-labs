@@ -1,0 +1,636 @@
+{
+  "analyzer": {
+    "adapter_kind": "builtin_python",
+    "id": "markdown-structure-v1",
+    "spec_sha256": "fc86aef9cc08ea381b3bdcf6ac0e705c706332d5e730f33e206eacbe22b19c07",
+    "version": "1.0.0"
+  },
+  "automated_authority": "evidence_only",
+  "configuration": {
+    "enabled_rule_ids": [
+      "duplicate-heading-text",
+      "empty-heading",
+      "heading-level-jump",
+      "image-missing-alt"
+    ],
+    "profile": "all"
+  },
+  "hypothesis_disposition": "not_decided",
+  "limitations": [
+    "The analyzer reads CommonMark tokens and does not reproduce every hosting platform's Markdown extensions.",
+    "Diagnostics identify inspectable properties; they do not measure README usefulness, correctness, or fitness for a specific audience.",
+    "Repository links, rendered HTML, and prose semantics are outside this first analyzer.",
+    "Corpus diagnostics describe this pinned sample and do not estimate population prevalence or README quality."
+  ],
+  "mode": "corpus_characterization",
+  "recorded_at": "2026-08-31T02:40:33.089462Z",
+  "result": "completed",
+  "run_id": "pilot-high-exposure-markdown-structure-v1",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "diagnostics": [
+        {
+          "evidence": [
+            "previous_level=2",
+            "level=5"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 696,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h2 to h5.",
+          "rule_id": "heading-level-jump"
+        },
+        {
+          "evidence": [
+            "previous_level=3",
+            "level=5"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 732,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h3 to h5.",
+          "rule_id": "heading-level-jump"
+        },
+        {
+          "evidence": [
+            "previous_level=3",
+            "level=5"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 765,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h3 to h5.",
+          "rule_id": "heading-level-jump"
+        },
+        {
+          "evidence": [
+            "previous_level=3",
+            "level=5"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 779,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h3 to h5.",
+          "rule_id": "heading-level-jump"
+        },
+        {
+          "evidence": [
+            "normalized=axios request config",
+            "first_line=732"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 779,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#request(config)'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios get url config",
+            "first_line=734"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 781,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#get(url[, config])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios delete url config",
+            "first_line=736"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 783,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#delete(url[, config])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios head url config",
+            "first_line=738"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 785,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#head(url[, config])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios options url config",
+            "first_line=740"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 787,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#options(url[, config])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios post url data config",
+            "first_line=742"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 789,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#post(url[, data[, config]])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios put url data config",
+            "first_line=744"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 791,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#put(url[, data[, config]])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axios patch url data config",
+            "first_line=746"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 793,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'axios#patch(url[, data[, config]])'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=axiosheaders concat targets",
+            "first_line=2479"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 2516,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'AxiosHeaders.concat(...targets)'.",
+          "rule_id": "duplicate-heading-text"
+        },
+        {
+          "evidence": [
+            "normalized=http 2 support",
+            "first_line=1252"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 2633,
+            "path": "README.md"
+          },
+          "message": "Heading text repeats an earlier label: 'HTTP/2 support'.",
+          "rule_id": "duplicate-heading-text"
+        }
+      ],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 96,
+        "image_count": 18,
+        "line_count": 2851
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "97a6e20150ce709291165af55c6fa4eba74f56c63dceb6aa69f1e9b495e52bcf",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "axios/axios",
+        "retrieval_url": "https://raw.githubusercontent.com/axios/axios/fede1d1562e308077da7994305d63fb7722b66ac/README.md",
+        "revision": "fede1d1562e308077da7994305d63fb7722b66ac"
+      },
+      "subject_id": "axios-axios-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 9,
+        "image_count": 1,
+        "line_count": 66
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "11d1ca2946f112e83bf72cc611ca01598daa003539988c064256772b23f33cc2",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "curl/curl",
+        "retrieval_url": "https://raw.githubusercontent.com/curl/curl/8a2bb9ca241bbd82a0da536f6f39dca9037dd046/README.md",
+        "revision": "8a2bb9ca241bbd82a0da536f6f39dca9037dd046"
+      },
+      "subject_id": "curl-curl-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 4,
+        "image_count": 0,
+        "line_count": 53
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "pallets/flask",
+        "retrieval_url": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+        "revision": "d318b683471101618febed18996405ad26462110"
+      },
+      "subject_id": "pallets-flask-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 11,
+        "image_count": 5,
+        "line_count": 94
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "c980b7bc1ee9bc2750b431a840b555f0652bb896ce60f6436b17fa7dfb542f57",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "freeCodeCamp/freeCodeCamp",
+        "retrieval_url": "https://raw.githubusercontent.com/freeCodeCamp/freeCodeCamp/69f6817cf3e4d7fcc69b95053214868a31519aa5/README.md",
+        "revision": "69f6817cf3e4d7fcc69b95053214868a31519aa5"
+      },
+      "subject_id": "freecodecamp-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 1,
+        "image_count": 2,
+        "line_count": 75
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "da0bd9ed3f4ef6046ba391493911a36284db2515f9ee1771d4f02adeb2de8b05",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "git/git",
+        "retrieval_url": "https://raw.githubusercontent.com/git/git/c73e85354c275c9d409b26445089bc16940fc527/README.md",
+        "revision": "c73e85354c275c9d409b26445089bc16940fc527"
+      },
+      "subject_id": "git-git-root"
+    },
+    {
+      "diagnostics": [
+        {
+          "evidence": [
+            "previous_level=1",
+            "level=3"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 15,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h1 to h3.",
+          "rule_id": "heading-level-jump"
+        }
+      ],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 5,
+        "image_count": 1,
+        "line_count": 42
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "8247b7c5de1e74854aac1a08aa5894444d1d33b4045c70d5cc3367ad0e25c3f3",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "golang/go",
+        "retrieval_url": "https://raw.githubusercontent.com/golang/go/603439a1c6f2d37c7f02e246342847056ed04c21/README.md",
+        "revision": "603439a1c6f2d37c7f02e246342847056ed04c21"
+      },
+      "subject_id": "golang-go-root"
+    },
+    {
+      "diagnostics": [
+        {
+          "evidence": [
+            "previous_level=2",
+            "level=5"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 43,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h2 to h5.",
+          "rule_id": "heading-level-jump"
+        }
+      ],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 10,
+        "image_count": 2,
+        "line_count": 100
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "0c1159ea384aa0855eaad87f4595da8fd776553830297f3a7c43db81c7708fbd",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "kubernetes/kubernetes",
+        "retrieval_url": "https://raw.githubusercontent.com/kubernetes/kubernetes/e72c2715ade37738aa5c029e8de5285cbe1c9441/README.md",
+        "revision": "e72c2715ade37738aa5c029e8de5285cbe1c9441"
+      },
+      "subject_id": "kubernetes-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 15,
+        "image_count": 0,
+        "line_count": 168
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "d9e6892ff2c83807c34f4aeb06bff724068803d0e03470bfb81a8f5cbde5f090",
+        "kind": "corpus_sample",
+        "path": "README",
+        "repository": "torvalds/linux",
+        "retrieval_url": "https://raw.githubusercontent.com/torvalds/linux/08dbfad3f5040f5bdb6c529da20d6d4e81fefd72/README",
+        "revision": "08dbfad3f5040f5bdb6c529da20d6d4e81fefd72"
+      },
+      "subject_id": "torvalds-linux-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 23,
+        "image_count": 0,
+        "line_count": 912
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "402f35f68a3dfd93443e60f1c4a237fba8a2e75594ed811ebcbcbc3dfa89c486",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "nodejs/node",
+        "retrieval_url": "https://raw.githubusercontent.com/nodejs/node/045ff95365c8a65f8abc0a33efb055b6d9d93c03/README.md",
+        "revision": "045ff95365c8a65f8abc0a33efb055b6d9d93c03"
+      },
+      "subject_id": "nodejs-node-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 2,
+        "image_count": 8,
+        "line_count": 91
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "b2aef38c7633af8cc43be494004da614e719cb20041beecaaa44566fe663a6ec",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "numpy/numpy",
+        "retrieval_url": "https://raw.githubusercontent.com/numpy/numpy/6068016edd5acb19e17c0abbe809cdce8ba1370a/README.md",
+        "revision": "6068016edd5acb19e17c0abbe809cdce8ba1370a"
+      },
+      "subject_id": "numpy-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 9,
+        "image_count": 5,
+        "line_count": 78
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "4d20edc8d043718c1459dd5d5e25777a282cc09092ecab0f9cc7559f0eac9842",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "react/react",
+        "retrieval_url": "https://raw.githubusercontent.com/facebook/react/2dc7da790d6388b95b83198ca9b588b2ad5f5c0b/README.md",
+        "revision": "2dc7da790d6388b95b83198ca9b588b2ad5f5c0b"
+      },
+      "subject_id": "react-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 28,
+        "image_count": 1,
+        "line_count": 482
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "03f855d343bf0007187f81af36c263f431ff97820f9677067855f15e5ef1c675",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "redis/redis",
+        "retrieval_url": "https://raw.githubusercontent.com/redis/redis/e1d7d50f9c244ce52f724b279fcb19773fffa98c/README.md",
+        "revision": "e1d7d50f9c244ce52f724b279fcb19773fffa98c"
+      },
+      "subject_id": "redis-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 4,
+        "image_count": 7,
+        "line_count": 76
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "2a9268c9be5f4dc9abe9105740be7c5234babc3dd2b25eb11ca376c538a0c67b",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "psf/requests",
+        "retrieval_url": "https://raw.githubusercontent.com/psf/requests/5460f467b02e49471c0fd6cfc9ca0adab6351f98/README.md",
+        "revision": "5460f467b02e49471c0fd6cfc9ca0adab6351f98"
+      },
+      "subject_id": "psf-requests-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 7,
+        "image_count": 0,
+        "line_count": 79
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "b3f6ef2fef88b98cb9ec013a5c86213095e53e40eb228679574e4d06517f33c8",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "rust-lang/rust",
+        "retrieval_url": "https://raw.githubusercontent.com/rust-lang/rust/4545c8369286cd331ab9d6250c25630a69d6f790/README.md",
+        "revision": "4545c8369286cd331ab9d6250c25630a69d6f790"
+      },
+      "subject_id": "rust-lang-rust-root"
+    },
+    {
+      "diagnostics": [
+        {
+          "evidence": [
+            "previous_level=2",
+            "level=4"
+          ],
+          "level": "note",
+          "location": {
+            "column": null,
+            "line": 74,
+            "path": "README.md"
+          },
+          "message": "Heading level increases from h2 to h4.",
+          "rule_id": "heading-level-jump"
+        }
+      ],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 9,
+        "image_count": 19,
+        "line_count": 168
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "cd490686cd4ad6355aff49d75431f2cc00a101c61f60c3065b7c88cab7f557a4",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "tensorflow/tensorflow",
+        "retrieval_url": "https://raw.githubusercontent.com/tensorflow/tensorflow/ba73aa33d5712108696e873bd8761ef41ff2b3b7/README.md",
+        "revision": "ba73aa33d5712108696e873bd8761ef41ff2b3b7"
+      },
+      "subject_id": "tensorflow-root"
+    },
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 4,
+        "heading_count": 10,
+        "image_count": 2,
+        "line_count": 76
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [],
+      "source": {
+        "content_sha256": "45a411a3b8d49556fbaa73601befc458ab10ad873fca9088136888c89abb8935",
+        "kind": "corpus_sample",
+        "path": "README.md",
+        "repository": "microsoft/vscode",
+        "retrieval_url": "https://raw.githubusercontent.com/microsoft/vscode/3aa54039a0bec1bd4f9b428cdb202b4271bf22ef/README.md",
+        "revision": "3aa54039a0bec1bd4f9b428cdb202b4271bf22ef"
+      },
+      "subject_id": "microsoft-vscode-root"
+    }
+  ],
+  "summary": {
+    "completed_subject_count": 16,
+    "diagnostic_count": 17,
+    "diagnostics_by_rule": {
+      "duplicate-heading-text": 10,
+      "heading-level-jump": 7
+    },
+    "incomplete_subject_count": 0,
+    "subject_count": 16
+  }
+}

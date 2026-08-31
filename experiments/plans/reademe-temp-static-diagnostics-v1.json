@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "reademe-temp-static-diagnostics-v1",
+  "title": "Pair static diagnostics with the reademe-temp soft review",
+  "question": "What deterministic Markdown properties does the initial static analyzer surface in the generated reademe-temp README, and how does that evidence complement rather than replace the soft maintainer review?",
+  "candidate_ids": [
+    "reademe-temp-modular-readme-v1"
+  ],
+  "method": {
+    "id": "post-generation-static-diagnostic",
+    "version": "1",
+    "parameters": {
+      "analyzer": "experiments/analyzers/markdown-structure-v1/analyzer.json",
+      "profile": "feedback",
+      "corpus_calibration_run": "experiments/runs/pilot-high-exposure-markdown-structure-v1/run.json",
+      "paired_soft_review_run": "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json"
+    }
+  },
+  "planned_trials": [
+    {
+      "id": "markdown-structure-feedback",
+      "kind": "static_analysis",
+      "status": "completed",
+      "candidate_ids": [
+        "reademe-temp-modular-readme-v1"
+      ],
+      "measurements": [
+        "enabled rule coverage",
+        "localized deterministic diagnostics",
+        "subject content identity",
+        "contrast with advisory semantic review"
+      ],
+      "run_records": [
+        "experiments/runs/reademe-temp-forward-test-markdown-structure-v1/run.json"
+      ]
+    }
+  ],
+  "completion_policy": {
+    "mode": "complete_planned_run",
+    "automated_results_authority": "evidence_only",
+    "candidate_admission_gate": "none",
+    "allowed_early_stops": [
+      "safety",
+      "authorization",
+      "infrastructure"
+    ],
+    "early_stop_disposition": "incomplete_not_rejected"
+  },
+  "decision": {
+    "authority": "owner_or_designated_review",
+    "timing": "after_planned_trials_complete",
+    "allowed_outcomes": [
+      "iterate",
+      "combine",
+      "retain",
+      "reject",
+      "promote"
+    ]
+  }
+}

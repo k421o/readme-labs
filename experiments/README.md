@@ -22,3 +22,13 @@ storage behind immutable hashes.
 
 User-response protocols live under `user-response/`. Their method payload is
 intentionally extensible so the domain can learn better ways to study readers.
+
+## Static analysis
+
+Static analyzers under [`analyzers/`](analyzers/) produce deterministic or
+tool-backed diagnostics beside soft reviews. They first run in corpus
+characterization mode, then may expose a calibrated document-feedback profile
+for generated, ingested, candidate, or local READMEs. The common run envelope
+preserves subject identity and authority while adapter-specific native output
+keeps its own contract. See the
+[static-analysis architecture](../docs/static-analysis.md).

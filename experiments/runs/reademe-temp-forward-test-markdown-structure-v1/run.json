@@ -1,0 +1,63 @@
+{
+  "analyzer": {
+    "adapter_kind": "builtin_python",
+    "id": "markdown-structure-v1",
+    "spec_sha256": "fc86aef9cc08ea381b3bdcf6ac0e705c706332d5e730f33e206eacbe22b19c07",
+    "version": "1.0.0"
+  },
+  "automated_authority": "evidence_only",
+  "configuration": {
+    "enabled_rule_ids": [
+      "empty-heading",
+      "heading-level-jump",
+      "image-missing-alt"
+    ],
+    "profile": "feedback"
+  },
+  "hypothesis_disposition": "not_decided",
+  "limitations": [
+    "The analyzer reads CommonMark tokens and does not reproduce every hosting platform's Markdown extensions.",
+    "Diagnostics identify inspectable properties; they do not measure README usefulness, correctness, or fitness for a specific audience.",
+    "Repository links, rendered HTML, and prose semantics are outside this first analyzer."
+  ],
+  "mode": "document_diagnostic",
+  "recorded_at": "2026-08-31T02:44:42.285439Z",
+  "result": "completed",
+  "run_id": "reademe-temp-forward-test-markdown-structure-v1",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "diagnostics": [],
+      "incomplete_reason": null,
+      "metrics": {
+        "evaluated_rule_count": 3,
+        "heading_count": 2,
+        "image_count": 0,
+        "line_count": 15
+      },
+      "native_artifact": null,
+      "result": "completed",
+      "skipped_rules": [
+        {
+          "reason": "excluded_from_selected_profile",
+          "rule_id": "duplicate-heading-text"
+        }
+      ],
+      "source": {
+        "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+        "kind": "candidate",
+        "path": "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md",
+        "repository": "k421o/readme-labs",
+        "revision": "b10ff9c1ad032c6861b7d03463f52d9ac5d8e208"
+      },
+      "subject_id": "reademe-temp-forward-test-readme"
+    }
+  ],
+  "summary": {
+    "completed_subject_count": 1,
+    "diagnostic_count": 0,
+    "diagnostics_by_rule": {},
+    "incomplete_subject_count": 0,
+    "subject_count": 1
+  }
+}

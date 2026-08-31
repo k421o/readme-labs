@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/k421o/readme-labs/blob/main/experiments/schemas/static-analysis-run-v1.schema.json",
+  "title": "README Labs static analysis run envelope v1",
+  "description": "A common provenance and diagnostic envelope around adapter-owned static-analysis output. It contains no quality verdict or acceptance decision.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "run_id",
+    "recorded_at",
+    "mode",
+    "analyzer",
+    "configuration",
+    "automated_authority",
+    "hypothesis_disposition",
+    "result",
+    "subjects",
+    "summary",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"$ref": "#/$defs/id"},
+    "recorded_at": {"type": "string", "format": "date-time"},
+    "mode": {"enum": ["document_diagnostic", "corpus_characterization"]},
+    "analyzer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version", "adapter_kind", "spec_sha256"],
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "version": {"type": "string", "minLength": 1},
+        "adapter_kind": {"enum": ["builtin_python", "external_command"]},
+        "spec_sha256": {"$ref": "#/$defs/digest"}
+      }
+    },
+    "configuration": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile", "enabled_rule_ids"],
+      "properties": {
+        "profile": {"enum": ["all", "feedback"]},
+        "enabled_rule_ids": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/id"}
+        }
+      }
+    },
+    "automated_authority": {"const": "evidence_only"},
+    "hypothesis_disposition": {"const": "not_decided"},
+    "result": {"enum": ["completed", "incomplete"]},
+    "subjects": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"$ref": "#/$defs/subject"}
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_count",
+        "completed_subject_count",
+        "incomplete_subject_count",
+        "diagnostic_count",
+        "diagnostics_by_rule"
+      ],
+      "properties": {
+        "subject_count": {"type": "integer", "minimum": 1},
+        "completed_subject_count": {"type": "integer", "minimum": 0},
+        "incomplete_subject_count": {"type": "integer", "minimum": 0},
+        "diagnostic_count": {"type": "integer", "minimum": 0},
+        "diagnostics_by_rule": {
+          "type": "object",
+          "additionalProperties": {"type": "integer", "minimum": 0}
+        }
+      }
+    },
+    "limitations": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 1}
+    }
+  },
+  "$defs": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["kind", "path", "content_sha256"],
+      "properties": {
+        "kind": {
+          "enum": ["local", "generated", "ingested", "candidate", "corpus_sample"]
+        },
+        "repository": {"type": ["string", "null"]},
+        "revision": {"type": ["string", "null"]},
+        "path": {"type": "string", "minLength": 1},
+        "content_sha256": {"$ref": "#/$defs/digest"},
+        "retrieval_url": {"type": "string", "format": "uri"}
+      }
+    },
+    "location": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "line", "column"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "line": {"type": ["integer", "null"], "minimum": 1},
+        "column": {"type": ["integer", "null"], "minimum": 1}
+      }
+    },
+    "diagnostic": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "level", "message", "location", "evidence"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/id"},
+        "level": {"enum": ["note", "warning", "error"]},
+        "message": {"type": "string", "minLength": 1},
+        "location": {"$ref": "#/$defs/location"},
+        "evidence": {
+          "type": "array",
+          "items": {"type": "string", "minLength": 1}
+        }
+      }
+    },
+    "skipped_rule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["rule_id", "reason"],
+      "properties": {
+        "rule_id": {"$ref": "#/$defs/id"},
+        "reason": {"type": "string", "minLength": 1}
+      }
+    },
+    "native_artifact": {
+      "anyOf": [
+        {"type": "null"},
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["path", "sha256", "contract"],
+          "properties": {
+            "path": {"type": "string", "minLength": 1},
+            "sha256": {"$ref": "#/$defs/digest"},
+            "contract": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "subject_id",
+        "source",
+        "result",
+        "incomplete_reason",
+        "metrics",
+        "diagnostics",
+        "skipped_rules",
+        "native_artifact"
+      ],
+      "properties": {
+        "subject_id": {"$ref": "#/$defs/id"},
+        "source": {"$ref": "#/$defs/source"},
+        "result": {"enum": ["completed", "incomplete"]},
+        "incomplete_reason": {"type": ["string", "null"]},
+        "metrics": {"type": "object"},
+        "diagnostics": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/diagnostic"}
+        },
+        "skipped_rules": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/skipped_rule"}
+        },
+        "native_artifact": {"$ref": "#/$defs/native_artifact"}
+      }
+    }
+  }
+}

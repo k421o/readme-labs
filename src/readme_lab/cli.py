@@ -35,6 +35,11 @@ from readme_lab.migration import (
     build_git_migration_receipt,
     write_git_migration_receipt,
 )
+from readme_lab.static_analysis import (
+    load_static_analysis_run,
+    run_corpus_static_analysis,
+    run_document_static_analysis,
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -350,6 +355,45 @@ def build_parser() -> argparse.ArgumentParser:
     )
     experiment_validate_parser.add_argument("plan", type=Path)
 
+    static_analysis_parser = subparsers.add_parser(
+        "static-analysis", help="run evidence-only static README analyzers"
+    )
+    static_analysis_subparsers = static_analysis_parser.add_subparsers(
+        dest="static_analysis_command", required=True
+    )
+    static_analysis_run = static_analysis_subparsers.add_parser(
+        "run", help="produce diagnostics for one README artifact"
+    )
+    static_analysis_run.add_argument("analyzer", type=Path)
+    static_analysis_run.add_argument("readme", type=Path)
+    static_analysis_run.add_argument("--output", type=Path, required=True)
+    static_analysis_run.add_argument("--run-id", required=True)
+    static_analysis_run.add_argument("--subject-id", required=True)
+    static_analysis_run.add_argument(
+        "--source-kind",
+        choices=("local", "generated", "ingested", "candidate"),
+        required=True,
+    )
+    static_analysis_run.add_argument("--recorded-path")
+    static_analysis_run.add_argument("--repository")
+    static_analysis_run.add_argument("--revision")
+    static_analysis_run.add_argument(
+        "--profile", choices=("feedback", "all"), default="feedback"
+    )
+    static_analysis_corpus = static_analysis_subparsers.add_parser(
+        "corpus", help="characterize an analyzer on a pinned README corpus"
+    )
+    static_analysis_corpus.add_argument("analyzer", type=Path)
+    static_analysis_corpus.add_argument("manifest", type=Path)
+    static_analysis_corpus.add_argument("--cache", type=Path, required=True)
+    static_analysis_corpus.add_argument("--output", type=Path, required=True)
+    static_analysis_corpus.add_argument("--run-id", required=True)
+    static_analysis_verify = static_analysis_subparsers.add_parser(
+        "verify", help="validate a run envelope against its exact analyzer spec"
+    )
+    static_analysis_verify.add_argument("analyzer", type=Path)
+    static_analysis_verify.add_argument("run", type=Path)
+
     agent_eval_parser = subparsers.add_parser(
         "agent-eval", help="run a soft advisory agent evaluator"
     )
@@ -621,6 +665,53 @@ def main(argv: list[str] | None = None) -> int:
                     "automated_results_authority": plan["completion_policy"][
                         "automated_results_authority"
                     ],
+                    "valid": True,
+                },
+                indent=2,
+                sort_keys=True,
+            )
+        )
+        return 0
+    if args.command == "static-analysis" and args.static_analysis_command == "run":
+        run = run_document_static_analysis(
+            args.analyzer,
+            readme_path=args.readme,
+            output=args.output,
+            run_id=args.run_id,
+            subject_id=args.subject_id,
+            source_kind=args.source_kind,
+            recorded_path=args.recorded_path,
+            repository=args.repository,
+            revision=args.revision,
+            profile=args.profile,
+        )
+        print(json.dumps(run, indent=2, sort_keys=True))
+        return 0 if run["result"] == "completed" else 1
+    if (
+        args.command == "static-analysis"
+        and args.static_analysis_command == "corpus"
+    ):
+        run = run_corpus_static_analysis(
+            args.analyzer,
+            manifest_path=args.manifest,
+            cache_dir=args.cache,
+            output=args.output,
+            run_id=args.run_id,
+        )
+        print(json.dumps(run, indent=2, sort_keys=True))
+        return 0 if run["result"] == "completed" else 1
+    if (
+        args.command == "static-analysis"
+        and args.static_analysis_command == "verify"
+    ):
+        run = load_static_analysis_run(args.run, analyzer_path=args.analyzer)
+        print(
+            json.dumps(
+                {
+                    "run_id": run["run_id"],
+                    "mode": run["mode"],
+                    "result": run["result"],
+                    "summary": run["summary"],
                     "valid": True,
                 },
                 indent=2,

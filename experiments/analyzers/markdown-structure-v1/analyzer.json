@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "id": "markdown-structure-v1",
+  "title": "Deterministic Markdown structure and accessibility diagnostics",
+  "kind": "static_analyzer",
+  "authority": "evidence_only",
+  "adapter": {
+    "kind": "builtin_python",
+    "implementation": "readme_lab.static_analysis:markdown_structure_v1",
+    "version": "1.0.0",
+    "native_output": {
+      "preserved": false,
+      "contract": null
+    }
+  },
+  "documentation": "rules.md",
+  "supported_modes": [
+    "document_diagnostic",
+    "corpus_characterization"
+  ],
+  "rules": [
+    {
+      "id": "heading-level-jump",
+      "title": "Heading level increases by more than one",
+      "default_level": "note",
+      "feedback_default": true,
+      "requires_context": "document",
+      "interpretation": "A navigation and accessibility review cue; some generated or embedded Markdown structures may use deliberate jumps."
+    },
+    {
+      "id": "empty-heading",
+      "title": "Heading has no visible text",
+      "default_level": "warning",
+      "feedback_default": true,
+      "requires_context": "document",
+      "interpretation": "An empty heading usually creates an unusable navigation landmark, but rendered HTML context may change the result."
+    },
+    {
+      "id": "duplicate-heading-text",
+      "title": "Normalized heading text is repeated",
+      "default_level": "note",
+      "feedback_default": false,
+      "requires_context": "document",
+      "interpretation": "Repeated labels can make generated anchors or navigation ambiguous; repetition may still be intentional."
+    },
+    {
+      "id": "image-missing-alt",
+      "title": "Markdown image has empty alternative text",
+      "default_level": "warning",
+      "feedback_default": true,
+      "requires_context": "document",
+      "interpretation": "Empty alternative text may be correct for a decorative image, so repository and rendered-page context still matter."
+    }
+  ],
+  "limitations": [
+    "The analyzer reads CommonMark tokens and does not reproduce every hosting platform's Markdown extensions.",
+    "Diagnostics identify inspectable properties; they do not measure README usefulness, correctness, or fitness for a specific audience.",
+    "Repository links, rendered HTML, and prose semantics are outside this first analyzer."
+  ]
+}

@@ -55,6 +55,13 @@ They must not reject candidate admission, silently terminate the remaining
 planned trials, or turn incompatibility with the present design into a semantic
 judgment about usefulness.
 
+Static analyzers follow the same boundary. Their complete rule surface should
+first be characterized against an appropriate corpus; routine document
+feedback then names an explicit calibrated rule profile. Zero diagnostics means
+only that the enabled rules emitted no diagnostics. It is not a quality score,
+merge recommendation, or substitute for contextual evaluation. See
+[`static-analysis.md`](static-analysis.md).
+
 ## Soft evaluators
 
 A soft evaluator is a versioned agent perspective that produces advisory
