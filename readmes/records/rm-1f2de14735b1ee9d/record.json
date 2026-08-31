@@ -1,0 +1,69 @@
+{
+  "artifact": {
+    "byte_length": null,
+    "content_sha256": "1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+    "id": "sha256:1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+    "media_type": "text/markdown",
+    "original_name": "README.md",
+    "storage": {
+      "locator": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+      "mode": "external_reference",
+      "reference_path": "artifact.ref.json",
+      "reference_sha256": "d90dcf8f51b5b6ae6f51f2e6d7188f15f9489f376b7e37effd82c61ece6aedd9"
+    }
+  },
+  "capture": {
+    "boundary": "observed_source_snapshot",
+    "captured_at": "2026-08-30T02:10:00Z",
+    "pre_capture_editability": "not_applicable",
+    "state": "captured"
+  },
+  "custody": {
+    "body_policy": "reference_only",
+    "license_spdx": "BSD-3-Clause",
+    "ownership": "third_party",
+    "visibility": "public"
+  },
+  "limitations": [
+    "The third-party README body remains in the verified untracked corpus cache; this package preserves its immutable identity and derived evidence only.",
+    "High exposure is a sampling property, not a README quality label."
+  ],
+  "lineage": [],
+  "memberships": [
+    {
+      "collection_id": "pilot-high-exposure-v1",
+      "purpose": "reference_sample",
+      "recorded_at": "2026-08-30T02:10:00Z"
+    }
+  ],
+  "occurrences": [
+    {
+      "content_sha256": "1f2de14735b1ee9d3a342fa7c5d5e87b95727276c0a56c8a9d77221f37880602",
+      "id": "occ-816fff1bb4d0defe",
+      "path": "README.md",
+      "repository": "pallets/flask",
+      "retrieval_url": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+      "revision": "d318b683471101618febed18996405ad26462110",
+      "role": "framework_or_platform"
+    }
+  ],
+  "provenance": [
+    {
+      "id": "prov-dd754af43416ac10",
+      "kind": "retrieved",
+      "limitations": [
+        "The third-party README body remains in the verified untracked corpus cache; this package preserves its immutable identity and derived evidence only.",
+        "High exposure is a sampling property, not a README quality label."
+      ],
+      "recorded_at": "2026-08-30T02:10:00Z",
+      "source": {
+        "locator": "https://raw.githubusercontent.com/pallets/flask/d318b683471101618febed18996405ad26462110/README.md",
+        "path": "README.md",
+        "repository": "pallets/flask",
+        "revision": "d318b683471101618febed18996405ad26462110"
+      }
+    }
+  ],
+  "record_id": "rm-1f2de14735b1ee9d",
+  "schema_version": 1
+}

@@ -37,7 +37,10 @@ from readme_lab.migration import (
     write_git_migration_receipt,
 )
 from readme_lab.readme_artifacts import (
+    add_artifact_lineage,
+    add_artifact_membership,
     add_artifact_occurrence,
+    add_artifact_provenance,
     attach_observation_evidence,
     attach_soft_review_evidence,
     attach_static_analysis_evidence,
@@ -536,6 +539,65 @@ def build_parser() -> argparse.ArgumentParser:
     artifact_occurrence.add_argument("--role", required=True)
     artifact_occurrence.add_argument("--tree")
     artifact_occurrence.add_argument("--retrieval-url")
+
+    artifact_provenance = artifact_subparsers.add_parser(
+        "add-provenance",
+        help="record another origin event without changing captured bytes",
+    )
+    artifact_provenance.add_argument("record", type=Path)
+    artifact_provenance.add_argument(
+        "--kind",
+        choices=("generated", "retrieved", "ingested", "authored", "synthetic"),
+        required=True,
+    )
+    artifact_provenance.add_argument("--recorded-at", required=True)
+    artifact_provenance.add_argument("--repository")
+    artifact_provenance.add_argument("--revision")
+    artifact_provenance.add_argument("--recorded-path")
+    artifact_provenance.add_argument("--locator")
+    artifact_provenance.add_argument(
+        "--producer-kind",
+        choices=("skill", "candidate", "workflow", "human", "other"),
+    )
+    artifact_provenance.add_argument("--producer-id")
+    artifact_provenance.add_argument("--producer-version")
+    artifact_provenance.add_argument("--producer-run-id")
+    artifact_provenance.add_argument("--limitation", action="append", default=[])
+
+    artifact_membership = artifact_subparsers.add_parser(
+        "add-membership",
+        help="add a collection purpose independently of artifact provenance",
+    )
+    artifact_membership.add_argument("record", type=Path)
+    artifact_membership.add_argument("--collection", required=True)
+    artifact_membership.add_argument(
+        "--purpose",
+        choices=(
+            "reference_sample",
+            "generated_output",
+            "candidate_output",
+            "fixture",
+            "regression_baseline",
+            "accepted_example",
+            "personal_corpus",
+            "experiment_subject",
+        ),
+        required=True,
+    )
+    artifact_membership.add_argument("--recorded-at", required=True)
+
+    artifact_lineage = artifact_subparsers.add_parser(
+        "add-lineage", help="relate a captured revision to another artifact"
+    )
+    artifact_lineage.add_argument("record", type=Path)
+    artifact_lineage.add_argument(
+        "--relationship",
+        choices=("derived_from", "variant_of", "supersedes", "reproduces"),
+        required=True,
+    )
+    artifact_lineage.add_argument("--target-record-id")
+    artifact_lineage.add_argument("--target-artifact-id")
+    artifact_lineage.add_argument("--note")
 
     artifact_inspect = artifact_subparsers.add_parser(
         "inspect", help="attach a structural observation of captured artifact bytes"
@@ -1049,6 +1111,39 @@ def main(argv: list[str] | None = None) -> int:
             retrieval_url=args.retrieval_url,
         )
         print(json.dumps(occurrence, indent=2, sort_keys=True))
+        return 0
+    if args.command == "artifact" and args.artifact_command == "add-provenance":
+        provenance = add_artifact_provenance(
+            args.record,
+            kind=args.kind,
+            recorded_at=_optional_datetime(args.recorded_at),
+            repository=args.repository,
+            revision=args.revision,
+            recorded_path=args.recorded_path,
+            locator=args.locator,
+            producer=_producer(args),
+            limitations=args.limitation,
+        )
+        print(json.dumps(provenance, indent=2, sort_keys=True))
+        return 0
+    if args.command == "artifact" and args.artifact_command == "add-membership":
+        membership = add_artifact_membership(
+            args.record,
+            collection_id=args.collection,
+            purpose=args.purpose,
+            recorded_at=_optional_datetime(args.recorded_at),
+        )
+        print(json.dumps(membership, indent=2, sort_keys=True))
+        return 0
+    if args.command == "artifact" and args.artifact_command == "add-lineage":
+        lineage = add_artifact_lineage(
+            args.record,
+            relationship=args.relationship,
+            target_record_id=args.target_record_id,
+            target_artifact_id=args.target_artifact_id,
+            note=args.note,
+        )
+        print(json.dumps(lineage, indent=2, sort_keys=True))
         return 0
     if args.command == "artifact" and args.artifact_command == "inspect":
         evidence_path = inspect_captured_artifact(

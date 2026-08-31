@@ -9,7 +9,10 @@ from pathlib import Path
 import pytest
 
 from readme_lab.readme_artifacts import (
+    add_artifact_lineage,
+    add_artifact_membership,
     add_artifact_occurrence,
+    add_artifact_provenance,
     attach_observation_evidence,
     attach_soft_review_evidence,
     attach_static_analysis_evidence,
@@ -41,6 +44,7 @@ GENERATED_README = Path(
     "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md"
 )
 CORPUS_OBSERVATIONS = Path("corpus/observations/pilot-high-exposure-v1.jsonl")
+COMMITTED_RECORDS = Path("readmes/records")
 
 
 def sha256(path: Path) -> str:
@@ -243,6 +247,83 @@ def test_captured_artifact_can_record_multiple_repository_occurrences(
         "local:generation",
         "local:evaluation",
     }
+
+
+def test_purpose_and_lineage_can_evolve_without_mutating_captured_bytes(
+    tmp_path: Path,
+) -> None:
+    registry = tmp_path / "records"
+    first_source = tmp_path / "first.md"
+    second_source = tmp_path / "second.md"
+    first_source.write_text("# First\n", encoding="utf-8")
+    second_source.write_text("# Second\n", encoding="utf-8")
+    first = capture_readme_artifact(
+        first_source,
+        registry=registry,
+        provenance_kind="generated",
+        boundary="completed_generation",
+        pre_capture_editability="mutable",
+        ownership="owned",
+        visibility="local_only",
+        producer={"kind": "workflow", "id": "generator"},
+        captured_at=datetime(2026, 8, 30, tzinfo=UTC),
+    )
+    second = capture_readme_artifact(
+        second_source,
+        registry=registry,
+        provenance_kind="generated",
+        boundary="completed_generation",
+        pre_capture_editability="mutable",
+        ownership="owned",
+        visibility="local_only",
+        producer={"kind": "workflow", "id": "generator"},
+        captured_at=datetime(2026, 8, 31, tzinfo=UTC),
+    )
+    original_bytes = (second / "artifact.md").read_bytes()
+    first_record = load_artifact_record(first)
+
+    add_artifact_membership(
+        second,
+        collection_id="personal-readmes",
+        purpose="personal_corpus",
+        recorded_at=datetime(2026, 8, 31, 1, tzinfo=UTC),
+    )
+    add_artifact_provenance(
+        second,
+        kind="ingested",
+        recorded_at=datetime(2026, 8, 31, 2, tzinfo=UTC),
+        repository="local:archive",
+        revision="working-tree",
+        recorded_path="README.md",
+    )
+    add_artifact_lineage(
+        second,
+        relationship="supersedes",
+        target_record_id=first_record["record_id"],
+        target_artifact_id=first_record["artifact"]["id"],
+    )
+
+    record = load_artifact_record(second)
+    assert (second / "artifact.md").read_bytes() == original_bytes
+    assert record["memberships"][0]["purpose"] == "personal_corpus"
+    assert {item["kind"] for item in record["provenance"]} == {
+        "generated",
+        "ingested",
+    }
+    assert record["lineage"] == [
+        {
+            "relationship": "supersedes",
+            "target_record_id": first_record["record_id"],
+            "target_artifact_id": first_record["artifact"]["id"],
+        }
+    ]
+
+    with pytest.raises(ValueError, match="cannot point to itself"):
+        add_artifact_lineage(
+            second,
+            relationship="variant_of",
+            target_record_id=record["record_id"],
+        )
 
 
 def test_embedded_artifact_gets_document_centered_structural_evidence(
@@ -555,3 +636,41 @@ def test_sqlite_catalog_is_rebuilt_from_generated_and_reference_records(
         records, output=output, repository_root=Path.cwd()
     )
     assert rebuilt["artifact_count"] == 2
+
+
+def test_committed_generated_and_reference_packages_are_complete(
+    tmp_path: Path,
+) -> None:
+    generated = COMMITTED_RECORDS / "rm-f96b8e9d6c94dee9"
+    reference = COMMITTED_RECORDS / "rm-1f2de14735b1ee9d"
+
+    generated_result = verify_artifact_package(
+        generated, repository_root=Path.cwd()
+    )
+    reference_result = verify_artifact_package(
+        reference, repository_root=Path.cwd()
+    )
+    assert generated_result["evidence_kinds"] == [
+        "soft_agent_review",
+        "static_analysis",
+        "structural_observation",
+    ]
+    assert reference_result["storage_mode"] == "external_reference"
+    assert reference_result["evidence_kinds"] == [
+        "static_analysis",
+        "structural_observation",
+    ]
+    write_artifact_report(generated, repository_root=Path.cwd(), check=True)
+    write_artifact_report(reference, repository_root=Path.cwd(), check=True)
+
+    result = build_sqlite_catalog(
+        COMMITTED_RECORDS,
+        output=tmp_path / "catalog.sqlite",
+        repository_root=Path.cwd(),
+    )
+    assert result == {
+        "catalog": (tmp_path / "catalog.sqlite").resolve().as_posix(),
+        "schema_version": 1,
+        "artifact_count": 2,
+        "evidence_count": 5,
+    }

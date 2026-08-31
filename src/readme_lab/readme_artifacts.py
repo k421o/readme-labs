@@ -148,6 +148,17 @@ def _replace_json(path: Path, value: dict[str, Any]) -> None:
     temporary.replace(path)
 
 
+def _replace_artifact_record(record_dir: Path, value: dict[str, Any]) -> None:
+    record_path = record_dir.resolve() / "record.json"
+    original = record_path.read_bytes()
+    _replace_json(record_path, value)
+    try:
+        load_artifact_record(record_dir)
+    except Exception:
+        record_path.write_bytes(original)
+        raise
+
+
 def _base_record(
     *,
     content_sha256: str,
@@ -443,10 +454,34 @@ def load_artifact_record(record_dir: Path) -> dict[str, Any]:
         raise ValueError("artifact occurrence ids must be unique")
     for item in record["provenance"]:
         _validate_identified("prov", item)
+        if item["kind"] == "generated" and "producer" not in item:
+            raise ValueError("generated provenance requires an identified producer")
     for item in record["occurrences"]:
         _validate_identified("occ", item)
         if item["content_sha256"] != digest:
             raise ValueError("occurrence content digest does not match artifact")
+    membership_ids = [
+        (item["collection_id"], item["purpose"])
+        for item in record["memberships"]
+    ]
+    if len(membership_ids) != len(set(membership_ids)):
+        raise ValueError("artifact collection memberships must be unique")
+    lineage_ids = [
+        (
+            item["relationship"],
+            item.get("target_record_id"),
+            item.get("target_artifact_id"),
+        )
+        for item in record["lineage"]
+    ]
+    if len(lineage_ids) != len(set(lineage_ids)):
+        raise ValueError("artifact lineage relationships must be unique")
+    if any(
+        item.get("target_record_id") == record["record_id"]
+        or item.get("target_artifact_id") == record["artifact"]["id"]
+        for item in record["lineage"]
+    ):
+        raise ValueError("artifact lineage cannot point to itself")
     return record
 
 
@@ -477,9 +512,103 @@ def add_artifact_occurrence(
         raise ValueError(f"occurrence already exists: {occurrence['id']}")
     record["occurrences"].append(occurrence)
     record["occurrences"].sort(key=lambda item: item["id"])
-    _replace_json(record_dir / "record.json", record)
-    load_artifact_record(record_dir)
+    _replace_artifact_record(record_dir, record)
     return occurrence
+
+
+def add_artifact_provenance(
+    record_dir: Path,
+    *,
+    kind: str,
+    recorded_at: datetime,
+    repository: str | None = None,
+    revision: str | None = None,
+    recorded_path: str | None = None,
+    locator: str | None = None,
+    producer: dict[str, Any] | None = None,
+    limitations: list[str] | None = None,
+) -> dict[str, Any]:
+    """Append another origin event while preserving the artifact identity."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    provenance = _provenance(
+        kind=kind,
+        recorded_at=_timestamp(recorded_at),
+        repository=repository,
+        revision=revision,
+        recorded_path=recorded_path,
+        locator=locator,
+        producer=producer,
+        limitations=limitations or [],
+    )
+    if any(item["id"] == provenance["id"] for item in record["provenance"]):
+        raise ValueError(f"provenance already exists: {provenance['id']}")
+    record["provenance"].append(provenance)
+    record["provenance"].sort(key=lambda item: item["id"])
+    _replace_artifact_record(record_dir, record)
+    return provenance
+
+
+def add_artifact_membership(
+    record_dir: Path,
+    *,
+    collection_id: str,
+    purpose: str,
+    recorded_at: datetime,
+) -> dict[str, Any]:
+    """Add a lab use without rewriting the artifact's historical provenance."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    membership = _membership(
+        (collection_id, purpose), _timestamp(recorded_at)
+    )
+    identity = (collection_id, purpose)
+    if any(
+        (item["collection_id"], item["purpose"]) == identity
+        for item in record["memberships"]
+    ):
+        raise ValueError(f"membership already exists: {collection_id}={purpose}")
+    record["memberships"].append(membership)
+    record["memberships"].sort(
+        key=lambda item: (item["collection_id"], item["purpose"])
+    )
+    _replace_artifact_record(record_dir, record)
+    return membership
+
+
+def add_artifact_lineage(
+    record_dir: Path,
+    *,
+    relationship: str,
+    target_record_id: str | None = None,
+    target_artifact_id: str | None = None,
+    note: str | None = None,
+) -> dict[str, Any]:
+    """Link a captured revision to another immutable artifact or record."""
+
+    record_dir = record_dir.resolve()
+    record = load_artifact_record(record_dir)
+    lineage: dict[str, Any] = {"relationship": relationship}
+    if target_record_id is not None:
+        lineage["target_record_id"] = target_record_id
+    if target_artifact_id is not None:
+        lineage["target_artifact_id"] = target_artifact_id
+    if note is not None:
+        lineage["note"] = note
+    if lineage in record["lineage"]:
+        raise ValueError("lineage relationship already exists")
+    record["lineage"].append(lineage)
+    record["lineage"].sort(
+        key=lambda item: (
+            item["relationship"],
+            item.get("target_record_id", ""),
+            item.get("target_artifact_id", ""),
+        )
+    )
+    _replace_artifact_record(record_dir, record)
+    return lineage
 
 
 def _repository_source(

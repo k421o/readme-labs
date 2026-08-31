@@ -1,0 +1,105 @@
+{
+  "artifact_id": "sha256:f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+  "authority": "evidence_only",
+  "decision_disposition": "not_decided",
+  "evidence_id": "ev-c25c6fd296560bab",
+  "kind": "structural_observation",
+  "limitations": [
+    "Category signals use exact normalized heading aliases and do not infer semantic coverage from prose.",
+    "This structural observation is not a README quality score."
+  ],
+  "occurrence_id": "occ-32fff3ea0f76b14f",
+  "payload": {
+    "category_signals": [
+      {
+        "category_id": "identity",
+        "evidence": [
+          {
+            "kind": "document_title",
+            "line": 1,
+            "text": "NotebookLM Saved-Page Extraction"
+          }
+        ]
+      },
+      {
+        "category_id": "minimal_use",
+        "evidence": [
+          {
+            "kind": "heading_alias",
+            "line": 5,
+            "text": "Usage"
+          }
+        ]
+      }
+    ],
+    "derivation": {
+      "extractor": {
+        "name": "readme-lab-inspect",
+        "version": "2.0.0"
+      },
+      "taxonomy": {
+        "kind": "readme-labs-taxonomy",
+        "sha256": "678a4339b2b4ec96e40ec732d8b33811ab5a05d6c3182826a3937f0615794115",
+        "version": "1.0.0"
+      }
+    },
+    "document_id": "sha256:90dfe29bc8e617e65a53761f005f42694679e6945d940c3e4fd3a790415381b3",
+    "limitations": [
+      "Category signals use exact normalized heading aliases and do not infer semantic coverage from prose.",
+      "This structural observation is not a README quality score."
+    ],
+    "observation_id": "sha256:313f464357d96e6085bd05c18b63a73852e6fc4fd89596dc11b8a655bb69aa8b",
+    "observed_at": "2026-08-31T04:08:31Z",
+    "role": {
+      "assignment": "declared",
+      "primary": "repository_root",
+      "secondary": []
+    },
+    "schema_version": "2.0.0",
+    "source": {
+      "content_sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+      "path": "README.md",
+      "repository": "local:reademe-temp-evaluation",
+      "revision": "e59a6bbb67f7e6d2f6182bed8c627f6ac9dcdb38"
+    },
+    "structure": {
+      "code_block_count": 1,
+      "heading_count": 2,
+      "headings": [
+        {
+          "level": 1,
+          "line": 1,
+          "text": "NotebookLM Saved-Page Extraction"
+        },
+        {
+          "level": 2,
+          "line": 5,
+          "text": "Usage"
+        }
+      ],
+      "line_count": 15,
+      "link_count": 2,
+      "word_count": 96
+    }
+  },
+  "producer": {
+    "id": "readme-lab-inspect",
+    "kind": "structural_inspector",
+    "spec_sha256": "678a4339b2b4ec96e40ec732d8b33811ab5a05d6c3182826a3937f0615794115",
+    "version": "2.0.0"
+  },
+  "record_id": "rm-f96b8e9d6c94dee9",
+  "recorded_at": "2026-08-31T04:08:31Z",
+  "result": "completed",
+  "schema_version": 1,
+  "source_records": [
+    {
+      "path": "readmes/records/rm-f96b8e9d6c94dee9/artifact.md",
+      "role": "artifact",
+      "selector": null,
+      "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+    }
+  ],
+  "subject_scope": "occurrence",
+  "summary": "15 lines, 96 words, 2 headings, and 2 links observed."
+}

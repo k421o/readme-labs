@@ -14,6 +14,7 @@ HISTORICAL_FIXTURE_ROOT = REPOSITORY_ROOT / "research" / "readme-contract-exerci
 NON_AUTHORITATIVE_ARTIFACT_ROOTS = (
     REPOSITORY_ROOT / "intake" / "snapshots",
     REPOSITORY_ROOT / "candidates",
+    REPOSITORY_ROOT / "readmes" / "records",
 )
 
 
@@ -23,6 +24,8 @@ def is_non_authoritative_artifact(path: Path) -> bool:
     if path.is_relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[1]):
         relative = path.relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[1])
         return "artifact" in relative.parts
+    if path.is_relative_to(NON_AUTHORITATIVE_ARTIFACT_ROOTS[2]):
+        return path.name == "artifact.md"
     return False
 
 
