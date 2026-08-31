@@ -82,6 +82,7 @@
           "id",
           "title",
           "default_level",
+          "feedback_default",
           "requires_context",
           "interpretation"
         ],
@@ -89,6 +90,7 @@
           "id": {"$ref": "#/$defs/id"},
           "title": {"type": "string", "minLength": 1},
           "default_level": {"enum": ["note", "warning", "error"]},
+          "feedback_default": {"type": "boolean"},
           "requires_context": {"enum": ["document", "repository", "network"]},
           "interpretation": {"type": "string", "minLength": 1}
         }

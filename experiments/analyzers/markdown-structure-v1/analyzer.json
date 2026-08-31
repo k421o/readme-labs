@@ -23,6 +23,7 @@
       "id": "heading-level-jump",
       "title": "Heading level increases by more than one",
       "default_level": "note",
+      "feedback_default": true,
       "requires_context": "document",
       "interpretation": "A navigation and accessibility review cue; some generated or embedded Markdown structures may use deliberate jumps."
     },
@@ -30,6 +31,7 @@
       "id": "empty-heading",
       "title": "Heading has no visible text",
       "default_level": "warning",
+      "feedback_default": true,
       "requires_context": "document",
       "interpretation": "An empty heading usually creates an unusable navigation landmark, but rendered HTML context may change the result."
     },
@@ -37,6 +39,7 @@
       "id": "duplicate-heading-text",
       "title": "Normalized heading text is repeated",
       "default_level": "note",
+      "feedback_default": false,
       "requires_context": "document",
       "interpretation": "Repeated labels can make generated anchors or navigation ambiguous; repetition may still be intentional."
     },
@@ -44,6 +47,7 @@
       "id": "image-missing-alt",
       "title": "Markdown image has empty alternative text",
       "default_level": "warning",
+      "feedback_default": true,
       "requires_context": "document",
       "interpretation": "Empty alternative text may be correct for a decorative image, so repository and rendered-page context still matter."
     }

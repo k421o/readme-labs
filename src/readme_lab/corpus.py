@@ -73,18 +73,14 @@ def _fetch(url: str) -> bytes:
         return response.read()
 
 
-def collect_corpus(
-    manifest_path: Path,
-    *,
-    cache_dir: Path,
-    observations_path: Path,
-) -> dict[str, Any]:
-    """Fetch, verify, cache, and inspect every item in a manifest."""
+def materialize_corpus_documents(
+    manifest_path: Path, *, cache_dir: Path
+) -> list[tuple[dict[str, Any], Path]]:
+    """Fetch or reuse every pinned corpus document and verify its Git blob."""
 
     items = load_manifest(manifest_path)
     cache_dir.mkdir(parents=True, exist_ok=True)
-    observations: list[dict[str, Any]] = []
-
+    documents: list[tuple[dict[str, Any], Path]] = []
     for item in items:
         sample_dir = cache_dir / item["sample_id"]
         sample_dir.mkdir(parents=True, exist_ok=True)
@@ -102,7 +98,22 @@ def collect_corpus(
             )
         if not cached_path.exists():
             cached_path.write_bytes(content)
+        documents.append((item, cached_path))
+    return documents
 
+
+def collect_corpus(
+    manifest_path: Path,
+    *,
+    cache_dir: Path,
+    observations_path: Path,
+) -> dict[str, Any]:
+    """Fetch, verify, cache, and inspect every item in a manifest."""
+
+    documents = materialize_corpus_documents(manifest_path, cache_dir=cache_dir)
+    observations: list[dict[str, Any]] = []
+
+    for item, cached_path in documents:
         observed_at = datetime.fromisoformat(
             item["collected_at"].replace("Z", "+00:00")
         )
