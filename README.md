@@ -18,8 +18,8 @@ eventually executable environments to test that model.
   content-addressed artifact records with document-centered evidence packages.
 - Collect reproducible corpus manifests without treating popularity as quality
   or copying an unbounded raw corpus into Git.
-- Evaluate README review and authoring behavior on both controlled and natural
-  repositories.
+- Evaluate README review, authoring, and pruning behavior on both controlled
+  and natural repositories.
 - Ingest outside research, methods, skills, plugins, tooling, automation,
   scripts, bundles, and trial evidence without prematurely making them
   canonical.
@@ -197,10 +197,19 @@ promise and not evidence for the present capability. See the
 
 ## Derived capabilities
 
-The first experimental capability is `capabilities/readme-review`. Research,
-the domain model, and evaluation artifacts remain canonical; packaging copies
-must be generated from a pinned capability version rather than edited
-independently.
+The canonical capability set separates three observable jobs:
+
+- `capabilities/readme-review` reports material findings or an explicit
+  no-material-findings conclusion;
+- `capabilities/readme-generate` creates or explicitly replaces a README and
+  iterates through the complete review workflow; and
+- `capabilities/readme-prune` removes directed or review-evidenced content
+  while guarding the surviving reader contract against attributable regression.
+
+All three consume the same review criteria rather than maintaining independent
+README models. Research, the domain model, and evaluation artifacts remain
+canonical; packaging copies must be generated from pinned capability revisions
+rather than edited independently.
 
 Candidate trees under `candidates/` are intentionally different: they are
 testable experimental specimens with immutable provenance, not editable forks
