@@ -1,34 +1,41 @@
 # README artifact records and evidence packages
 
-README Labs treats a completed README snapshot as data. The artifact record is
-the document-centered unit that keeps immutable Markdown bytes or an immutable
+README Labs treats a completed README as data. The artifact record is the
+document-centered unit that keeps immutable Markdown bytes or an immutable
 source reference together with provenance, repository context, collection use,
-lineage, diagnostics, and reviews.
+lineage, diagnostics, and reviews. At the current repository head, one logical
+README has exactly one durable body-owning path.
 
-This model begins only at explicit capture. It does not constrain how a README
-is drafted, generated, or revised.
+This model begins only at an explicit external capture or managed custody
+transfer. It does not constrain how a README is drafted, generated, or revised
+before that boundary.
 
-## Authoring and capture boundary
+## Authoring and admission boundary
 
 ```text
-authoring workspace                    README artifact registry
-────────────────────────────────       ───────────────────────────────────
-README.md                              rm-<digest-prefix>/
-freely editable                         ├── artifact.md or artifact.ref.json
-agents may iterate                      ├── record.json
-no artifact identity yet   capture →    ├── evidence/*.json
-                                        └── report.md
+external authoring workspace ── explicit capture ──┐
+managed ingestion checkout  ── verified move   ──┼─▶ rm-<digest-prefix>/
+                                                  │    ├── artifact.md
+                                                  │    ├── record.json
+                                                  │    ├── evidence/*.json
+                                                  │    └── report.md
+immutable third-party source ─ pinned reference ─┘
 ```
 
-An authoring agent works on the repository's ordinary `README.md` and should
-not be asked to reason about immutable artifacts. A separate capture operation
-selects the completed bytes, computes their identity, and copies them into the
-registry. Editing the working README afterward is normal; capturing the changed
-bytes produces another artifact that can declare lineage such as `supersedes`.
+An authoring agent works on an ordinary `README.md` and should not be asked to
+reason about immutable artifacts. Explicit `artifact capture` is for an
+external or otherwise non-durable authoring workspace: it computes the completed
+bytes' identity and creates their sole body-owning path inside README Labs.
+Managed repository admission instead moves the selected file from its isolated
+checkout directly into that final path. Intake keeps landing metadata, not a
+snapshot of the body.
 
-The artifact bytes are immutable after capture. The surrounding record may
+The artifact bytes are immutable after admission. The surrounding record may
 append provenance events, repository occurrences, collection memberships,
-lineage, and evidence without changing those bytes.
+lineage, and evidence without changing those bytes. A changed body has a new
+content identity. When it supersedes the current owned version of the same
+logical README, Git preserves the retired record and bytes; they do not remain
+as a parallel live rollback copy at `HEAD`.
 
 ## Data model
 
@@ -56,13 +63,13 @@ The axes stay separate deliberately:
 
 | Concept | What it records | Why it is separate |
 | --- | --- | --- |
-| Artifact | Exact Markdown content and digest. | The same bytes can appear in several repositories or uses. |
-| Capture | When and why bytes crossed from mutable work into the registry. | Immutability must not leak into generation. |
+| Artifact | Exact Markdown content and digest. | One stored body can have several repository occurrences or uses without being copied. |
+| Admission | When and why completed bytes crossed into the registry by external capture or managed transfer. | Immutability must not leak into generation, and custody must not create parallel owners. |
 | Custody | Ownership, visibility, body-retention policy, and license when known. | A public reference and private generated output need different storage rules. |
 | Provenance event | How the artifact originated or entered the domain. | One artifact can have generated and later ingestion provenance. |
 | Occurrence | Repository, revision or tree, path, and README role. | Contextual review depends on placement, not only bytes. |
 | Membership | The artifact's present lab use. | A generated output can later become a reference without changing its origin. |
-| Lineage | Relationships between immutable versions. | Revision produces a new artifact instead of overwriting prior evidence. |
+| Lineage | Relationships between immutable versions. | Metadata can identify a superseded Git-held version without retaining its body at another live path. |
 | Evidence | One structural, diagnostic, agent, or human observation. | Measurements retain producer, scope, limitations, and source-run identity. |
 
 `generated` and `retrieved` are therefore provenance events, not mutually
@@ -81,7 +88,7 @@ record id:   rm-f96b8e9d6c94dee9
 stored body: readmes/records/rm-f96b8e9d6c94dee9/artifact.md
 ```
 
-Captured content is called `artifact.md`, not `README.md`. The original name and
+Embedded content is called `artifact.md`, not `README.md`. The original name and
 path remain metadata. This prevents a stored specimen from looking like an
 active repository entrypoint and avoids collisions when records are displayed
 together.
@@ -102,6 +109,10 @@ rm-f96b8e9d6c94dee9/
 └── report.md
 ```
 
+That `artifact.md` is the sole durable owner of those README bytes in this
+repository. Intake manifests, provenance events, occurrences, evidence, and
+reports point to its record ID and digest; none embeds or snapshots the body.
+
 A third-party, restricted, large, or otherwise non-retained body uses a pinned
 reference:
 
@@ -116,7 +127,15 @@ rm-1f2de14735b1ee9d/
 `artifact.ref.json` records the locator, repository, revision, path, and content
 digest. The raw corpus cache remains untracked and separately verifies its Git
 blob. Reference-only storage does not weaken identity and does not imply that a
-popular repository is a quality exemplar.
+popular repository is a quality exemplar. It is appropriate for third-party or
+restricted content, not as a substitute for landing an internally owned
+completed README.
+
+The only durable copy exception is an explicitly classified generated product
+adapter. Its `UPSTREAM.json` must map an exact canonical source tree to an exact
+generated destination at a full source revision and digest. That mechanically
+identical delivery copy has no independent authoring authority and does not
+authorize any additional unclassified copy.
 
 README Labs metadata is never inserted into the subject README. Doing so would
 change the bytes being measured, break source fidelity, and create recursive
@@ -140,7 +159,11 @@ multi-document or contextual execution record
 ```
 
 This gives each README a complete document-centered view without duplicating a
-corpus-wide run or replacing its execution context.
+corpus-wide run or replacing its execution context. Neither the projection nor
+the durable run log may embed the complete subject README. They retain record
+IDs, content hashes, measurements, diagnostics, bounded excerpts when needed,
+and sanitized command metadata. Raw command output that contains the full body
+is execution state and must be discarded rather than checked in.
 
 Evidence has one of two scopes:
 
@@ -149,6 +172,11 @@ Evidence has one of two scopes:
 - **Occurrence scope** observes the artifact in a repository placement. A role
   annotation, repository-contextual soft review, or user-response trial uses
   this scope.
+
+When occurrence-scoped evaluation needs real root placement or relative-link
+behavior, the runner copies `artifact.md` to `README.md` inside a disposable
+repository. That context copy exists only for execution and is removed after
+the run; durable evidence binds back to the final artifact by identity.
 
 The current adapters attach:
 
@@ -170,11 +198,12 @@ artifact identity, provenance, occurrences, memberships, structural metrics,
 static diagnostics, and contextual review details together. It deliberately has
 no combined score.
 
-SQLite is a rebuildable query projection, not a source of truth. The catalog
-contains normalized tables for artifacts, provenance, occurrences, memberships,
-lineage, evidence, evidence sources, and diagnostics. It can support corpus
-queries or a future local visualization without introducing binary merge state
-into Git.
+SQLite is a disposable, rebuildable query projection, not primary storage or a
+source of truth. Git-managed Markdown owns embedded README bodies and canonical
+JSON owns their metadata. The catalog contains normalized tables for artifacts,
+provenance, occurrences, memberships, lineage, evidence, evidence sources, and
+diagnostics. It can support corpus queries or a future local visualization
+without introducing binary merge state into Git.
 
 ```text
 canonical JSON packages
@@ -191,7 +220,8 @@ private or local-only records out of inappropriate publication paths.
 
 ## Commands
 
-Capture a completed generated README after authoring ends:
+Capture a completed generated README from an external or otherwise non-durable
+authoring workspace after authoring ends:
 
 ```console
 uv run readme-lab artifact capture /path/to/README.md \
@@ -206,6 +236,12 @@ uv run readme-lab artifact capture /path/to/README.md \
   --membership example-run=generated_output
 ```
 
+For a completed README already inside a managed ingestion checkout, use
+`ingest select` and `ingest admit` instead. That route moves the body directly
+into this registry and emits a landed intake manifest; it does not call the
+copying capture command or create an intake snapshot. See
+[`repository-ingestion.md`](repository-ingestion.md#landing-selected-readme-artifacts).
+
 Register a public reference without retaining its body:
 
 ```console
@@ -218,6 +254,23 @@ uv run readme-lab artifact reference \
   --recorded-path README.md \
   --role repository_root \
   --membership public-reference-v1=reference_sample
+```
+
+Run a repository-contextual review from the final body without creating a
+durable root copy. The base repository must be clean; the runner makes a
+no-hardlink clone, commits the body at the requested path, records the context
+binding, and removes the clone after execution:
+
+```console
+uv run readme-lab agent-eval run \
+  experiments/evaluators/<evaluator>/evaluator.json \
+  --repository /path/to/clean/base-repository \
+  --readme README.md \
+  --readme-record readmes/records/<record> \
+  --run-dir experiments/runs/<run> \
+  --run-id <run> \
+  --candidate-id <candidate> \
+  --model <model>
 ```
 
 Attach existing evidence and build the projections:

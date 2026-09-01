@@ -46,6 +46,32 @@ This report is a generated projection over the canonical JSON record and attache
 
 ## Evidence
 
+### `soft_agent_review` — `ev-a2a9d3da5b659c58`
+
+Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository’s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project.
+
+Result: `completed`. Subject scope: `occurrence`. Sources: [review_run](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json), [evaluator_spec](../../../experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json), [evaluator_instructions](../../../experiments/evaluators/popular-linux-open-source-maintainer-v1/instructions.md), [evaluator_response_schema](../../../experiments/schemas/soft-agent-review-response-v1.schema.json), [execution_response_schema](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.schema.json), [events](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/events.jsonl), [response](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.json), [stderr](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/stderr.log).
+
+Recommendation: `request_changes` with `high` confidence. This recommendation is advisory.
+
+Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository’s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project.
+
+Strengths:
+
+- The documented extraction command matches the executable interface.
+- The README’s internal links point to present repository files.
+
+Concerns:
+
+- **The replacement removes essential project context and documentation navigation** (`blocking`): A root README in a long-lived project should preserve the basic map of what is in the repository and the operational/privacy constraints of its primary artifact. The new opening sentence says Studio metadata is documented, yet offers no route to that documentation. This is a substantive regression in discoverability and provenance, not a preference for a longer README. Suggested change: Keep the concise usage section, but restore a short repository overview and links to the overview/recovery limits, Studio inventory, related recovered documents, and template system. State clearly that the original saved HTML is intentionally untracked because it may contain private account/application data.
+- **Linux support and dependency setup are underspecified** (`blocking`): For maintainers and users on Linux, the advertised command should have an actionable dependency path and a crisp statement of what succeeds without macOS-specific metadata. Otherwise a first run can fail before extraction due to a missing dependency, and users cannot tell whether incomplete URL recovery is expected. Suggested change: Add a supported way to obtain `lxml` (or link to the project’s dependency manifest if one is added) and state that source/chat extraction works from the saved HTML, while original-URL recovery is an optional macOS-only capability requiring the companion directory and its extended attributes.
+
+Limitations:
+
+- This is a simulated maintainer review based only on the checked-out repository and its Git history; no upstream issue, release policy, CI configuration, or real Linux user environment was available.
+- The original saved NotebookLM HTML and macOS companion directory are intentionally absent, so end-to-end extraction and URL-recovery behavior could not be verified.
+- No claim is made about whether the removed documentation was intentionally relocated outside this repository.
+
 ### `static_analysis` — `ev-b040e654700f9a52`
 
 0 diagnostics from markdown-structure-v1 using the feedback profile.
@@ -84,32 +110,6 @@ Limitations:
 
 - Category signals use exact normalized heading aliases and do not infer semantic coverage from prose.
 - This structural observation is not a README quality score.
-
-### `soft_agent_review` — `ev-dbb5c4a80e8a1286`
-
-Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository’s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project.
-
-Result: `completed`. Subject scope: `occurrence`. Sources: [review_run](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/run.json), [evaluator_spec](../../../experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json), [evaluator_instructions](../../../experiments/evaluators/popular-linux-open-source-maintainer-v1/instructions.md), [evaluator_response_schema](../../../experiments/schemas/soft-agent-review-response-v1.schema.json), [execution_response_schema](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.schema.json), [events](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/events.jsonl), [response](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/response.json), [stderr](../../../experiments/runs/reademe-temp-forward-test-linux-maintainer-v1/stderr.log).
-
-Recommendation: `request_changes` with `high` confidence. This recommendation is advisory.
-
-Request changes. The concise command is accurate and the linked generated outputs exist, but this README replacement removes the repository’s essential scope, provenance, privacy, and navigation information. That is too much loss of maintainer-facing context for a mature Linux-focused open-source project.
-
-Strengths:
-
-- The documented extraction command matches the executable interface.
-- The README’s internal links point to present repository files.
-
-Concerns:
-
-- **The replacement removes essential project context and documentation navigation** (`blocking`): A root README in a long-lived project should preserve the basic map of what is in the repository and the operational/privacy constraints of its primary artifact. The new opening sentence says Studio metadata is documented, yet offers no route to that documentation. This is a substantive regression in discoverability and provenance, not a preference for a longer README. Suggested change: Keep the concise usage section, but restore a short repository overview and links to the overview/recovery limits, Studio inventory, related recovered documents, and template system. State clearly that the original saved HTML is intentionally untracked because it may contain private account/application data.
-- **Linux support and dependency setup are underspecified** (`blocking`): For maintainers and users on Linux, the advertised command should have an actionable dependency path and a crisp statement of what succeeds without macOS-specific metadata. Otherwise a first run can fail before extraction due to a missing dependency, and users cannot tell whether incomplete URL recovery is expected. Suggested change: Add a supported way to obtain `lxml` (or link to the project’s dependency manifest if one is added) and state that source/chat extraction works from the saved HTML, while original-URL recovery is an optional macOS-only capability requiring the companion directory and its extended attributes.
-
-Limitations:
-
-- This is a simulated maintainer review based only on the checked-out repository and its Git history; no upstream issue, release policy, CI configuration, or real Linux user environment was available.
-- The original saved NotebookLM HTML and macOS companion directory are intentionally absent, so end-to-end extraction and URL-recovery behavior could not be verified.
-- No claim is made about whether the removed documentation was intentionally relocated outside this repository.
 
 ## Authority boundary
 

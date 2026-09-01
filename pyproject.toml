@@ -37,6 +37,7 @@ packages = ["src/readme_lab"]
 "evals/review-scorecard-v1.schema.json" = "readme_lab/data/review-scorecard-v1.schema.json"
 "corpus/manifest-item-v1.schema.json" = "readme_lab/data/manifest-item-v1.schema.json"
 "intake/source-manifest-v1.schema.json" = "readme_lab/data/source-manifest-v1.schema.json"
+"intake/source-manifest-v2.schema.json" = "readme_lab/data/source-manifest-v2.schema.json"
 "intake/ingestion-job-v1.schema.json" = "readme_lab/data/ingestion-job-v1.schema.json"
 "intake/ingestion-selection-v1.schema.json" = "readme_lab/data/ingestion-selection-v1.schema.json"
 "intake/ingestion-inventory-v1.schema.json" = "readme_lab/data/ingestion-inventory-v1.schema.json"

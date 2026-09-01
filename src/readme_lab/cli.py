@@ -7,7 +7,10 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from readme_lab.agent_evaluation import run_agent_evaluation
+from readme_lab.agent_evaluation import (
+    run_agent_evaluation,
+    run_materialized_agent_evaluation,
+)
 from readme_lab.candidates import materialize_candidate, verify_candidate
 from readme_lab.capsule import materialize_capsule
 from readme_lab.corpus import collect_corpus, summarize_observations, write_summary
@@ -456,6 +459,11 @@ def build_parser() -> argparse.ArgumentParser:
     agent_eval_run_parser.add_argument("evaluator", type=Path)
     agent_eval_run_parser.add_argument("--repository", type=Path, required=True)
     agent_eval_run_parser.add_argument("--readme", required=True)
+    agent_eval_run_parser.add_argument(
+        "--readme-record",
+        type=Path,
+        help="materialize this final artifact record in a disposable clone",
+    )
     agent_eval_run_parser.add_argument("--run-dir", type=Path, required=True)
     agent_eval_run_parser.add_argument("--run-id", required=True)
     agent_eval_run_parser.add_argument("--candidate-id", required=True)
@@ -1070,17 +1078,31 @@ def main(argv: list[str] | None = None) -> int:
         )
         return 0
     if args.command == "agent-eval" and args.agent_eval_command == "run":
-        run = run_agent_evaluation(
-            args.evaluator,
-            repository=args.repository,
-            readme_path=args.readme,
-            run_dir=args.run_dir,
-            run_id=args.run_id,
-            candidate_id=args.candidate_id,
-            model=args.model,
-            reasoning_effort=args.reasoning_effort,
-            codex_executable=args.codex_executable,
-        )
+        if args.readme_record is None:
+            run = run_agent_evaluation(
+                args.evaluator,
+                repository=args.repository,
+                readme_path=args.readme,
+                run_dir=args.run_dir,
+                run_id=args.run_id,
+                candidate_id=args.candidate_id,
+                model=args.model,
+                reasoning_effort=args.reasoning_effort,
+                codex_executable=args.codex_executable,
+            )
+        else:
+            run = run_materialized_agent_evaluation(
+                args.evaluator,
+                base_repository=args.repository,
+                readme_record=args.readme_record,
+                readme_path=args.readme,
+                run_dir=args.run_dir,
+                run_id=args.run_id,
+                candidate_id=args.candidate_id,
+                model=args.model,
+                reasoning_effort=args.reasoning_effort,
+                codex_executable=args.codex_executable,
+            )
         print(json.dumps(run, indent=2, sort_keys=True))
         return 0 if run["result"] == "completed" else 1
     if args.command == "artifact" and args.artifact_command == "capture":

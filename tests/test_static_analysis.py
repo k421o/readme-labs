@@ -26,7 +26,7 @@ GENERATED_RUN = Path(
     "experiments/runs/reademe-temp-forward-test-markdown-structure-v1/run.json"
 )
 GENERATED_README = Path(
-    "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md"
+    "readmes/records/rm-f96b8e9d6c94dee9/artifact.md"
 )
 
 

@@ -72,5 +72,10 @@ skill.
 
 Do not capture the mutable draft as a README artifact, create a content-addressed
 record, attach evaluation evidence, or assign lineage during the generation and
-review loop. Artifact capture is a separate, explicit boundary after an owner
-selects a completed output; this skill does not cross it automatically.
+review loop. Artifact admission is a separate, explicit boundary after an owner
+selects a completed output; this skill does not cross it automatically. A
+managed ingestion workflow moves the selected file directly into its final
+artifact record, while an external or otherwise non-durable authoring workspace
+may use explicit capture. Neither route may leave a second durable body in
+intake, context, evidence, or logs. Any contextual copy is disposable execution
+state; Git provides history and rollback for the landed body.

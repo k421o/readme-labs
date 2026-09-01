@@ -3,21 +3,25 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
+from datetime import UTC, datetime
 from pathlib import Path
 
+import pytest
+
+import readme_lab.agent_evaluation as agent_evaluation
 from readme_lab.agent_evaluation import (
     build_agent_evaluator_prompt,
     load_agent_review_response,
     load_evaluator,
     run_agent_evaluation,
+    run_materialized_agent_evaluation,
 )
+from readme_lab.readme_artifacts import capture_readme_artifact
 
 EVALUATOR = Path(
     "experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json"
 )
-COMMITTED_RUN = Path(
-    "experiments/runs/reademe-temp-forward-test-linux-maintainer-v1"
-)
+COMMITTED_RUN = Path("experiments/runs/reademe-temp-forward-test-linux-maintainer-v1")
 
 
 def git(repository: Path, *arguments: str) -> str:
@@ -65,7 +69,16 @@ output.write_text(json.dumps({
     'questions': [],
     'limitations': ['Simulated maintainer perspective.']
 }) + '\\n')
-print(json.dumps({'type': 'item.completed'}))
+print(json.dumps({
+    'type': 'item.completed',
+    'item': {
+        'type': 'command_execution',
+        'command': "sed -n '1,80p' README.md",
+        'aggregated_output': '# Example\\n\\nA useful example.\\n',
+        'exit_code': 0,
+        'status': 'completed'
+    }
+}))
 """
     else:
         body = """#!/usr/bin/env python3
@@ -89,9 +102,7 @@ def test_initial_evaluator_is_advisory_and_treats_repo_as_evidence() -> None:
 
 def test_soft_agent_response_schema_declares_types_for_structured_output() -> None:
     evaluator = load_evaluator(EVALUATOR)
-    schema = json.loads(
-        evaluator["_response_schema_path"].read_text(encoding="utf-8")
-    )
+    schema = json.loads(evaluator["_response_schema_path"].read_text(encoding="utf-8"))
 
     properties = schema["properties"]
     assert properties["schema_version"]["type"] == "string"
@@ -124,6 +135,16 @@ def test_soft_agent_review_records_a_recommendation_without_deciding_hypothesis(
     assert result["automated_authority"] == "evidence_only"
     assert result["hypothesis_disposition"] == "not_decided"
     assert result["executor"]["sandbox"] == "read-only"
+    events_text = (tmp_path / "run/events.jsonl").read_text(encoding="utf-8")
+    event = json.loads(events_text)
+    assert "A useful example" not in events_text
+    assert event["item"]["command"] == "sed -n '1,80p' README.md"
+    assert event["item"]["status"] == "completed"
+    output = "# Example\n\nA useful example.\n"
+    assert event["item"]["aggregated_output"] == {
+        "sha256": hashlib.sha256(output.encode()).hexdigest(),
+        "byte_length": len(output.encode()),
+    }
 
 
 def test_executor_failure_is_incomplete_not_candidate_rejection(tmp_path: Path) -> None:
@@ -145,6 +166,70 @@ def test_executor_failure_is_incomplete_not_candidate_rejection(tmp_path: Path) 
     assert result["result"] == "incomplete"
     assert result["incomplete_reason"] == "executor_failed"
     assert result["hypothesis_disposition"] == "not_decided"
+    raw_stderr = "executor unavailable\n"
+    stderr_text = (tmp_path / "failed-run/stderr.log").read_text(encoding="utf-8")
+    assert raw_stderr not in stderr_text
+    assert json.loads(stderr_text) == {
+        "sha256": hashlib.sha256(raw_stderr.encode()).hexdigest(),
+        "byte_length": len(raw_stderr.encode()),
+    }
+
+
+def test_final_artifact_review_uses_and_removes_a_disposable_root_readme(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = make_repository(tmp_path)
+    original_readme = (repository / "README.md").read_bytes()
+    artifact_source = tmp_path / "final-readme.md"
+    artifact_body = b"# Final artifact\n\nReviewed in repository context.\n"
+    artifact_source.write_bytes(artifact_body)
+    record_dir = capture_readme_artifact(
+        artifact_source,
+        registry=tmp_path / "records",
+        provenance_kind="generated",
+        boundary="completed_generation",
+        pre_capture_editability="mutable",
+        ownership="owned",
+        visibility="local_only",
+        producer={"kind": "skill", "id": "test-generator"},
+        captured_at=datetime(2026, 9, 1, 12, tzinfo=UTC),
+    )
+    executable = make_fake_codex(tmp_path, succeeds=True)
+    workspaces: list[Path] = []
+    original_materialize = agent_evaluation.materialize_readme_context
+
+    def track_materialization(*args: object, **kwargs: object) -> dict[str, object]:
+        workspaces.append(Path(args[2]))
+        return original_materialize(*args, **kwargs)
+
+    monkeypatch.setattr(
+        agent_evaluation, "materialize_readme_context", track_materialization
+    )
+
+    result = run_materialized_agent_evaluation(
+        EVALUATOR,
+        base_repository=repository,
+        readme_record=record_dir,
+        readme_path="README.md",
+        run_dir=tmp_path / "materialized-run",
+        run_id="materialized-run",
+        candidate_id="candidate-a",
+        model="test-model",
+        reasoning_effort="low",
+        codex_executable=executable.as_posix(),
+    )
+
+    assert result["result"] == "completed"
+    assert (
+        result["subject"]["readme_sha256"] == hashlib.sha256(artifact_body).hexdigest()
+    )
+    assert result["materialization"]["artifact_binding"]["target_path"] == ("README.md")
+    assert result["materialization"]["ephemeral"] is True
+    assert result["materialization"]["no_hardlinks"] is True
+    assert len(workspaces) == 1
+    assert not workspaces[0].exists()
+    assert (repository / "README.md").read_bytes() == original_readme
+    assert (record_dir / "artifact.md").read_bytes() == artifact_body
 
 
 def test_committed_soft_review_is_valid_advisory_evidence() -> None:

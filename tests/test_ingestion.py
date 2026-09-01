@@ -26,6 +26,7 @@ from readme_lab.ingestion import (
 from readme_lab.ingestion_actions import execute_source_cleanup
 from readme_lab.intake import verify_intake_manifest
 from readme_lab.migration import load_git_migration_receipt
+from readme_lab.readme_artifacts import load_artifact_record, record_id_for_digest
 
 
 def git(repository: Path, *arguments: str, check: bool = True) -> str:
@@ -36,6 +37,15 @@ def git(repository: Path, *arguments: str, check: bool = True) -> str:
         capture_output=True,
         text=True,
     ).stdout.strip()
+
+
+def git_bytes(repository: Path, *arguments: str) -> bytes:
+    return subprocess.run(
+        ["git", *arguments],
+        cwd=repository,
+        check=True,
+        capture_output=True,
+    ).stdout
 
 
 def make_repository(path: Path, *, initial_file: str = "README.md") -> Path:
@@ -90,10 +100,12 @@ def test_checked_in_reademe_temp_controller_receipt_proves_landed_targets() -> N
         "experiment_plan",
         "experiment_run",
     }
+    receipt_revision = "b10ff9c1ad032c6861b7d03463f52d9ac5d8e208"
     for target in receipt["admission_targets"]:
-        path = Path(target["path"])
-        assert path.is_file()
-        assert hashlib.sha256(path.read_bytes()).hexdigest() == target["sha256"]
+        historical_bytes = git_bytes(
+            Path.cwd(), "show", f"{receipt_revision}:{target['path']}"
+        )
+        assert hashlib.sha256(historical_bytes).hexdigest() == target["sha256"]
 
 
 def test_domain_container_must_not_be_a_git_repository(tmp_path: Path) -> None:
@@ -271,6 +283,244 @@ def test_selected_skill_lands_as_candidate_then_managed_checkout_is_deleted(
     assert (source / ".agents/skills/example/SKILL.md").is_file()
     assert (domain_repository / "intake/receipts/example-skill.json").is_file()
     assert load_ingestion_job(yard, "example-skill")["status"] == "finalized"
+
+
+def test_selected_readme_moves_directly_to_its_final_artifact_record(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "readme-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="readme-landing",
+        source=source.as_posix(),
+        ownership="owned",
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="readme-landing",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+
+    admission = admit_ingestion(
+        yard=yard,
+        job_id="readme-landing",
+        domain_repository=domain_repository,
+        manifest_id="readme-landing",
+        title="README landing",
+    )
+
+    record_id = record_id_for_digest(selection["sha256"])
+    record_dir = domain_repository / "readmes/records" / record_id
+    checkout_readme = yard / "active/readme-landing/checkout/README.md"
+    manifest_path = domain_repository / "intake/manifests/readme-landing.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    item = manifest["items"][0]
+
+    assert [target["kind"] for target in admission["targets"]] == [
+        "intake_manifest",
+        "readme_record",
+    ]
+    assert manifest["schema_version"] == 2
+    assert item["intake_mode"] == "landed"
+    assert "snapshot" not in item
+    assert item["landing"] == {
+        "artifact_type": "file",
+        "managed_source_absent": True,
+        "managed_source_path": "README.md",
+        "path": f"readmes/records/{record_id}/artifact.md",
+        "record_id": record_id,
+        "sha256": selection["sha256"],
+        "transferred_at": load_artifact_record(record_dir)["capture"][
+            "captured_at"
+        ],
+    }
+    assert not checkout_readme.exists()
+    assert (record_dir / "artifact.md").read_text(encoding="utf-8") == "initial\n"
+    assert not (domain_repository / "intake/snapshots/readme-landing").exists()
+    assert source.joinpath("README.md").is_file()
+    assert verify_intake_manifest(
+        manifest_path,
+        source_root=yard / "active/readme-landing/checkout",
+        repository_root=domain_repository,
+    )["verified"]
+    verification = verify_ingestion(
+        yard=yard,
+        job_id="readme-landing",
+        domain_repository=domain_repository,
+    )
+    assert verification["selections"] == [
+        {
+            "id": "readme",
+            "source_absent": True,
+            "destination_verified": True,
+            "verified": True,
+        }
+    ]
+
+
+def test_readme_landing_rolls_back_when_manifest_verification_fails(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "rollback-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="readme-rollback",
+        source=source.as_posix(),
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="readme-rollback",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    monkeypatch.setattr(
+        "readme_lab.ingestion.verify_intake_manifest",
+        lambda *args, **kwargs: {"verified": False},
+    )
+
+    with pytest.raises(ValueError, match="did not verify"):
+        admit_ingestion(
+            yard=yard,
+            job_id="readme-rollback",
+            domain_repository=domain_repository,
+            manifest_id="readme-rollback",
+            title="README rollback",
+        )
+
+    checkout_readme = yard / "active/readme-rollback/checkout/README.md"
+    record_id = record_id_for_digest(selection["sha256"])
+    assert checkout_readme.read_text(encoding="utf-8") == "initial\n"
+    assert not (domain_repository / "readmes/records" / record_id).exists()
+    assert not (
+        domain_repository / "intake/manifests/readme-rollback.json"
+    ).exists()
+
+
+def test_admission_rejects_selection_drift_before_moving_readme(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "drift-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="readme-drift",
+        source=source.as_posix(),
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="readme-drift",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    checkout_readme = yard / "active/readme-drift/checkout/README.md"
+    checkout_readme.write_text("changed after selection\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="changed before admission"):
+        admit_ingestion(
+            yard=yard,
+            job_id="readme-drift",
+            domain_repository=domain_repository,
+            manifest_id="readme-drift",
+            title="README drift",
+        )
+
+    assert checkout_readme.read_text(encoding="utf-8") == (
+        "changed after selection\n"
+    )
+    assert not (
+        domain_repository
+        / "readmes/records"
+        / record_id_for_digest(selection["sha256"])
+    ).exists()
+    assert not (domain_repository / "intake/manifests/readme-drift.json").exists()
+    assert load_ingestion_job(yard, "readme-drift")["status"] == "selected"
+
+
+def test_identical_readme_selections_converge_on_one_durable_body(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "same-body-source")
+    (source / "docs/README.md").parent.mkdir()
+    (source / "docs/README.md").write_text("initial\n", encoding="utf-8")
+    git(source, "add", ".")
+    git(source, "commit", "--quiet", "-m", "add identical README")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="same-body",
+        source=source.as_posix(),
+    )
+    first = add_ingestion_selection(
+        yard=yard,
+        job_id="same-body",
+        selection_id="root-readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    second = add_ingestion_selection(
+        yard=yard,
+        job_id="same-body",
+        selection_id="docs-readme",
+        source_path="docs/README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+
+    admit_ingestion(
+        yard=yard,
+        job_id="same-body",
+        domain_repository=domain_repository,
+        manifest_id="same-body",
+        title="Same README body",
+    )
+
+    assert first["sha256"] == second["sha256"]
+    assert len(list((domain_repository / "readmes/records").glob("*/artifact.md"))) == 1
+    checkout = yard / "active/same-body/checkout"
+    assert not (checkout / "README.md").exists()
+    assert not (checkout / "docs/README.md").exists()
+
+
+def test_overlapping_selection_paths_are_rejected(tmp_path: Path) -> None:
+    domain_root, _, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "overlap-source")
+    (source / "docs/guide.md").parent.mkdir()
+    (source / "docs/guide.md").write_text("guide\n", encoding="utf-8")
+    git(source, "add", ".")
+    git(source, "commit", "--quiet", "-m", "add docs")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="overlap",
+        source=source.as_posix(),
+    )
+    add_ingestion_selection(
+        yard=yard,
+        job_id="overlap",
+        selection_id="docs",
+        source_path="docs",
+        role="research_content",
+        preservation="selected",
+    )
+
+    with pytest.raises(ValueError, match="paths overlap"):
+        add_ingestion_selection(
+            yard=yard,
+            job_id="overlap",
+            selection_id="guide",
+            source_path="docs/guide.md",
+            role="research_content",
+            preservation="selected",
+        )
 
 
 def test_plugin_tooling_automation_and_script_selections_remain_explicit(
@@ -506,6 +756,55 @@ def test_finalization_preflights_receipt_collision_before_deleting_checkout(
         )
 
     assert (yard / "active/collision/checkout/README.md").is_file()
+
+
+def test_finalization_reverifies_landed_body_before_deleting_checkout(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "finalization-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="finalization-reverify",
+        source=source.as_posix(),
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="finalization-reverify",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    admit_ingestion(
+        yard=yard,
+        job_id="finalization-reverify",
+        domain_repository=domain_repository,
+        manifest_id="finalization-reverify",
+        title="Finalization reverify",
+    )
+    verify_ingestion(
+        yard=yard,
+        job_id="finalization-reverify",
+        domain_repository=domain_repository,
+    )
+    record = (
+        domain_repository
+        / "readmes/records"
+        / record_id_for_digest(selection["sha256"])
+    )
+    (record / "artifact.md").write_text("tampered\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="changed after ingestion verification"):
+        finalize_ingestion(
+            yard=yard,
+            job_id="finalization-reverify",
+            domain_repository=domain_repository,
+            workspace_disposition="delete",
+        )
+
+    assert (yard / "active/finalization-reverify/checkout").is_dir()
+    assert load_ingestion_job(yard, "finalization-reverify")["status"] == "verified"
 
 
 def test_owned_git_migration_cleans_source_physically_and_uses_history_receipt(
@@ -805,6 +1104,78 @@ def test_failed_cleanup_commit_restores_physically_deleted_source(
         )
 
     assert (source / "README.md").read_text() == "initial\n"
+    assert git(source, "status", "--short") == ""
+
+
+def test_source_cleanup_reverifies_artifact_package_before_deleting_source(
+    tmp_path: Path,
+) -> None:
+    domain_root, domain_repository, yard = make_domain(tmp_path)
+    source = make_repository(tmp_path / "cleanup-reverify-source")
+    begin_ingestion(
+        domain_root=domain_root,
+        job_id="cleanup-reverify",
+        source=source.as_posix(),
+        ownership="owned",
+    )
+    selection = add_ingestion_selection(
+        yard=yard,
+        job_id="cleanup-reverify",
+        selection_id="readme",
+        source_path="README.md",
+        role="readme_artifact",
+        preservation="selected",
+    )
+    admit_ingestion(
+        yard=yard,
+        job_id="cleanup-reverify",
+        domain_repository=domain_repository,
+        manifest_id="cleanup-reverify",
+        title="Cleanup reverify fixture",
+    )
+    verify_ingestion(
+        yard=yard,
+        job_id="cleanup-reverify",
+        domain_repository=domain_repository,
+    )
+    create_external_action_plan(
+        yard=yard,
+        job_id="cleanup-reverify",
+        action_id="clean-source",
+        action="source_cleanup",
+        parameters={
+            "source_repository": source.as_posix(),
+            "expected_head": git(source, "rev-parse", "HEAD"),
+            "paths": [
+                {
+                    "path": selection["path"],
+                    "artifact_type": selection["artifact_type"],
+                    "sha256": selection["sha256"],
+                }
+            ],
+            "commit_message": "Remove landed README",
+            "settlement": "local_commit",
+        },
+    )
+    record = (
+        domain_repository
+        / "readmes/records"
+        / record_id_for_digest(selection["sha256"])
+    )
+    (record / "record.json").unlink()
+
+    with pytest.raises(ValueError, match="changed after ingestion verification"):
+        execute_source_cleanup(
+            yard=yard,
+            plan_path=(
+                yard / "active/cleanup-reverify/control/actions/clean-source.json"
+            ),
+            authorized_source=source,
+            domain_repository=domain_repository,
+            execute=True,
+        )
+
+    assert (source / "README.md").read_text(encoding="utf-8") == "initial\n"
     assert git(source, "status", "--short") == ""
 
 

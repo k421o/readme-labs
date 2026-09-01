@@ -14,8 +14,8 @@ eventually executable environments to test that model.
 - Build an evidence-backed anatomy for root, package, component, experiment,
   fixture, and archive READMEs.
 - Represent individual documents as versioned `READMEObservation` records.
-- Capture completed README outputs and pinned reference snapshots as
-  content-addressed artifact records with document-centered evidence packages.
+- Land completed README outputs once as content-addressed artifact records, or
+  retain only pinned references when custody does not permit the body.
 - Collect reproducible corpus manifests without treating popularity as quality
   or copying an unbounded raw corpus into Git.
 - Evaluate README review and authoring behavior on both controlled and natural
@@ -54,6 +54,24 @@ The middle is intended to remain stable while sources and consumers grow
 through adapters. See the [domain charter](docs/domain-charter.md) for scope and
 evidence rules.
 
+### README body custody
+
+At the current repository head, one logical README has one durable body-owning
+path. A completed README admitted through the managed ingestion yard moves from
+its disposable checkout directly to `readmes/records/<record>/artifact.md`; an
+intake manifest records the verified landing without keeping another snapshot.
+Git supplies version history and rollback, so prior bodies do not remain as
+parallel live files. The only classified duplicate is a mechanically generated
+product adapter with an exact source-to-destination mapping in `UPSTREAM.json`;
+it has no independent authoring authority.
+
+Experiments may copy that body into a temporary repository as a root
+`README.md` when placement and relative links matter. Those execution copies
+are removed after the run. Evidence and durable event logs retain identities,
+hashes, measurements, and sanitized execution metadata, never another complete
+subject body. The SQLite catalog is likewise a rebuildable index over the
+Git-managed Markdown and JSON records, not primary storage.
+
 ## Complexity progression
 
 Domain maturity and product maturity advance independently. An experimental
@@ -71,8 +89,8 @@ and dependency rules are in
 domain/         README roles, taxonomy, and observation schemas
 research/       Findings, sources, examples, and interpretation
 corpus/         Versioned manifests, labels, and sampling plans
-intake/         Outside research, methods, artifacts, and provenance
-readmes/        Captured README artifacts, evidence records, and reports
+intake/         Transactional admission metadata, outside evidence, and provenance
+readmes/        Sole owned README bodies, artifact metadata, evidence, and reports
 candidates/     Reproducible non-authoritative skills, plugins, tools, and methods
 experiments/    Hypotheses, static analyzers, advisory evaluators, and runs
 evals/          Task capsules, mutations, environments, and scorecards
@@ -93,6 +111,7 @@ Python 3.12+ and [`uv`](https://docs.astral.sh/uv/) are required.
 uv sync --dev
 uv run ruff check .
 uv run pytest
+uv run python scripts/check_readme_bodies.py
 ```
 
 Verify an admitted source, candidate, and experiment plan:
@@ -148,7 +167,8 @@ uv run readme-lab inspect README.md \
 The emitted record describes structure and provenance. It is not a quality
 score.
 
-Capture one completed output after its authoring workflow ends:
+Capture one completed output from an external or otherwise non-durable
+authoring workspace after its authoring workflow ends:
 
 ```console
 uv run readme-lab artifact capture /path/to/README.md \
@@ -162,7 +182,10 @@ uv run readme-lab artifact capture /path/to/README.md \
   --producer-id example-generator
 ```
 
-Capture does not edit or constrain the working README. The
+Capture does not edit or constrain that working README. Managed ingestion uses
+a move-first landing instead, so it does not leave an intake copy beside the
+record. Neither route may create two durable body-owning paths for one logical
+README inside this repository. The
 [artifact-record architecture](docs/readme-artifact-records.md) defines naming,
 custody, provenance, occurrence context, evidence attachment, generated reports,
 and the rebuildable SQLite catalog.

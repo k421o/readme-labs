@@ -25,7 +25,12 @@
     "report": "prepublication-review.txt",
     "report_sha256": "8c2afefd504510f0655a89d72cb24d0ce82ef76c1bbff24a914837a866d5332b",
     "events": "prepublication-review-events.jsonl",
-    "events_sha256": "659f29759a8580d28bca7c5baffde3f610184249136434ab0d9f01eae3af63a7"
+    "events_sha256": "c2446bbca5f473b71f3864092f455f3a9e11feb812940e841277155461aa9f5d"
+  },
+  "event_sanitization": {
+    "original_events_sha256": "659f29759a8580d28bca7c5baffde3f610184249136434ab0d9f01eae3af63a7",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 60
   },
   "notes": [
     "The report is preserved as the gate result before remediation; its hold verdict is not rewritten after the blockers were fixed.",

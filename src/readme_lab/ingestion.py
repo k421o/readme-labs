@@ -11,7 +11,7 @@ import subprocess
 from collections.abc import Iterable
 from datetime import UTC, datetime
 from importlib import resources
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
@@ -29,6 +29,14 @@ from readme_lab.git_sources import (
 )
 from readme_lab.intake import fingerprint_git_path, verify_intake_manifest
 from readme_lab.migration import load_git_migration_receipt
+from readme_lab.readme_artifacts import (
+    ReadmeArtifactTransfer,
+    load_artifact_record,
+    record_id_for_digest,
+    rollback_readme_artifact_transfer,
+    transfer_readme_artifact,
+    verify_artifact_package,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = REPOSITORY_ROOT / "intake"
@@ -40,6 +48,24 @@ INVENTORY_SCHEMA = "ingestion-inventory-v1.schema.json"
 RECEIPT_SCHEMA = "finalization-receipt-v1.schema.json"
 ACTION_SCHEMA = "external-action-plan-v1.schema.json"
 ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+
+def _paths_overlap(left: str, right: str) -> bool:
+    left_path = PurePosixPath(left)
+    right_path = PurePosixPath(right)
+    return (
+        left_path == right_path
+        or left_path in right_path.parents
+        or right_path in left_path.parents
+    )
+
+
+def _is_readme_landing(selection: dict[str, Any]) -> bool:
+    return (
+        selection["role"] == "readme_artifact"
+        and selection["preservation"] in {"selected", "replayable"}
+        and selection["candidate"] is None
+    )
 
 
 def _now() -> str:
@@ -74,9 +100,11 @@ def load_finalization_receipt(path: Path) -> dict[str, Any]:
 
 def _write_json(path: Path, value: dict[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(
         json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    temporary.replace(path)
 
 
 def _file_sha256(path: Path) -> str:
@@ -623,12 +651,15 @@ def add_ingestion_selection(
         raise ValueError("selections are immutable after admission")
     checkout = job_dir / "checkout"
     artifact = _resolve_artifact(checkout, source_path)
+    source_path = artifact.relative_to(checkout.resolve()).as_posix()
     artifact_type = "tree" if artifact.is_dir() else "file"
     digest = artifact_sha256(artifact, artifact_type)
     normalized_context = []
     for context in context_paths:
-        _resolve_artifact(checkout, context)
-        normalized_context.append(context)
+        resolved_context = _resolve_artifact(checkout, context)
+        normalized_context.append(
+            resolved_context.relative_to(checkout.resolve()).as_posix()
+        )
     if preservation == "replayable" and not normalized_context:
         raise ValueError("replayable selections require at least one context path")
     if preservation != "replayable" and normalized_context:
@@ -660,6 +691,13 @@ def add_ingestion_selection(
             "format": candidate_format,
             "entrypoint": candidate_entrypoint,
         }
+    if role == "readme_artifact" and preservation in {"selected", "replayable"}:
+        if artifact_type != "file":
+            raise ValueError("README artifact landing requires one selected file")
+        if candidate is not None:
+            raise ValueError(
+                "README artifacts land in readmes/records and cannot also be candidates"
+            )
 
     source_state = "directory"
     if is_git_repository(checkout):
@@ -680,6 +718,30 @@ def add_ingestion_selection(
             for item in selections["selections"]
         ):
             raise ValueError(f"duplicate candidate id: {candidate['id']}")
+    new_paths = [source_path, *normalized_context]
+    for index, left in enumerate(new_paths):
+        for right in new_paths[index + 1 :]:
+            if _paths_overlap(left, right):
+                raise ValueError(
+                    "selection paths overlap and would duplicate bytes: "
+                    f"{left}, {right}"
+                )
+    for existing in selections["selections"]:
+        existing_paths = [existing["path"], *existing["context_paths"]]
+        overlap = next(
+            (
+                (new, old)
+                for new in new_paths
+                for old in existing_paths
+                if _paths_overlap(new, old)
+            ),
+            None,
+        )
+        if overlap is not None:
+            raise ValueError(
+                "selection paths overlap and would duplicate bytes: "
+                f"{overlap[0]}, {overlap[1]}"
+            )
     selection = {
         "id": selection_id,
         "path": source_path,
@@ -860,8 +922,27 @@ def _preflight_admission(
     outputs: list[Path] = []
     for selection in selections:
         artifact = _resolve_artifact(checkout, selection["path"])
+        actual_type = "tree" if artifact.is_dir() else "file"
+        if actual_type != selection["artifact_type"] or artifact_sha256(
+            artifact, actual_type
+        ) != selection["sha256"]:
+            raise ValueError(
+                f"selected artifact changed before admission: {selection['id']}"
+            )
         candidate = selection["candidate"]
-        if candidate is not None:
+        if _is_readme_landing(selection):
+            record_root = (
+                domain_repository
+                / "readmes/records"
+                / record_id_for_digest(selection["sha256"])
+            )
+            if record_root.exists():
+                record = load_artifact_record(record_root)
+                if record["artifact"]["content_sha256"] != selection["sha256"]:
+                    raise FileExistsError(record_root)
+            elif record_root not in outputs:
+                outputs.append(record_root)
+        elif candidate is not None:
             candidate_root = domain_repository / "candidates" / candidate["id"]
             outputs.append(candidate_root)
             if artifact.is_dir():
@@ -897,7 +978,7 @@ def admit_ingestion(
     manifest_id: str,
     title: str,
 ) -> dict[str, Any]:
-    """Admit selected artifacts into intake and optional candidate records."""
+    """Admit selections, landing completed READMEs in their final records."""
 
     _assert_id(manifest_id)
     job_dir = _job_directory(yard, job_id, require_active=True)
@@ -928,146 +1009,244 @@ def admit_ingestion(
     items: list[dict[str, Any]] = []
     relationships: list[dict[str, str]] = []
     candidate_targets: list[dict[str, str]] = []
+    readme_targets: list[dict[str, str]] = []
+    transfers: list[ReadmeArtifactTransfer] = []
+    created_paths: list[Path] = []
+    manifest_repository = _manifest_repository(job)
 
-    for selection in selections["selections"]:
-        source_artifact = _resolve_artifact(checkout, selection["path"])
-        source = _source_record(
-            job,
-            checkout,
-            source_path=selection["path"],
-            artifact_type=selection["artifact_type"],
-            source_state=selection["source_state"],
-        )
-        item: dict[str, Any] = {
-            "id": selection["id"],
-            "kind": _intake_kind(selection["role"]),
-            "source": source,
-            "intake_mode": "reference",
-            "status": "admitted",
-            "authority": "evidence_only",
-            "description": f"Managed ingestion selection for {selection['role']}.",
-            "limitations": [
-                f"Preservation policy: {selection['preservation']}.",
-                "Admission does not establish correctness or canonical authority.",
-            ],
-        }
-        if selection["preservation"] in {"selected", "replayable"}:
-            snapshot: dict[str, Any] = {}
-            if selection["candidate"] is not None:
-                snapshot, candidate_target = _write_candidate(
-                    domain_repository=domain_repository,
-                    manifest_path=manifest_path,
-                    selection=selection,
-                    source_artifact=source_artifact,
-                    snapshot=snapshot,
+    def rollback_admission() -> None:
+        manifest_path.unlink(missing_ok=True)
+        for transfer in reversed(transfers):
+            rollback_readme_artifact_transfer(transfer)
+        for path in reversed(created_paths):
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.exists():
+                path.unlink()
+
+    try:
+        for selection in selections["selections"]:
+            source_artifact = _resolve_artifact(checkout, selection["path"])
+            source = _source_record(
+                job,
+                checkout,
+                source_path=selection["path"],
+                artifact_type=selection["artifact_type"],
+                source_state=selection["source_state"],
+            )
+            item: dict[str, Any] = {
+                "id": selection["id"],
+                "kind": _intake_kind(selection["role"]),
+                "source": source,
+                "intake_mode": "reference",
+                "status": "admitted",
+                "authority": "evidence_only",
+                "description": (
+                    f"Managed ingestion selection for {selection['role']}."
+                ),
+                "limitations": [
+                    f"Preservation policy: {selection['preservation']}.",
+                    "Admission does not establish correctness or canonical authority.",
+                ],
+            }
+            if _is_readme_landing(selection):
+                source_revision = source.get("revision") or (
+                    f"workspace@{source['observed_at']}"
                 )
-                candidate_targets.append(candidate_target)
-            else:
-                snapshot_root = (
+                transfer = transfer_readme_artifact(
+                    source_artifact,
+                    registry=domain_repository / "readmes/records",
+                    provenance_kind="ingested",
+                    boundary="ingestion_selection",
+                    pre_capture_editability="not_applicable",
+                    ownership={
+                        "owned": "owned",
+                        "external": "third_party",
+                        "unknown": "unknown",
+                    }[job["source"]["ownership"]],
+                    visibility="unknown",
+                    repository=manifest_repository["repository_id"],
+                    revision=source_revision,
+                    recorded_path=selection["path"],
+                    role="repository_root",
+                    limitations=[
+                        "The managed ingestion checkout transferred this README "
+                        "directly to its sole durable body location."
+                    ],
+                )
+                transfers.append(transfer)
+                record = load_artifact_record(transfer.record_dir)
+                item["landing"] = {
+                    "record_id": record["record_id"],
+                    "path": transfer.body_path.relative_to(
+                        domain_repository
+                    ).as_posix(),
+                    "artifact_type": "file",
+                    "sha256": transfer.content_sha256,
+                    "transferred_at": transfer.transferred_at,
+                    "managed_source_path": selection["path"],
+                    "managed_source_absent": True,
+                }
+                item["intake_mode"] = "landed"
+                item["limitations"].append(
+                    "Intake retains metadata only; the README body is owned by "
+                    f"{item['landing']['record_id']}."
+                )
+                readme_target = _target(
+                    "readme_record",
+                    transfer.record_dir / "record.json",
+                    domain_repository,
+                )
+                if not any(
+                    target["path"] == readme_target["path"]
+                    for target in readme_targets
+                ):
+                    readme_targets.append(readme_target)
+            elif selection["preservation"] in {"selected", "replayable"}:
+                snapshot: dict[str, Any] = {}
+                if selection["candidate"] is not None:
+                    candidate_root = (
+                        domain_repository
+                        / "candidates"
+                        / selection["candidate"]["id"]
+                    )
+                    created_paths.append(candidate_root)
+                    snapshot, candidate_target = _write_candidate(
+                        domain_repository=domain_repository,
+                        manifest_path=manifest_path,
+                        selection=selection,
+                        source_artifact=source_artifact,
+                        snapshot=snapshot,
+                    )
+                    candidate_targets.append(candidate_target)
+                else:
+                    snapshot_root = (
+                        domain_repository
+                        / "intake/snapshots"
+                        / manifest_id
+                        / selection["id"]
+                    )
+                    created_paths.append(snapshot_root)
+                    if source_artifact.is_file():
+                        snapshot_path = snapshot_root / source_artifact.name
+                    else:
+                        snapshot_path = snapshot_root
+                    _copy_artifact(source_artifact, snapshot_path)
+                    snapshot = {
+                        "path": snapshot_path.relative_to(
+                            domain_repository
+                        ).as_posix(),
+                        "artifact_type": selection["artifact_type"],
+                        "sha256": artifact_sha256(
+                            snapshot_path, selection["artifact_type"]
+                        ),
+                    }
+                item["snapshot"] = snapshot
+                item["intake_mode"] = "snapshot"
+            elif selection["preservation"] == "archive":
+                item["limitations"].append(
+                    "Full bytes remain in the managed operational archive rather "
+                    "than domain Git."
+                )
+            items.append(item)
+
+            for index, context_path in enumerate(
+                selection["context_paths"], start=1
+            ):
+                context_artifact = _resolve_artifact(checkout, context_path)
+                artifact_type = "tree" if context_artifact.is_dir() else "file"
+                context_id = f"{selection['id']}-context-{index}"
+                context_source = _source_record(
+                    job,
+                    checkout,
+                    source_path=context_path,
+                    artifact_type=artifact_type,
+                    source_state=(
+                        "committed"
+                        if is_git_repository(checkout)
+                        and _git_path_is_committed_and_clean(checkout, context_path)
+                        else "workspace"
+                    ),
+                )
+                context_root = (
                     domain_repository
                     / "intake/snapshots"
                     / manifest_id
-                    / selection["id"]
+                    / context_id
                 )
-                if source_artifact.is_file():
-                    snapshot_path = snapshot_root / source_artifact.name
-                else:
-                    snapshot_path = snapshot_root
-                _copy_artifact(source_artifact, snapshot_path)
-                snapshot = {
-                    "path": snapshot_path.relative_to(domain_repository).as_posix(),
-                    "artifact_type": selection["artifact_type"],
-                    "sha256": artifact_sha256(
-                        snapshot_path, selection["artifact_type"]
-                    ),
-                }
-            item["snapshot"] = snapshot
-            item["intake_mode"] = "snapshot"
-        elif selection["preservation"] == "archive":
-            item["limitations"].append(
-                "Full bytes remain in the managed operational archive rather "
-                "than domain Git."
-            )
-        items.append(item)
+                created_paths.append(context_root)
+                context_snapshot = (
+                    context_root / context_artifact.name
+                    if context_artifact.is_file()
+                    else context_root
+                )
+                _copy_artifact(context_artifact, context_snapshot)
+                items.append(
+                    {
+                        "id": context_id,
+                        "kind": "repository",
+                        "source": context_source,
+                        "snapshot": {
+                            "path": context_snapshot.relative_to(
+                                domain_repository
+                            ).as_posix(),
+                            "artifact_type": artifact_type,
+                            "sha256": artifact_sha256(
+                                context_snapshot, artifact_type
+                            ),
+                        },
+                        "intake_mode": "snapshot",
+                        "status": "admitted",
+                        "authority": "evidence_only",
+                        "description": f"Replay context for {selection['id']}.",
+                        "limitations": [
+                            "Context is evidence, not candidate authority."
+                        ],
+                    }
+                )
+                relationships.append(
+                    {
+                        "from": context_id,
+                        "relationship": "provides_replay_context_for",
+                        "to": selection["id"],
+                    }
+                )
 
-        for index, context_path in enumerate(selection["context_paths"], start=1):
-            context_artifact = _resolve_artifact(checkout, context_path)
-            artifact_type = "tree" if context_artifact.is_dir() else "file"
-            context_id = f"{selection['id']}-context-{index}"
-            context_source = _source_record(
-                job,
-                checkout,
-                source_path=context_path,
-                artifact_type=artifact_type,
-                source_state=(
-                    "committed"
-                    if is_git_repository(checkout)
-                    and _git_path_is_committed_and_clean(checkout, context_path)
-                    else "workspace"
-                ),
-            )
-            context_root = (
-                domain_repository / "intake/snapshots" / manifest_id / context_id
-            )
-            context_snapshot = (
-                context_root / context_artifact.name
-                if context_artifact.is_file()
-                else context_root
-            )
-            _copy_artifact(context_artifact, context_snapshot)
-            items.append(
-                {
-                    "id": context_id,
-                    "kind": "repository",
-                    "source": context_source,
-                    "snapshot": {
-                        "path": context_snapshot.relative_to(
-                            domain_repository
-                        ).as_posix(),
-                        "artifact_type": artifact_type,
-                        "sha256": artifact_sha256(context_snapshot, artifact_type),
-                    },
-                    "intake_mode": "snapshot",
-                    "status": "admitted",
-                    "authority": "evidence_only",
-                    "description": f"Replay context for {selection['id']}.",
-                    "limitations": ["Context is evidence, not candidate authority."],
-                }
-            )
-            relationships.append(
-                {
-                    "from": context_id,
-                    "relationship": "provides_replay_context_for",
-                    "to": selection["id"],
-                }
-            )
+        manifest = {
+            "schema_version": 2,
+            "id": manifest_id,
+            "title": title,
+            "observed_at": _now(),
+            "source_repository": manifest_repository,
+            "items": items,
+            "relationships": relationships,
+            "limitations": [
+                "The managed ingestion log remains local; this manifest records "
+                "only landed domain material."
+            ],
+        }
+        _write_json(manifest_path, manifest)
+        verification = verify_intake_manifest(
+            manifest_path, source_root=checkout, repository_root=domain_repository
+        )
+        if not verification["verified"]:
+            raise ValueError("generated intake manifest did not verify")
+    except Exception:
+        rollback_admission()
+        raise
 
-    manifest = {
-        "schema_version": 1,
-        "id": manifest_id,
-        "title": title,
-        "observed_at": _now(),
-        "source_repository": _manifest_repository(job),
-        "items": items,
-        "relationships": relationships,
-        "limitations": [
-            "The managed ingestion log remains local; this manifest records "
-            "only landed domain material."
-        ],
-    }
-    _write_json(manifest_path, manifest)
-    verification = verify_intake_manifest(
-        manifest_path, source_root=checkout, repository_root=domain_repository
-    )
-    if not verification["verified"]:
-        raise ValueError("generated intake manifest did not verify")
-    targets = [_target("intake_manifest", manifest_path, domain_repository)]
-    targets.extend(candidate_targets)
-    job["admission"] = {"mode": "generated", "targets": targets}
-    job["status"] = "admitted"
-    _log(job, "domain_admission_generated", manifest=targets[0]["path"])
-    _store_job(job_dir, job)
-    return job["admission"]
+    try:
+        targets = [_target("intake_manifest", manifest_path, domain_repository)]
+        targets.extend(candidate_targets)
+        targets.extend(readme_targets)
+        job["admission"] = {"mode": "generated", "targets": targets}
+        job["status"] = "admitted"
+        _log(job, "domain_admission_generated", manifest=targets[0]["path"])
+        _store_job(job_dir, job)
+        return job["admission"]
+    except Exception:
+        rollback_admission()
+        raise
 
 
 def link_existing_admission(
@@ -1116,6 +1295,12 @@ def _verify_target(
         )
     if kind == "candidate":
         return bool(verify_candidate(path)["verified"])
+    if kind == "readme_record":
+        return bool(
+            verify_artifact_package(
+                path.parent, repository_root=domain_repository
+            )["valid"]
+        )
     if kind == "experiment_plan":
         load_experiment_plan(path)
         return True
@@ -1139,13 +1324,42 @@ def verify_ingestion(
         raise ValueError("verification requires a completed admission")
     checkout = job_dir / "checkout"
     selections = json.loads((job_dir / job["selections"]).read_text(encoding="utf-8"))
+    manifest_items: dict[str, dict[str, Any]] = {}
+    for target in job["admission"]["targets"]:
+        if target["kind"] != "intake_manifest":
+            continue
+        manifest_path = resolve_contained(domain_repository, target["path"])
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest_items.update({item["id"]: item for item in manifest["items"]})
     selection_results = []
     for selection in selections["selections"]:
-        artifact = _resolve_artifact(checkout, selection["path"])
-        digest = artifact_sha256(artifact, selection["artifact_type"])
-        selection_results.append(
-            {"id": selection["id"], "verified": digest == selection["sha256"]}
-        )
+        if _is_readme_landing(selection):
+            source_path = resolve_contained(checkout, selection["path"])
+            item = manifest_items.get(selection["id"], {})
+            landing = item.get("landing")
+            destination_verified = False
+            if landing is not None:
+                destination = resolve_contained(domain_repository, landing["path"])
+                destination_verified = (
+                    landing["sha256"] == selection["sha256"]
+                    and artifact_sha256(destination, landing["artifact_type"])
+                    == selection["sha256"]
+                )
+            source_absent = not source_path.exists() and not source_path.is_symlink()
+            selection_results.append(
+                {
+                    "id": selection["id"],
+                    "source_absent": source_absent,
+                    "destination_verified": destination_verified,
+                    "verified": source_absent and destination_verified,
+                }
+            )
+        else:
+            artifact = _resolve_artifact(checkout, selection["path"])
+            digest = artifact_sha256(artifact, selection["artifact_type"])
+            selection_results.append(
+                {"id": selection["id"], "verified": digest == selection["sha256"]}
+            )
     domain_repository = domain_repository.resolve()
     target_results = []
     for target in job["admission"]["targets"]:
@@ -1273,6 +1487,16 @@ def finalize_ingestion(
     )
     if exported is not None and exported.exists():
         raise FileExistsError(exported)
+
+    if job["admission"] is None or not all(
+        _verify_target(
+            target,
+            domain_repository=domain_repository,
+            checkout=checkout,
+        )
+        for target in job["admission"]["targets"]
+    ):
+        raise ValueError("durable admission changed after ingestion verification")
 
     if workspace_disposition == "delete":
         if not checkout.resolve().is_relative_to(job_dir.resolve()):

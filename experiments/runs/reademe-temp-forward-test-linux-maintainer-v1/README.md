@@ -10,7 +10,8 @@ that README were proposed to a mature open-source repository used on Linux.
 - Candidate: `reademe-temp-modular-readme-v1`
 - Source baseline: local `reademe-temp` commit
   `0b7a4f58aaa7622f8be6450c929efbd200779e69`
-- Candidate README: [`forward-test/assembled/README.md`](../../../intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md)
+- Candidate README:
+  [`artifact.md`](../../../readmes/records/rm-f96b8e9d6c94dee9/artifact.md)
 - Candidate README SHA-256:
   `f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0`
 - Ephemeral evaluation commit:
@@ -21,7 +22,7 @@ that README were proposed to a mature open-source repository used on Linux.
 The ephemeral commit was made in a no-hardlink clone. It changes only the root
 README from the source baseline and exists to give the evaluator a concrete,
 clean Git state. The source repository was not modified. The immutable source
-fingerprints and the imported snapshots are recorded by
+fingerprints, pruned context snapshot, and landed README are recorded by
 [`reademe-temp-v1.json`](../../../intake/manifests/reademe-temp-v1.json).
 
 ## Result and authority
@@ -44,7 +45,8 @@ experiment completes.
 - [`run.json`](run.json) — subject, evaluator, executor, artifact hashes, and
   non-authoritative disposition
 - [`response.json`](response.json) — validated structured review
-- [`events.jsonl`](events.jsonl) — raw Codex execution events
+- [`events.jsonl`](events.jsonl) — Codex execution metadata with command output
+  replaced by SHA-256 and byte length
 - [`stderr.log`](stderr.log) — executor diagnostics
 - [`response.schema.json`](response.schema.json) — exact structured-output
   contract supplied to the executor

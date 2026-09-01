@@ -9,12 +9,12 @@ class and its recorded state determine what it may influence.
 
 | Class | Purpose | Authority |
 | --- | --- | --- |
-| Intake record | Preserve the identity, provenance, and limitations of outside work. | Evidence only. Admission does not endorse a claim or design. |
+| Intake record | Carry identity, provenance, limitations, and verified custody transitions for outside work. | Evidence only. It is transactional transport, not durable completed-README storage, and admission does not endorse a claim or design. |
 | Candidate | Make a skill, plugin, tool, automation, script, bundle, method, or other treatment reproducible and testable. | Experimental only. It may intentionally conflict with current contracts. |
 | Experiment plan | State a question, planned trials, measurements, and completion policy. | Governs the run, not the answer. |
-| Observation | Preserve agent behavior, user response, diagnostics, metrics, and failures. | Evidence for later interpretation. |
-| README artifact record | Identify captured Markdown bytes, custody, provenance, occurrences, collection purposes, and lineage. | Artifact identity only. Capture does not establish quality or constrain pre-capture authoring. |
-| Document evidence record | Project one observation or evaluation subject beside its README artifact while retaining hashes for the original run. | Evidence only; never a combined score or decision. |
+| Observation | Preserve agent behavior, user response, diagnostics, metrics, and failures without embedding the complete subject README. | Evidence for later interpretation. |
+| README artifact record | Own one completed Markdown body, or pin one non-retained external body, with custody, provenance, occurrences, collection purposes, and lineage. | Artifact identity only. Admission does not establish quality or constrain prior authoring. |
+| Document evidence record | Project one observation or evaluation subject beside its README artifact while retaining hashes for the original run, not another body copy. | Evidence only; never a combined score or decision. |
 | Canonical domain artifact | Record an owner-selected model, method, or capability. | Editable README-domain authority. |
 | Regression contract | Protect an explicitly accepted property or compatibility promise. | May gate only the scope and release that claim the contract. |
 | Product adapter | Deliver pinned canonical capabilities through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
@@ -27,7 +27,8 @@ outside work or current design
     -> one or more isolated candidates
     -> complete experiment plan
     -> freely editable generated README work
-    -> explicit capture of selected completed artifacts
+    -> explicit selection of completed README bytes
+    -> final artifact landing, with no intake body snapshot
     -> trials, analyzers, and advisory evaluators
     -> document-centered evidence records, including failures and surprises
     -> owner or designated-review synthesis
@@ -82,12 +83,21 @@ only that the enabled rules emitted no diagnostics. It is not a quality score,
 merge recommendation, or substitute for contextual evaluation. See
 [`static-analysis.md`](static-analysis.md).
 
-Artifact capture is likewise outside the authoring agent's decision loop. The
-working `README.md` remains editable until a selected completed output crosses
-the explicit capture boundary. The captured bytes then receive a digest-derived
-identity; later revision creates another artifact and optional lineage rather
-than mutating prior evidence. See
+Artifact admission is likewise outside the authoring agent's decision loop. The
+working `README.md` remains editable until an owner selects a completed output.
+A managed ingestion checkout transfers that file directly into its
+digest-derived final record; an external or otherwise non-durable authoring
+workspace may use explicit capture. At `HEAD`, the result has one durable
+body-owning path. Git preserves superseded versions and provides rollback rather
+than parallel live copies. See
 [`readme-artifact-records.md`](readme-artifact-records.md).
+
+Contextual trials may copy the final body into a disposable repository as root
+`README.md`, mutate it, exercise relative links, and then remove the workspace.
+Durable evidence and event logs retain identity, measurements, and sanitized
+execution metadata, never the complete subject body. The local SQLite catalog
+is a rebuildable index over Git-managed Markdown and JSON, not another storage
+authority.
 
 ## Soft evaluators
 
@@ -120,6 +130,7 @@ or concurrency substrates, not automatically durable authorities.
 
 Source acquisition uses a non-Git operational yard beside this repository.
 The yard may contain disposable clones, local archives, and uncommitted job
-logs, but it is not another domain authority. Only landed artifacts and
-verified finalization or Git-migration receipts enter durable intake. See
+logs, but it is not another domain authority. A completed README moves from the
+yard directly into its final artifact record; only landing metadata and verified
+finalization or Git-migration receipts remain in durable intake. See
 [`repository-ingestion.md`](repository-ingestion.md).

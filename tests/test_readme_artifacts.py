@@ -22,6 +22,8 @@ from readme_lab.readme_artifacts import (
     load_artifact_record,
     record_id_for_digest,
     register_reference_artifact,
+    rollback_readme_artifact_transfer,
+    transfer_readme_artifact,
     verify_artifact_package,
 )
 from readme_lab.readme_catalog import (
@@ -41,7 +43,7 @@ EVALUATOR = Path(
     "experiments/evaluators/popular-linux-open-source-maintainer-v1/evaluator.json"
 )
 GENERATED_README = Path(
-    "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md"
+    "readmes/records/rm-f96b8e9d6c94dee9/artifact.md"
 )
 CORPUS_OBSERVATIONS = Path("corpus/observations/pilot-high-exposure-v1.jsonl")
 COMMITTED_RECORDS = Path("readmes/records")
@@ -97,6 +99,205 @@ def test_completed_generation_stays_mutable_until_explicit_capture(
     }
     assert record["provenance"][0]["kind"] == "generated"
     assert record["memberships"][0]["purpose"] == "generated_output"
+
+
+def test_transfer_moves_completed_readme_into_its_artifact_record(
+    tmp_path: Path,
+) -> None:
+    source = tmp_path / "managed-checkout/README.md"
+    source.parent.mkdir()
+    body = b"# Landed README\n\nTransferred once.\n"
+    source.write_bytes(body)
+    captured_at = datetime(2026, 9, 1, 12, tzinfo=UTC)
+
+    transfer = transfer_readme_artifact(
+        source,
+        registry=tmp_path / "records",
+        provenance_kind="ingested",
+        boundary="ingestion_selection",
+        pre_capture_editability="not_applicable",
+        ownership="owned",
+        visibility="local_only",
+        repository="local:source",
+        revision="workspace@2026-09-01T12:00:00Z",
+        recorded_path="README.md",
+        role="repository_root",
+        captured_at=captured_at,
+    )
+
+    assert transfer.created_record is True
+    assert transfer.transferred_at == "2026-09-01T12:00:00Z"
+    assert transfer.content_sha256 == hashlib.sha256(body).hexdigest()
+    assert not source.exists()
+    assert transfer.body_path.read_bytes() == body
+    record = load_artifact_record(transfer.record_dir)
+    assert record["record_id"] == record_id_for_digest(transfer.content_sha256)
+    assert record["capture"]["boundary"] == "ingestion_selection"
+    assert record["artifact"]["storage"]["path"] == "artifact.md"
+
+
+def test_identical_transfer_can_rollback_without_removing_existing_record(
+    tmp_path: Path,
+) -> None:
+    body = b"# One canonical body\n"
+    initial_source = tmp_path / "first-checkout/README.md"
+    initial_source.parent.mkdir()
+    initial_source.write_bytes(body)
+    first = transfer_readme_artifact(
+        initial_source,
+        registry=tmp_path / "records",
+        provenance_kind="ingested",
+        boundary="ingestion_selection",
+        pre_capture_editability="not_applicable",
+        ownership="owned",
+        visibility="local_only",
+        repository="local:first",
+        revision="workspace@first",
+        recorded_path="README.md",
+        captured_at=datetime(2026, 9, 1, 12, tzinfo=UTC),
+    )
+    record_bytes = (first.record_dir / "record.json").read_bytes()
+
+    duplicate_source = tmp_path / "second-checkout/README.md"
+    duplicate_source.parent.mkdir()
+    duplicate_source.write_bytes(body)
+    duplicate = transfer_readme_artifact(
+        duplicate_source,
+        registry=tmp_path / "records",
+        provenance_kind="ingested",
+        boundary="ingestion_selection",
+        pre_capture_editability="not_applicable",
+        ownership="owned",
+        visibility="local_only",
+        repository="local:second",
+        revision="workspace@second",
+        recorded_path="README.md",
+        captured_at=datetime(2026, 9, 1, 13, tzinfo=UTC),
+    )
+
+    assert duplicate.created_record is False
+    assert duplicate.record_dir == first.record_dir
+    assert not duplicate_source.exists()
+    rollback_readme_artifact_transfer(duplicate)
+
+    assert duplicate_source.read_bytes() == body
+    assert first.record_dir.is_dir()
+    assert first.body_path.read_bytes() == body
+    assert (first.record_dir / "record.json").read_bytes() == record_bytes
+    load_artifact_record(first.record_dir)
+
+
+def test_existing_record_transfer_failure_restores_managed_source(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    body = b"# Canonical body\n"
+    registry_source = tmp_path / "first/README.md"
+    registry_source.parent.mkdir()
+    registry_source.write_bytes(body)
+    first = transfer_readme_artifact(
+        registry_source,
+        registry=tmp_path / "records",
+        provenance_kind="ingested",
+        boundary="ingestion_selection",
+        pre_capture_editability="not_applicable",
+        ownership="owned",
+        visibility="local_only",
+        repository="local:first",
+        revision="workspace@first",
+        recorded_path="README.md",
+        captured_at=datetime(2026, 9, 1, 12, tzinfo=UTC),
+    )
+    duplicate_source = tmp_path / "second/README.md"
+    duplicate_source.parent.mkdir()
+    duplicate_source.write_bytes(body)
+    original_unlink = Path.unlink
+
+    def unlink_and_corrupt(path: Path, *args: object, **kwargs: object) -> None:
+        original_unlink(path, *args, **kwargs)
+        if path.resolve() == duplicate_source.resolve():
+            first.body_path.write_text("corrupt\n", encoding="utf-8")
+
+    monkeypatch.setattr(Path, "unlink", unlink_and_corrupt)
+
+    with pytest.raises(RuntimeError, match="did not settle"):
+        transfer_readme_artifact(
+            duplicate_source,
+            registry=tmp_path / "records",
+            provenance_kind="ingested",
+            boundary="ingestion_selection",
+            pre_capture_editability="not_applicable",
+            ownership="owned",
+            visibility="local_only",
+            captured_at=datetime(2026, 9, 1, 13, tzinfo=UTC),
+        )
+
+    assert duplicate_source.read_bytes() == body
+
+
+def test_transfer_refuses_reference_only_collision_without_removing_source(
+    tmp_path: Path,
+) -> None:
+    body = b"# Externally referenced README\n"
+    digest = hashlib.sha256(body).hexdigest()
+    registry = tmp_path / "records"
+    reference_record = register_reference_artifact(
+        registry=registry,
+        content_sha256=digest,
+        locator="https://example.invalid/project/README.md",
+        repository="example/project",
+        revision="a" * 40,
+        recorded_path="README.md",
+        role="repository_root",
+        captured_at=datetime(2026, 9, 1, 12, tzinfo=UTC),
+    )
+    source = tmp_path / "managed-checkout/README.md"
+    source.parent.mkdir()
+    source.write_bytes(body)
+
+    with pytest.raises(FileExistsError, match=reference_record.name):
+        transfer_readme_artifact(
+            source,
+            registry=registry,
+            provenance_kind="ingested",
+            boundary="ingestion_selection",
+            pre_capture_editability="not_applicable",
+            ownership="owned",
+            visibility="local_only",
+            repository="local:source",
+            revision="workspace@source",
+            recorded_path="README.md",
+            captured_at=datetime(2026, 9, 1, 13, tzinfo=UTC),
+        )
+
+    assert source.read_bytes() == body
+    assert reference_record.is_dir()
+    assert not (reference_record / "artifact.md").exists()
+    assert load_artifact_record(reference_record)["artifact"]["storage"][
+        "mode"
+    ] == "external_reference"
+
+
+def test_transfer_rejects_symlink_without_moving_its_target(tmp_path: Path) -> None:
+    outside = tmp_path / "outside.md"
+    outside.write_text("# Outside target\n", encoding="utf-8")
+    source = tmp_path / "managed/README.md"
+    source.parent.mkdir()
+    source.symlink_to(outside)
+
+    with pytest.raises(ValueError, match="cannot be a symlink"):
+        transfer_readme_artifact(
+            source,
+            registry=tmp_path / "records",
+            provenance_kind="ingested",
+            boundary="ingestion_selection",
+            pre_capture_editability="not_applicable",
+            ownership="owned",
+            visibility="local_only",
+        )
+
+    assert source.is_symlink()
+    assert outside.read_text(encoding="utf-8") == "# Outside target\n"
+    assert not (tmp_path / "records").exists()
 
 
 def test_capture_never_injects_registry_metadata_into_subject(tmp_path: Path) -> None:

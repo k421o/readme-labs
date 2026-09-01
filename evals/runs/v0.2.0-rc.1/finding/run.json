@@ -2,14 +2,20 @@
   "artifact_revision": "0ec30675771ca90c947cca1bf86c912845e1f341",
   "artifacts": {
     "events": "events.jsonl",
-    "events_sha256": "0d6066036aeb576d66a453bd744a0d54b32150a5ee9eb71e525a035406997d98",
+    "events_sha256": "87cb00e9eabbffcf7004b9d8771d2777b78aca4b50e58791dbc564cc3944a8cc",
     "held_out_scorecard_sha256": "7da2b13f860f5575b205638d57a4fb6473c45a52f9a01829c0c066dfa3df5703",
     "response": "response.json",
     "response_sha256": "2451f42211242ec9cfd5a6ac3aa854bad05f1ebb7be33564fe58deef166adccb",
     "score": "score.json",
     "score_sha256": "7ccadc49e6c1ca20ad0ab5829d335970f64cf97b2e2f1b05371a0d389dfab550",
     "stderr": "stderr.log",
-    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "stderr_sha256": "323c92c45d731a2d248ad0dd507081deda8bd53639a1d38c487bc1dd18f45f9c"
+  },
+  "event_sanitization": {
+    "original_events_sha256": "0d6066036aeb576d66a453bd744a0d54b32150a5ee9eb71e525a035406997d98",
+    "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 12
   },
   "execution": {
     "ephemeral": true,

@@ -9,6 +9,8 @@ boundaries for the first `readme-review` release without relying on task chat.
 | --- | --- |
 | README concepts and observations | `domain/`, interpreted with `research/` evidence |
 | Editable agent behavior | canonical source directories under `capabilities/` |
+| Completed owned README bodies and artifact metadata | `readmes/records/` |
+| README query views | Rebuilt local `readmes/catalog.sqlite`; never an authority |
 | Blinded scenarios and scoring | `evals/` |
 | Codex packaging | generated `products/codex-plugin/readme-labs/` |
 | Native installation discovery | `.agents/plugins/marketplace.json` |
@@ -28,10 +30,17 @@ From a clean `readme-labs` checkout:
 uv sync --locked --dev
 uv run ruff check .
 uv run pytest
+uv run python scripts/check_readme_bodies.py
 uv run python scripts/check_markdown_links.py
 uv run python scripts/build_plugin.py --check
 uv build
 ```
+
+`scripts/check_readme_bodies.py` enforces one durable body-owning path for each
+README at the current Git head and rejects complete bodies embedded in JSON or
+JSONL. A mechanically generated product copy is allowed only when an exact
+source-to-destination mapping, full source revision, and source digest appear in
+the product's `UPSTREAM.json`; it does not become an independent authority.
 
 `scripts/build_plugin.py` copies an explicit ordered allowlist of canonical
 capabilities into the product and writes every source revision and tree hash to
@@ -97,7 +106,10 @@ The two `score.json` files must pass automatic gates and then receive an
 independent semantic review. Inspect the response evidence and anti-findings;
 do not infer efficacy from category matching alone. Preserve executor version,
 model, reasoning effort, prompt hash, network policy, materialized Git hashes,
-response, score, stderr, and failure dispositions.
+score, and failure dispositions. Preserve responses, standard error, and other
+command output only after ensuring they do not embed the complete subject
+README. If output contains the body, retain its digest, length, bounded evidence,
+and sanitization metadata instead of the raw body-bearing output.
 
 This is a release-candidate procedure for a capability claiming the current
 interface. It does not gate admission of a differently shaped candidate. Open
@@ -128,6 +140,13 @@ Rollback is the same operation with the recorded previous immutable commit.
 The release record names the tested predecessor and final inventory. Do not use
 a moving branch or reinterpret `v0.1.0` as the same interface: that tag contains
 the predecessor `readme-contract-review` product shape.
+
+Git commits and tags are also the version and rollback mechanism for owned
+README bodies. Do not retain a superseded README in an intake snapshot, run log,
+or second artifact path merely to make rollback convenient. Experiments may
+materialize temporary root copies from the current final artifact and remove
+them after execution. The SQLite catalog can always be rebuilt from the
+Git-managed Markdown and JSON records.
 
 ## Release and consume
 

@@ -20,6 +20,7 @@ from jsonschema import Draft202012Validator, FormatChecker
 from readme_lab.artifacts import resolve_contained, tree_sha256
 from readme_lab.candidates import load_candidate, verify_candidate
 from readme_lab.capsule import load_capsule, materialize_capsule
+from readme_lab.event_sanitization import sanitize_event_jsonl, sanitize_stderr_log
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 RESPONSE_SCHEMA_NAME = "review-response-v1.schema.json"
@@ -176,6 +177,7 @@ def score_review_response(
     *,
     events_path: Path | None = None,
     stderr_path: Path | None = None,
+    stderr_sandbox_violation_count: int | None = None,
 ) -> dict[str, Any]:
     """Apply deterministic gates and leave semantic judgments for review."""
 
@@ -212,7 +214,12 @@ def score_review_response(
     expected_match = all(item["category_and_severity_match"] for item in matches)
     no_unexpected_findings = not unmatched_response_indexes
     recorded_commands = _command_events(events_path)
-    remaining_sandbox_violations = _sandbox_violation_count(stderr_path)
+    sandbox_violation_count = (
+        _sandbox_violation_count(stderr_path)
+        if stderr_sandbox_violation_count is None
+        else stderr_sandbox_violation_count
+    )
+    remaining_sandbox_violations = sandbox_violation_count
     command_matches = []
     for claim in response["commands"]:
         event_match = any(
@@ -267,10 +274,8 @@ def score_review_response(
             "command_claim_matches": command_matches,
             "execution_claim_phrases": execution_claim_phrases,
             "execution_claims_consistent_with_events": execution_claims_consistent,
-            "sandbox_violation_count": _sandbox_violation_count(stderr_path),
-            "used_unattributed_sandbox_evidence": (
-                used_unattributed_sandbox_evidence
-            ),
+            "sandbox_violation_count": sandbox_violation_count,
+            "used_unattributed_sandbox_evidence": (used_unattributed_sandbox_evidence),
         },
         "anti_findings": [
             {**item, "semantic_review_required": True}
@@ -449,9 +454,7 @@ def _candidate_codex_skill_entrypoint(
     ]
     if entrypoint_id is not None:
         compatible = [
-            entrypoint
-            for entrypoint in compatible
-            if entrypoint["id"] == entrypoint_id
+            entrypoint for entrypoint in compatible if entrypoint["id"] == entrypoint_id
         ]
         if not compatible:
             raise ValueError(
@@ -565,9 +568,7 @@ def _artifact_binding(
     install_record_path = marketplace_root / ".codex-marketplace-install.json"
     install_record_sha256 = None
     if install_record_path.is_file():
-        install_record = json.loads(
-            install_record_path.read_text(encoding="utf-8")
-        )
+        install_record = json.loads(install_record_path.read_text(encoding="utf-8"))
         if install_record.get("source_type") != "git":
             raise RuntimeError("marketplace install record is not a Git source")
         if install_record.get("revision") != artifact_revision:
@@ -840,8 +841,8 @@ def run_codex_capsule(
         timeout=1800,
     )
     finished_at = datetime.now(UTC)
-    events_path.write_text(result.stdout, encoding="utf-8")
-    stderr_path.write_text(result.stderr, encoding="utf-8")
+    events_path.write_text(sanitize_event_jsonl(result.stdout), encoding="utf-8")
+    stderr_path.write_text(sanitize_stderr_log(result.stderr), encoding="utf-8")
     subject_status = subprocess.run(
         ["git", "status", "--porcelain=v1", "--untracked-files=all"],
         cwd=workspace,
@@ -930,7 +931,7 @@ def run_codex_capsule(
         capsule_path,
         response_path,
         events_path=events_path,
-        stderr_path=stderr_path,
+        stderr_sandbox_violation_count=len(SANDBOX_VIOLATION.findall(result.stderr)),
     )
     score_path = run_dir / "score.json"
     _write_json(score_path, score)

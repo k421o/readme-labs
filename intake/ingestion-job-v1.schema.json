@@ -179,6 +179,7 @@
             "candidate",
             "experiment_plan",
             "experiment_run",
+            "readme_record",
             "migration_receipt",
             "other"
           ]

@@ -4,7 +4,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import shutil
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from importlib import resources
 from pathlib import Path
@@ -22,6 +24,18 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = REPOSITORY_ROOT / "readmes"
 ARTIFACT_SCHEMA = "artifact-record-v1.schema.json"
 EVIDENCE_SCHEMA = "evidence-record-v1.schema.json"
+
+
+@dataclass(frozen=True)
+class ReadmeArtifactTransfer:
+    """One reversible custody transfer into the README artifact registry."""
+
+    source: Path
+    record_dir: Path
+    body_path: Path
+    content_sha256: str
+    transferred_at: str
+    created_record: bool
 
 
 def _load_schema(name: str) -> dict[str, Any]:
@@ -266,9 +280,12 @@ def capture_readme_artifact(
 ) -> Path:
     """Capture selected Markdown bytes after authoring has completed."""
 
-    source = source.resolve()
-    if source.is_symlink() or not source.is_file():
+    source = Path(os.path.abspath(source))
+    if source.is_symlink():
+        raise ValueError("README source cannot be a symlink")
+    if not source.is_file():
         raise FileNotFoundError(source)
+    source = source.resolve()
     content_sha256 = _file_sha256(source)
     record_id = record_id_for_digest(content_sha256)
     record_dir = registry.resolve() / record_id
@@ -312,6 +329,141 @@ def capture_readme_artifact(
         shutil.rmtree(record_dir)
         raise
     return record_dir
+
+
+def transfer_readme_artifact(
+    source: Path,
+    *,
+    registry: Path,
+    provenance_kind: str,
+    boundary: str,
+    pre_capture_editability: str,
+    ownership: str,
+    visibility: str,
+    repository: str | None = None,
+    revision: str | None = None,
+    recorded_path: str | None = None,
+    role: str = "unspecified",
+    tree: str | None = None,
+    producer: dict[str, Any] | None = None,
+    memberships: list[tuple[str, str]] | None = None,
+    captured_at: datetime | None = None,
+    license_spdx: str | None = None,
+    limitations: list[str] | None = None,
+) -> ReadmeArtifactTransfer:
+    """Move one completed README into its sole durable registry location.
+
+    The source is a managed staging body, not an authoring workspace. If an
+    identical content-addressed record already exists, the existing body wins
+    and the redundant staging body is removed.
+    """
+
+    source = Path(os.path.abspath(source))
+    if source.is_symlink():
+        raise ValueError("managed README source cannot be a symlink")
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    source = source.resolve()
+    content_sha256 = _file_sha256(source)
+    timestamp = _timestamp(captured_at)
+    record_id = record_id_for_digest(content_sha256)
+    record_dir = registry.resolve() / record_id
+    artifact_path = record_dir / "artifact.md"
+    if record_dir.exists():
+        record = load_artifact_record(record_dir)
+        source_bytes = source.read_bytes()
+        if (
+            record["artifact"]["content_sha256"] != content_sha256
+            or record["artifact"]["storage"]["mode"] != "embedded"
+            or artifact_path.read_bytes() != source_bytes
+        ):
+            raise FileExistsError(record_dir)
+        try:
+            source.unlink()
+            if source.exists() or _file_sha256(artifact_path) != content_sha256:
+                raise RuntimeError(
+                    "README transfer did not settle on the existing body"
+                )
+        except Exception as error:
+            if not source.exists():
+                source.write_bytes(source_bytes)
+            if _file_sha256(source) != content_sha256:
+                raise RuntimeError(
+                    "README transfer failure did not restore managed source bytes"
+                ) from error
+            raise
+        return ReadmeArtifactTransfer(
+            source=source,
+            record_dir=record_dir,
+            body_path=artifact_path,
+            content_sha256=content_sha256,
+            transferred_at=timestamp,
+            created_record=False,
+        )
+
+    record_dir.mkdir(parents=True)
+    try:
+        shutil.move(source, artifact_path)
+        record = _base_record(
+            content_sha256=content_sha256,
+            byte_length=artifact_path.stat().st_size,
+            original_name=source.name,
+            storage={
+                "mode": "embedded",
+                "path": "artifact.md",
+                "sha256": content_sha256,
+            },
+            boundary=boundary,
+            pre_capture_editability=pre_capture_editability,
+            captured_at=timestamp,
+            ownership=ownership,
+            visibility=visibility,
+            body_policy="embedded",
+            license_spdx=license_spdx,
+            provenance_kind=provenance_kind,
+            repository=repository,
+            revision=revision,
+            recorded_path=recorded_path,
+            locator=None,
+            producer=producer,
+            role=role,
+            tree=tree,
+            memberships=memberships or [],
+            limitations=limitations or [],
+        )
+        _write_new_json(record_dir / "record.json", record)
+        load_artifact_record(record_dir)
+        if source.exists() or _file_sha256(artifact_path) != content_sha256:
+            raise RuntimeError("README transfer postconditions failed")
+    except Exception:
+        if artifact_path.is_file() and not source.exists():
+            source.parent.mkdir(parents=True, exist_ok=True)
+            shutil.move(artifact_path, source)
+        shutil.rmtree(record_dir, ignore_errors=True)
+        raise
+    return ReadmeArtifactTransfer(
+        source=source,
+        record_dir=record_dir,
+        body_path=artifact_path,
+        content_sha256=content_sha256,
+        transferred_at=timestamp,
+        created_record=True,
+    )
+
+
+def rollback_readme_artifact_transfer(transfer: ReadmeArtifactTransfer) -> None:
+    """Restore the managed source when a wider admission transaction fails."""
+
+    if transfer.source.exists():
+        raise FileExistsError(transfer.source)
+    transfer.source.parent.mkdir(parents=True, exist_ok=True)
+    if transfer.created_record:
+        shutil.move(transfer.body_path, transfer.source)
+        shutil.rmtree(transfer.record_dir)
+    else:
+        shutil.copy2(transfer.body_path, transfer.source)
+    if _file_sha256(transfer.source) != transfer.content_sha256:
+        raise RuntimeError("README transfer rollback did not restore source bytes")
 
 
 def register_reference_artifact(

@@ -36,7 +36,12 @@
     "response": "response.txt",
     "response_sha256": "b74118e980f605bd4d04f898cec6e0df524b2f7db274c7c6a379199d5cef2657",
     "events": "events.jsonl",
-    "events_sha256": "1dafb1d9ccc07cf324025f16463b89caa1cae592dd75061583fcc3895002818a"
+    "events_sha256": "4f6f2a74db0054611a12a9ca8ab1cda0211c49d97b431ae4a04a25db5f991ffb"
+  },
+  "event_sanitization": {
+    "original_events_sha256": "1dafb1d9ccc07cf324025f16463b89caa1cae592dd75061583fcc3895002818a",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 10
   },
   "limitations": [
     "The consumer remains pinned to historical readme-labs v0.1.0; this run verifies independent installation and normal discovery rather than changing that declared integration.",
