@@ -368,6 +368,8 @@ administrator permission and the final archived state.
 Acquisition, Git isolation, inventories, and disposition are intentionally
 separable from README roles and admission. They remain implemented here while
 README Labs is the only demonstrated consumer. A second real consumer such as
-Agent Skills is the signal to extract the generic controller into Agent Ops or
-a dedicated source-ingestion project; README-specific interpretation remains
-owned by README Labs.
+Agent Skills is the signal to evaluate extraction into a dedicated
+source-ingestion authority or another explicitly selected owner; README-specific
+interpretation remains owned by README Labs. Agent Ops may coordinate a
+cross-authority extraction, but that workbench does not become the controller's
+durable implementation owner by default.
