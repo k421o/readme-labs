@@ -205,8 +205,11 @@ later move behind versioned interfaces.
 The repository-ingestion controller follows the same rule. Its operational
 yard is outside Git, while its implementation remains here until a second
 domain demonstrates reuse. At that point generic clone, isolation, GitHub, and
-disposition mechanics may move to Agent Ops or a dedicated project; README
-roles, intake interpretation, candidates, and promotion remain local.
+disposition mechanics may move to a dedicated project or another explicitly
+selected owning authority; README roles, intake interpretation, candidates,
+and promotion remain local. Agent Ops may coordinate the cross-repository
+migration but does not acquire implementation authority merely because the
+change spans repositories.
 
 ## Change procedure
 
