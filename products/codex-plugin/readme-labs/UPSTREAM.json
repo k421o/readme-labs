@@ -2,7 +2,18 @@
   "artifact_kind": "codex_plugin_adapter",
   "generated_by": "scripts/build_plugin.py",
   "maturity": "experimental",
-  "source": "capabilities/readme-review",
-  "source_revision": "961c4e6c5afe4efb0d0d5413adbc0e2abfe56198",
-  "source_sha256": "71d0f220affaee0b9a62be0b35a1f6314e57b77eee7507121c3b3f7a36b0a2eb"
+  "sources": [
+    {
+      "destination": "skills/readme-review",
+      "source": "capabilities/readme-review",
+      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
+      "source_sha256": "f48d15e1df50d190c7cbcb856dd15deff5d482f6eb2e376bf560fe2f94a5d14c"
+    },
+    {
+      "destination": "skills/readme-generate",
+      "source": "capabilities/readme-generate",
+      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
+      "source_sha256": "d901f0942b293d7c6ca01cd6c5f70806ce7898bb122b754cbea11231b9326d38"
+    }
+  ]
 }
