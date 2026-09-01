@@ -112,7 +112,7 @@ captured README artifacts and document-centered evidence
     ↓
 evaluation scenarios, runs, and synthesis
     ↓
-canonical capability source
+canonical capability sources
     ↓
 generated or pinned product adapters
     ↓

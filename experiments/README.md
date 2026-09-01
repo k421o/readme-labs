@@ -48,6 +48,10 @@ entrypoint, subject, prompt, executor, and score evidence. A score diagnoses
 the declared capsule only; it neither decides the hypothesis nor prevents its
 remaining planned trials.
 
-Review trials are read-only with respect to the subject repository. Candidate
-README generation needs different workspace and write-capture boundaries and
-is intentionally deferred to [issue #14](https://github.com/k421o/readme-labs/issues/14).
+Review trials are read-only with respect to the subject repository. A
+write-producing candidate trial remains deferred to
+[issue #14](https://github.com/k421o/readme-labs/issues/14) until a VM,
+container, cgroup, or equivalent isolation backend owns the treatment's full
+process lifetime and proves the workspace quiescent before any privileged
+capture. Process-group cleanup and final-state scanning alone do not establish
+that boundary.
