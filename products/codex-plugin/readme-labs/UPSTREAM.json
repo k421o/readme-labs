@@ -13,8 +13,8 @@
     {
       "destination": "skills/readme-generate",
       "source": "capabilities/readme-generate",
-      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
-      "source_sha256": "d901f0942b293d7c6ca01cd6c5f70806ce7898bb122b754cbea11231b9326d38"
+      "source_revision": "bb5c99fdcb2c3898127dd883b68ae02bb6bb64b3",
+      "source_sha256": "f4cf72fe0feb03a62e756bf3db365cd23dbd4678fa56ad71bccd7827ae06359e"
     }
   ]
 }
