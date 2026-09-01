@@ -10,7 +10,7 @@ not by itself a released support promise.
 - **Capability artifacts:** canonical skills derived from a named domain
   version and evaluated against a published scenario set.
 - **Product adapters:** generated installation surfaces, such as the Codex
-  plugin, that pin a capability revision and content hash.
+  plugin, that pin one or more capability revisions and content hashes.
 - **Data artifacts:** manifests, observations, annotations, and reports with a
   declared sampling and licensing boundary.
 
@@ -65,7 +65,8 @@ they satisfy; they must not move or rewrite `v0.1.0`.
 ## Product promotion gates
 
 - Generated content is byte-identical to the pinned canonical capability.
-- Provenance records include version, source revision, and tree hash.
+- Provenance records include the product version plus every source revision and
+  tree hash.
 - The target product's native validator and discovery checks pass.
 - Installation, update, and rollback paths are exercised in a disposable
   environment.
@@ -78,7 +79,8 @@ The repository-owned `.agents/plugins/marketplace.json` is the native
 mechanical delivery surface for the generated adapter. A Git marketplace
 installed from an immutable release or commit is allowed at experimental
 maturity. It is not public or verified marketplace publication and does not
-transfer source authority away from `capabilities/readme-review`.
+transfer source authority away from the canonical sources under
+`capabilities/`.
 
 ## Data release gates
 

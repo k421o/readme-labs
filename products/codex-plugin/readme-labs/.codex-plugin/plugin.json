@@ -13,6 +13,9 @@
     "developerName": "k421o",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Use $readme-review to review an existing README or $readme-generate to create one from repository evidence."
+    "defaultPrompt": [
+      "Use $readme-labs:readme-review to review an existing README.",
+      "Use $readme-labs:readme-generate to create a README from repository evidence."
+    ]
   }
 }
