@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import shutil
 import subprocess
@@ -71,7 +72,20 @@ if arguments and arguments[0] == "sandbox":
 if arguments and arguments[0] == "exec":
     output = Path(arguments[arguments.index("--output-last-message") + 1])
     shutil.copyfile(os.environ["README_LABS_FAKE_RESPONSE"], output)
-    print(json.dumps({"type": "turn.completed"}))
+    print(json.dumps({
+        "type": "item.completed",
+        "item": {
+            "type": "command_execution",
+            "command": "sed -n '1,80p' README.md",
+            "output": "private README output",
+            "exit_code": 0,
+            "status": "completed"
+        }
+    }))
+    print(
+        "private stderr output: recorded sandbox violation",
+        file=sys.stderr,
+    )
     raise SystemExit(0)
 raise SystemExit(2)
 """,
@@ -192,6 +206,25 @@ def test_candidate_review_trial_runs_as_evidence_only(
     )
     assert (run_dir / "run.json").is_file()
     assert (run_dir / "score.json").is_file()
+    events_text = (run_dir / "events.jsonl").read_text(encoding="utf-8")
+    event = json.loads(events_text)
+    assert "private README output" not in events_text
+    assert event["item"]["command"] == "sed -n '1,80p' README.md"
+    assert event["item"]["status"] == "completed"
+    output = "private README output"
+    assert event["item"]["output"] == {
+        "sha256": hashlib.sha256(output.encode()).hexdigest(),
+        "byte_length": len(output.encode()),
+    }
+    raw_stderr = "private stderr output: recorded sandbox violation\n"
+    stderr_text = (run_dir / "stderr.log").read_text(encoding="utf-8")
+    assert raw_stderr not in stderr_text
+    assert json.loads(stderr_text) == {
+        "sha256": hashlib.sha256(raw_stderr.encode()).hexdigest(),
+        "byte_length": len(raw_stderr.encode()),
+    }
+    score = json.loads((run_dir / "score.json").read_text(encoding="utf-8"))
+    assert score["automatic_checks"]["sandbox_violation_count"] == 1
 
 
 def test_artifact_binding_verifies_marketplace_and_installed_bytes(
@@ -201,12 +234,7 @@ def test_artifact_binding_verifies_marketplace_and_installed_bytes(
     marketplace = codex_home / ".tmp" / "marketplaces" / "readme-labs"
     product = marketplace / "products" / "readme-labs"
     installed = (
-        codex_home
-        / "plugins"
-        / "cache"
-        / "readme-labs"
-        / "readme-labs"
-        / "0.2.0-rc.1"
+        codex_home / "plugins" / "cache" / "readme-labs" / "readme-labs" / "0.2.0-rc.1"
     )
     product.mkdir(parents=True)
     (product / "plugin.json").write_text("{}\n", encoding="utf-8")
@@ -239,9 +267,7 @@ def test_artifact_binding_verifies_marketplace_and_installed_bytes(
         text=True,
     ).stdout.strip()
     codex_home.joinpath("config.toml").write_text(
-        "[marketplaces.readme-labs]\n"
-        'source_type = "git"\n'
-        f'ref = "{revision}"\n',
+        f'[marketplaces.readme-labs]\nsource_type = "git"\nref = "{revision}"\n',
         encoding="utf-8",
     )
     (marketplace / ".codex-marketplace-install.json").write_text(
@@ -266,8 +292,8 @@ def test_artifact_binding_verifies_marketplace_and_installed_bytes(
 
     assert binding["artifact_revision_verified"] is True
     assert binding["marketplace_revision"] == revision
-    assert binding["marketplace_product_sha256"] == (
-        binding["installed_product_sha256"]
+    assert (
+        binding["marketplace_product_sha256"] == (binding["installed_product_sha256"])
     )
 
 
@@ -278,9 +304,7 @@ def test_artifact_binding_rejects_configured_revision_mismatch(
     marketplace = codex_home / ".tmp" / "marketplaces" / "readme-labs"
     marketplace.mkdir(parents=True)
     codex_home.joinpath("config.toml").write_text(
-        "[marketplaces.readme-labs]\n"
-        'source_type = "git"\n'
-        f'ref = "{"0" * 40}"\n',
+        f'[marketplaces.readme-labs]\nsource_type = "git"\nref = "{"0" * 40}"\n',
         encoding="utf-8",
     )
     plugin = {
@@ -301,12 +325,7 @@ def test_artifact_binding_rejects_tracked_marketplace_tampering(
     marketplace = codex_home / ".tmp" / "marketplaces" / "readme-labs"
     product = marketplace / "product"
     installed = (
-        codex_home
-        / "plugins"
-        / "cache"
-        / "readme-labs"
-        / "readme-labs"
-        / "0.2.0-rc.1"
+        codex_home / "plugins" / "cache" / "readme-labs" / "readme-labs" / "0.2.0-rc.1"
     )
     product.mkdir(parents=True)
     (product / "plugin.json").write_text("{}\n", encoding="utf-8")
@@ -339,9 +358,7 @@ def test_artifact_binding_rejects_tracked_marketplace_tampering(
         text=True,
     ).stdout.strip()
     codex_home.joinpath("config.toml").write_text(
-        "[marketplaces.readme-labs]\n"
-        'source_type = "git"\n'
-        f'ref = "{revision}"\n',
+        f'[marketplaces.readme-labs]\nsource_type = "git"\nref = "{revision}"\n',
         encoding="utf-8",
     )
     (marketplace / ".codex-marketplace-install.json").write_text(
@@ -441,10 +458,7 @@ def test_deterministic_scoring_unwraps_codex_shell_quoting(tmp_path: Path) -> No
         "type": "item.completed",
         "item": {
             "type": "command_execution",
-            "command": (
-                "/bin/zsh -lc \"rg --files -g 'README*' "
-                "-g '\"'!vendor'\"'\""
-            ),
+            "command": ("/bin/zsh -lc \"rg --files -g 'README*' -g '\"'!vendor'\"'\""),
             "exit_code": 0,
         },
     }
@@ -483,9 +497,7 @@ def test_deterministic_scoring_marks_unattributed_sandbox_denial(
     command_match = score["automatic_checks"]["command_claim_matches"][0]
     assert command_match["recorded_event_match"] is False
     assert command_match["sandbox_violation_match"] is True
-    assert command_match["evidence"] == (
-        "correlated_unattributed_sandbox_violation"
-    )
+    assert command_match["evidence"] == ("correlated_unattributed_sandbox_violation")
     assert score["automatic_checks"]["used_unattributed_sandbox_evidence"] is True
 
 

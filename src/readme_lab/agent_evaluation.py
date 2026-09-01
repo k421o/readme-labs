@@ -8,11 +8,14 @@ import subprocess
 from datetime import UTC, datetime
 from importlib import resources
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any
 
 from jsonschema import Draft202012Validator
 
 from readme_lab.artifacts import resolve_contained
+from readme_lab.event_sanitization import sanitize_event_jsonl, sanitize_stderr_log
+from readme_lab.readme_materialization import materialize_readme_context
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = REPOSITORY_ROOT / "experiments" / "schemas"
@@ -75,9 +78,7 @@ def _git(repository: Path, *arguments: str) -> str:
     return result.stdout.strip()
 
 
-def build_agent_evaluator_prompt(
-    evaluator: dict[str, Any], *, readme_path: str
-) -> str:
+def build_agent_evaluator_prompt(evaluator: dict[str, Any], *, readme_path: str) -> str:
     """Build a perspective prompt that is advisory and injection-resistant."""
 
     instructions = evaluator["_instructions_path"].read_text(encoding="utf-8")
@@ -97,15 +98,11 @@ def build_agent_evaluator_prompt(
     )
 
 
-def load_agent_review_response(
-    path: Path, evaluator: dict[str, Any]
-) -> dict[str, Any]:
+def load_agent_review_response(path: Path, evaluator: dict[str, Any]) -> dict[str, Any]:
     """Validate a response without interpreting its recommendation as a gate."""
 
     response = json.loads(path.read_text(encoding="utf-8"))
-    schema = json.loads(
-        evaluator["_response_schema_path"].read_text(encoding="utf-8")
-    )
+    schema = json.loads(evaluator["_response_schema_path"].read_text(encoding="utf-8"))
     Draft202012Validator(schema).validate(response)
     if response["evaluator_id"] != evaluator["id"]:
         raise ValueError("response evaluator_id does not match evaluator")
@@ -192,8 +189,8 @@ def run_agent_evaluation(
         stdout = error.stdout or ""
         stderr = error.stderr or ""
     finished_at = datetime.now(UTC)
-    events_path.write_text(stdout, encoding="utf-8")
-    stderr_path.write_text(stderr, encoding="utf-8")
+    events_path.write_text(sanitize_event_jsonl(stdout), encoding="utf-8")
+    stderr_path.write_text(sanitize_stderr_log(stderr), encoding="utf-8")
 
     run_record: dict[str, Any] = {
         "run_schema_version": "1.0.0",
@@ -268,3 +265,66 @@ def run_agent_evaluation(
 
     _write_json(run_dir / "run.json", run_record)
     return run_record
+
+
+def run_materialized_agent_evaluation(
+    evaluator_path: Path,
+    *,
+    base_repository: Path,
+    readme_record: Path,
+    readme_path: str,
+    run_dir: Path,
+    run_id: str,
+    candidate_id: str,
+    model: str,
+    reasoning_effort: str,
+    codex_executable: str = "codex",
+    timeout_seconds: int = 1800,
+) -> dict[str, Any]:
+    """Review a final README body in a disposable repository context."""
+
+    with TemporaryDirectory(prefix="readme-labs-agent-eval-") as temporary:
+        workspace = Path(temporary) / "repository"
+        materialization = materialize_readme_context(
+            base_repository,
+            readme_record,
+            workspace,
+            target_readme=readme_path,
+        )
+        run = run_agent_evaluation(
+            evaluator_path,
+            repository=workspace,
+            readme_path=readme_path,
+            run_dir=run_dir,
+            run_id=run_id,
+            candidate_id=candidate_id,
+            model=model,
+            reasoning_effort=reasoning_effort,
+            codex_executable=codex_executable,
+            timeout_seconds=timeout_seconds,
+        )
+        subject = run["subject"]
+        binding = materialization["artifact_binding"]
+        if (
+            subject["repository_head"] != materialization["materialized"]["revision"]
+            or subject["repository_tree"] != materialization["materialized"]["tree"]
+            or subject["readme_sha256"] != binding["content_sha256"]
+            or subject["readme_path"] != binding["target_path"]
+        ):
+            raise RuntimeError(
+                "agent evaluation lost its README materialization binding"
+            )
+        run["materialization"] = {
+            "context_id": materialization["context_id"],
+            "ephemeral": True,
+            "no_hardlinks": True,
+            "base": {
+                "revision": materialization["base"]["revision"],
+                "tree": materialization["base"]["tree"],
+            },
+            "materialized": materialization["materialized"],
+            "artifact_binding": binding,
+            "removed_remotes": materialization["removed_remotes"],
+        }
+        _write_json(Path(run_dir).resolve() / "run.json", run)
+        return run

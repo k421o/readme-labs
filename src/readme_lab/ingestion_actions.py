@@ -17,6 +17,7 @@ from readme_lab.ingestion import (
     _log,
     _store_job,
     _target,
+    _verify_target,
     _write_json,
     load_external_action_plan,
 )
@@ -266,7 +267,19 @@ def _durable_selection_landed(
                 ),
                 None,
             )
-            if item is None or "snapshot" not in item:
+            if item is None:
+                continue
+            landing = item.get("landing")
+            if landing is not None:
+                landing_path = resolve_contained(
+                    domain_repository, landing["path"]
+                )
+                actual = artifact_sha256(
+                    landing_path, landing["artifact_type"]
+                )
+                if actual == selection["sha256"] == landing["sha256"]:
+                    return True
+            if "snapshot" not in item:
                 continue
             snapshot = item["snapshot"]
             snapshot_path = resolve_contained(domain_repository, snapshot["path"])
@@ -399,6 +412,17 @@ def execute_source_cleanup(
             raise ValueError(
                 f"selection has no verified durable landing: {selection['id']}"
             )
+
+    checkout = job_dir / "checkout"
+    if job["admission"] is None or not all(
+        _verify_target(
+            target,
+            domain_repository=domain_repository,
+            checkout=checkout,
+        )
+        for target in job["admission"]["targets"]
+    ):
+        raise ValueError("durable admission changed after ingestion verification")
 
     selected_paths = [item["path"] for item in paths]
     run_git(source, "rm", "-r", "--", *selected_paths)

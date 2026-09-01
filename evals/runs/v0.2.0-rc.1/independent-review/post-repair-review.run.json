@@ -23,7 +23,12 @@
     "report": "post-repair-review.txt",
     "report_sha256": "e1b312dd6feff7cc34eeb9b5b061e3448cc715008c2337b086bc211d9ccae5f9",
     "events": "post-repair-review-events.jsonl",
-    "events_sha256": "1b82912181ac8754c8359d0fd343758f108fe96f0b7cd993a21a59ef0c6e3365"
+    "events_sha256": "74dfb7e7097303e15af155e3806a41a36eacb524c192eb91ce3351d8e6b3aa3f"
+  },
+  "event_sanitization": {
+    "original_events_sha256": "1b82912181ac8754c8359d0fd343758f108fe96f0b7cd993a21a59ef0c6e3365",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 30
   },
   "limitations": [
     "The transition record summarizes native command results rather than preserving raw stdout and stderr.",

@@ -30,7 +30,8 @@
         "resulting README artifact"
       ],
       "run_records": [
-        "intake/snapshots/reademe-temp-forward-test/forward-test"
+        "intake/manifests/reademe-temp-v1.json",
+        "readmes/records/rm-f96b8e9d6c94dee9/record.json"
       ]
     },
     {

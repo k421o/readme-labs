@@ -1,25 +1,32 @@
 # Managed repository ingestion
 
 README Labs separates acquiring a source from admitting a durable domain
-artifact. A clone, local copy, or job log is operational state. It becomes a
-checked-in domain record only after a README artifact, skill, plugin, tool,
-automation, script, research method, protocol, data item, candidate, trial
-result, or settled Git migration lands.
+artifact. A clone, local copy, or job log is operational state. Intake is the
+transactional transport and provenance boundary, not durable storage for a
+completed README body. A completed README crosses that boundary by moving from
+the managed checkout directly into its final artifact record; the intake
+manifest records the landing without retaining a second copy.
+
+At the current repository head, one logical README has one durable body-owning
+path. Other selected material can become a checked-in snapshot, candidate, or
+settled migration. Git records earlier README versions and provides rollback;
+parallel live copies do not serve as provenance.
 
 ## Three planes
 
 ```text
 operational yard                  README Labs                    owned Git history
 ────────────────────────          ─────────────────────────      ─────────────────────
-isolated checkout                 intake manifest               source deletion commit
-local inventory                   candidate descriptor          destination addition
-selection and action log   ───▶   experiment links       or     push / PR / merge refs
+isolated checkout                 intake landing metadata       domain commits and tags
+local inventory            ───▶   final README record     or     source deletion commit
+selection and action log          candidate or snapshot         push / PR / merge refs
 archive or cleanup state          finalization receipt          migration receipt
 ```
 
 The operational yard does not confer authority on acquired work. Durable
-intake records remain evidence, candidates remain experimental, and only an
-explicit later decision may change a canonical capability.
+intake records remain evidence, candidates remain experimental, README records
+establish identity rather than quality, and only an explicit later decision
+may change a canonical capability.
 
 ## Container topology
 
@@ -130,15 +137,17 @@ uv run readme-lab ingest select \
 | Policy | Durable content | Valid cleanup basis |
 | --- | --- | --- |
 | `reference` | Source locator, Git identity, and digest | No. It does not prove bytes landed elsewhere. |
-| `selected` | Exact selected bytes | Yes, after snapshot verification. |
-| `replayable` | Exact selected bytes plus explicitly named context paths | Yes, after snapshot verification. |
+| `selected` | A completed README's final artifact body, or another selection's exact snapshot or candidate bytes | Yes, after landing or snapshot verification. |
+| `replayable` | The selected landing, snapshot, or candidate plus explicitly named context paths | Yes, after the landing and every context snapshot verify. |
 | `archive` | Operational checkout and Git bundle outside domain Git | Requires local archive finalization; source cleanup is separate. |
 | `git_migration` | Linked owned source and destination Git history; no duplicate snapshot | Yes, after destination identity and equal content verify. |
 
 Replay context is never inferred. Every context path is separately recorded,
 snapshotted, and related to its primary selection. Agents may recommend a
 larger selection, but they cannot silently shrink the declared preservation
-surface.
+surface. Selection and context roots cannot overlap. A context snapshot may
+remain durable evidence, but it must not reproduce the subject README body;
+execution-time copies of that body belong in disposable workspaces.
 
 Symlinks are inventoried but cannot currently be selection roots or occur in
 a snapshotted tree. This is a deliberate v1 stop rather than an implicit
@@ -146,7 +155,8 @@ dereference that could ingest bytes outside the selected tree.
 
 ## Admission and verification
 
-Generated admission creates an intake manifest and optional embedded candidate:
+Generated admission creates a version 2 intake manifest, optional embedded
+candidate, and any final README records required by the selections:
 
 ```console
 uv run readme-lab ingest admit \
@@ -157,7 +167,7 @@ uv run readme-lab ingest admit \
   --title "Example source intake"
 ```
 
-When the selected material already landed, link its existing records instead
+For non-managed material that already landed, link its existing records instead
 of copying it again:
 
 ```console
@@ -169,9 +179,10 @@ uv run readme-lab ingest admit \
   --link-target candidate=candidates/example/candidate.json
 ```
 
-Linking a record does not by itself authorize source deletion. Physical source
-cleanup independently proves that the selected digest exists in a generated
-snapshot, an explicit landing proof, or an owned Git migration destination.
+Linking a record does not by itself authorize source deletion, and it does not
+replace the managed README transfer described below. Physical source cleanup
+independently proves that the selected digest exists in a generated snapshot,
+an explicit landing proof, or an owned Git migration destination.
 
 Verify before any finalization:
 
@@ -182,35 +193,55 @@ uv run readme-lab ingest verify \
   --domain-repository /path/to/readme-domain/readme-labs
 ```
 
-Verification recomputes selection digests, target file hashes, intake source
-and snapshot bindings, candidate contracts, experiment plans, and migration
-receipts as applicable.
+Verification recomputes selection digests or README destination digests, checks
+that a landed README is absent from its managed source path, and verifies target
+file hashes, intake source and snapshot bindings, README packages, candidate
+contracts, experiment plans, and migration receipts as applicable.
 
 ### Landing selected README artifacts
 
-Selecting or admitting a README does not silently freeze it. When the intended
-result is a completed document artifact, a separate explicit capture uses the
-verified selection and records `ingestion_selection` as its boundary:
+Classify one completed file as a README artifact with `selected` or
+`replayable` preservation and no candidate contract:
 
 ```console
-uv run readme-lab artifact capture /path/to/selected/README.md \
-  --registry readmes/records \
-  --provenance-kind ingested \
-  --boundary ingestion_selection \
-  --pre-capture-editability not_applicable \
-  --ownership owned \
-  --visibility local_only \
-  --repository <source-id> \
-  --revision <verified-revision> \
-  --recorded-path README.md
+uv run readme-lab ingest select \
+  --yard /path/to/readme-domain/ingestion \
+  --job-id example-source \
+  --selection-id completed-readme \
+  --path README.md \
+  --role readme_artifact \
+  --preservation selected
 ```
 
-A third-party selection may instead use `artifact reference` with its verified
-content digest and immutable locator. The artifact record complements rather
-than replaces the intake manifest: intake owns acquisition and admission;
-`readmes/records/` owns the selected README's document identity and attached
-evidence. See
+`ingest admit` then computes the content-addressed record ID and moves the file
+from the managed checkout to
+`readmes/records/<record-id>/artifact.md`. If an identical embedded record
+already exists, that body remains canonical and the redundant managed copy is
+removed. The version 2 manifest uses `intake_mode: landed` and binds the source
+digest to the record ID, final path, transfer time, managed source path, and
+verified source absence. It contains no README snapshot.
+
+Admission is transactional: if record creation, manifest writing, or immediate
+manifest verification fails, a newly created record moves back to the checkout;
+deduplication against an existing record restores the managed source from that
+record. After successful admission, `ingest verify` requires both the final
+digest and managed-source absence. Finalization may then remove the rest of the
+checkout. The original repository supplied to `ingest begin` remains untouched.
+
+A third-party README whose custody forbids retention may instead use
+`artifact reference` with its verified content digest and immutable locator. A
+reference to an internally owned body is not a substitute for landing it. The
+artifact record complements rather than replaces the intake manifest: intake
+owns the transaction and provenance; `readmes/records/` owns the selected
+README's sole durable body, identity, and attached evidence. See
 [`readme-artifact-records.md`](readme-artifact-records.md).
+
+Experiments may materialize the final `artifact.md` as a root `README.md` in a
+temporary repository when placement and relative-link behavior matter. That
+copy is execution state and is removed after the run. Durable evidence and
+event logs retain hashes, measurements, and sanitized metadata, never the
+complete subject body. Previous landed bytes are recovered through Git history
+instead of retained side-by-side.
 
 ### Recorded controller exercise
 
@@ -226,10 +257,12 @@ soft agent-review run.
 
 The source's experimental skill commit was reachable in cloned Git history but
 was not the current source branch. The existing intake manifest independently
-verified that historical commit and the captured workspace trial. Finalization
-then removed only the managed checkout, retained the local control record, and
-exported the receipt because durable domain targets already existed. It did not
-modify, archive, publish, or delete the original source repository.
+verified that historical commit. Its version 2 record reconstructs the captured
+workspace trial from a non-README context snapshot and the sole landed README
+body rather than preserving that body twice. Finalization then removed only the
+managed checkout, retained the local control record, and exported the receipt
+because durable domain targets already existed. It did not modify, archive,
+publish, or delete the original source repository.
 
 ## Workspace disposition
 

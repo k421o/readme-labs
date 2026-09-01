@@ -39,7 +39,11 @@ This interface does not promise silent replacement of an existing README, a
 generic documentation audit, universal section-template compliance, invented
 project facts, independent publication verification without evidence, or
 artifact capture during the authoring loop. Capture and lineage remain a
-separate owner-selected operation after generation completes.
+separate owner-selected operation after generation completes. Managed admission
+likewise remains outside that loop and moves a completed README directly to its
+sole final body-owning path; intake,
+evidence, logs, and evaluation context do not become additional durable body
+owners.
 
 ## Compatibility
 

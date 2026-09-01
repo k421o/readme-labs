@@ -1,0 +1,38 @@
+{
+  "content_equivalent": true,
+  "destination": {
+    "artifact_type": "file",
+    "ownership": "owned",
+    "ownership_basis": "explicit_owner_assertion",
+    "path": "readmes/records/rm-f96b8e9d6c94dee9/artifact.md",
+    "remote": "https://github.com/k421o/readme-labs.git",
+    "repository_id": "k421o/readme-labs",
+    "revision": "bb5c99fdcb2c3898127dd883b68ae02bb6bb64b3",
+    "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+  },
+  "duplicate_snapshot_retained": false,
+  "id": "reademe-temp-forward-test-readme-v1",
+  "limitations": [],
+  "recorded_at": "2026-09-01T23:21:53.719261Z",
+  "schema_version": 1,
+  "settlement": {
+    "destination": "pushed",
+    "references": [
+      "https://github.com/k421o/readme-labs/issues/23",
+      "https://github.com/k421o/readme-labs/pull/24"
+    ],
+    "source": "pushed"
+  },
+  "source": {
+    "artifact_type": "file",
+    "deletion_revision": "bb5c99fdcb2c3898127dd883b68ae02bb6bb64b3",
+    "ownership": "owned",
+    "ownership_basis": "explicit_owner_assertion",
+    "path": "intake/snapshots/reademe-temp-forward-test/forward-test/assembled/README.md",
+    "path_absent": true,
+    "remote": "https://github.com/k421o/readme-labs.git",
+    "repository_id": "k421o/readme-labs",
+    "revision": "f49daf761b377859f7d940d9a2a9402f0657c035",
+    "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+  }
+}

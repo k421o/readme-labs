@@ -1,11 +1,19 @@
 from __future__ import annotations
 
+import hashlib
 import subprocess
 from pathlib import Path
 
 import pytest
 
-from readme_lab.migration import build_git_migration_receipt
+from readme_lab.migration import (
+    build_git_migration_receipt,
+    load_git_migration_receipt,
+)
+
+CHECKED_IN_RECEIPT = Path(
+    "intake/migrations/reademe-temp-forward-test-readme-v1.json"
+)
 
 
 def git(repository: Path, *arguments: str) -> str:
@@ -80,3 +88,21 @@ def test_migration_receipt_requires_physical_absence_in_source_history(
             source_settlement="local_commit",
             destination_settlement="local_commit",
         )
+
+
+def test_checked_in_readme_move_receipt_matches_the_single_live_body() -> None:
+    receipt = load_git_migration_receipt(CHECKED_IN_RECEIPT)
+    source = Path(receipt["source"]["path"])
+    destination = Path(receipt["destination"]["path"])
+
+    assert receipt["content_equivalent"] is True
+    assert receipt["duplicate_snapshot_retained"] is False
+    assert receipt["source"]["path_absent"] is True
+    assert not source.exists()
+    assert destination.is_file()
+    digest = hashlib.sha256(destination.read_bytes()).hexdigest()
+    assert (
+        digest
+        == receipt["source"]["sha256"]
+        == receipt["destination"]["sha256"]
+    )

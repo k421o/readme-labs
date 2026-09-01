@@ -1,5 +1,5 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "id": "reademe-temp-v1",
   "title": "Local reademe-temp README research, modular method, skill, and forward trial",
   "observed_at": "2026-08-30T22:02:58Z",
@@ -167,15 +167,53 @@
       "snapshot": {
         "path": "intake/snapshots/reademe-temp-forward-test/forward-test",
         "artifact_type": "tree",
-        "sha256": "dfcd650ad0c13e1548a39d59a414463aa68675f475b6b7f1d1f3216010bdb8e4"
+        "sha256": "1447bbff132bbe5b4029dd42c9a30a24e1d97eca1fc35252e40b692c9b28d1e3"
+      },
+      "reconstruction": {
+        "artifact_type": "tree",
+        "sha256": "dfcd650ad0c13e1548a39d59a414463aa68675f475b6b7f1d1f3216010bdb8e4",
+        "insertions": [
+          {
+            "source_item_id": "modular-readme-forward-test-readme",
+            "path": "assembled/README.md",
+            "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+          }
+        ]
       },
       "intake_mode": "snapshot",
       "status": "admitted",
       "authority": "evidence_only",
-      "description": "Uncommitted but complete three-worker forward-test packets, evidence reports, components, and assembled README.",
+      "description": "Uncommitted three-worker forward-test packets, evidence reports, and components. The assembled README is landed separately and is inserted only in disposable reconstructions.",
       "limitations": [
         "The original run tree was uncommitted and is identified by observation time and content digest rather than a Git object.",
         "The forward test exercised one repository and does not establish general usefulness."
+      ]
+    },
+    {
+      "id": "modular-readme-forward-test-readme",
+      "kind": "readme_artifact",
+      "source": {
+        "state": "workspace",
+        "observed_at": "2026-08-30T22:02:58Z",
+        "path": ".agents/skills/modular-readme/work/forward-test/assembled/README.md",
+        "artifact_type": "file",
+        "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0"
+      },
+      "landing": {
+        "record_id": "rm-f96b8e9d6c94dee9",
+        "path": "readmes/records/rm-f96b8e9d6c94dee9/artifact.md",
+        "artifact_type": "file",
+        "sha256": "f96b8e9d6c94dee97c7c65c011d29d686be88e1edcfc7a588262d5db795720a0",
+        "transferred_at": "2026-09-01T22:49:22Z",
+        "managed_source_path": ".agents/skills/modular-readme/work/forward-test/assembled/README.md",
+        "managed_source_absent": true
+      },
+      "intake_mode": "landed",
+      "status": "admitted",
+      "authority": "evidence_only",
+      "description": "The completed forward-test README at its sole durable body-owning path.",
+      "limitations": [
+        "The prior intake snapshot path remains recoverable from Git history but is absent at HEAD."
       ]
     }
   ],
@@ -199,10 +237,15 @@
       "from": "modular-readme-skill",
       "relationship": "produced",
       "to": "modular-readme-forward-test"
+    },
+    {
+      "from": "modular-readme-forward-test",
+      "relationship": "uses_landed_readme",
+      "to": "modular-readme-forward-test-readme"
     }
   ],
   "limitations": [
-    "The source repository is local-only, so selected snapshots are preserved here for durable review.",
+    "The source repository is local-only, so selected non-README context is preserved here for durable review; completed README bodies land in readmes/records.",
     "Intake preserves the original work without accepting its conclusions, method, or skill design."
   ]
 }

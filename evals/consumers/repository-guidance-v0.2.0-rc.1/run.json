@@ -39,9 +39,15 @@
     "response": "response.txt",
     "response_sha256": "28dae0d5607a402489fc34a23583b8e1405d1801c89e38bf5696e66d477234d3",
     "events": "events.jsonl",
-    "events_sha256": "007e8680105bfcfee81abdf6553c6a64016af990c0b7ba3e837c896f83d91e3d",
+    "events_sha256": "855f32eaafe68fad55ca63f70dbce7c74696ff861ed2037ecbf55ff0150bf940",
     "stderr": "stderr.log",
-    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    "stderr_sha256": "323c92c45d731a2d248ad0dd507081deda8bd53639a1d38c487bc1dd18f45f9c"
+  },
+  "event_sanitization": {
+    "original_events_sha256": "007e8680105bfcfee81abdf6553c6a64016af990c0b7ba3e837c896f83d91e3d",
+    "original_stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 24
   },
   "limitations": [
     "This run exercises the release candidate rather than the final tag.",

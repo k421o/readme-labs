@@ -1,1 +1,1 @@
-2026-08-30T16:58:56.764378Z  WARN codex_sandboxing::violation: recorded sandbox violation: resource=filesystem backend=seatbelt reason=operation_not_permitted path=unknown
+{"byte_length":172,"sha256":"705fd68e6bae1fef623a9c7cee03c2cd0b355e8f9c965d40788aeb7a45501a35"}

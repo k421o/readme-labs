@@ -1,11 +1,11 @@
 {
   "artifacts": {
     "events": "events.jsonl",
-    "events_sha256": "e908fa7d288ba983447434f6eeff910ce6f4ea33f175b1eb0b72f257bcbe62e0",
+    "events_sha256": "65a88289a0c48c1b0200586434d003e12a7ec1b63341034c0d19c74009516e89",
     "response": "response.json",
     "response_sha256": "6f1e4f3dc85168ea8d5a81641bbf5b49f2f169f60b9faa19c6860e2830fdb916",
     "stderr": "stderr.log",
-    "stderr_sha256": "1e76c8707645154725208d7233cd10fd7bd276058e2af4739f5f4a18d2470334"
+    "stderr_sha256": "86b7268b4ca6ca56703658768666efb3768623e67297056569258b3c6fdcc221"
   },
   "automated_authority": "evidence_only",
   "candidate_id": "reademe-temp-modular-readme-v1",
@@ -22,6 +22,12 @@
     "return_code": 0,
     "started_at": "2026-08-30T22:12:05.097893Z",
     "timed_out": false
+  },
+  "event_sanitization": {
+    "original_events_sha256": "e908fa7d288ba983447434f6eeff910ce6f4ea33f175b1eb0b72f257bcbe62e0",
+    "original_stderr_sha256": "1e76c8707645154725208d7233cd10fd7bd276058e2af4739f5f4a18d2470334",
+    "policy": "readme-labs-output-digest-v1",
+    "redacted_field_count": 8
   },
   "executor": {
     "ephemeral": true,
