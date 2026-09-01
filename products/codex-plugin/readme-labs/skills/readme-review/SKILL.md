@@ -1,6 +1,6 @@
 ---
 name: readme-review
-description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, or improve a README; decide what belongs in one; find stale or missing README guidance; or verify that a README matches its repository. Do not use README conventions as a universal template or treat README prose as agent policy.
+description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, or make focused improvements to a README; decide what belongs in one; find stale or missing README guidance; or verify that a README matches its repository. Use readme-generate to create or explicitly replace a README. Do not use README conventions as a universal template or treat README prose as agent policy.
 ---
 
 # README review

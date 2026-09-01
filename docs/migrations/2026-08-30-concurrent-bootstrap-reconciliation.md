@@ -36,11 +36,12 @@ coordination did not protect the shared remote authority.
 | Original migration record | Retained with a historical-status banner | Preserves the exact released decision context without presenting it as current architecture |
 | `v0.1.0` and `repository-guidance@v0.2.0` | Left immutable | Tags and downstream locks are provenance and compatibility boundaries, not branches to rewrite |
 
-## Current authority
+## Authority at reconciliation
 
 - Domain model: `domain/`.
 - Research and historical evidence: `research/`.
-- Current canonical editable capability: `capabilities/readme-review/`.
+- Canonical editable capability at reconciliation:
+  `capabilities/readme-review/`.
 - Evaluation contracts and runs: `evals/`.
 - Current experimental product adapter: `products/codex-plugin/readme-labs/`.
 - Historical downstream interface: `readme-labs@v0.1.0` skill
@@ -53,9 +54,9 @@ not silently substitute a branch path for a released artifact.
 ## Validation and remaining gate
 
 PR #1 merges current `main`, so its eventual merge no longer discards PR #2
-history. Repository tests verify one current generated capability, while the
-immutable tag preserves the predecessor. The downstream repository remains on
-its working lock.
+history. At reconciliation time, repository tests verified one generated
+capability, while the immutable tag preserved the predecessor. The downstream
+repository remained on its working lock.
 
 No new release should be cut merely to make the names agree. The next release
 must first add a blinded runner result, a no-material-finding scenario, and an

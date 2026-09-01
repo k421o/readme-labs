@@ -17,7 +17,7 @@ class and its recorded state determine what it may influence.
 | Document evidence record | Project one observation or evaluation subject beside its README artifact while retaining hashes for the original run. | Evidence only; never a combined score or decision. |
 | Canonical domain artifact | Record an owner-selected model, method, or capability. | Editable README-domain authority. |
 | Regression contract | Protect an explicitly accepted property or compatibility promise. | May gate only the scope and release that claim the contract. |
-| Product adapter | Deliver a pinned canonical capability through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
+| Product adapter | Deliver pinned canonical capabilities through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
 
 ## Experimental flow
 
@@ -36,17 +36,26 @@ outside work or current design
     -> regression and release gates
 ```
 
-The current canonical capability is a baseline and comparator. It is not an
-admission schema for candidates. A candidate may use a different `SKILL.md`,
+The current canonical capabilities are baselines and comparators. They are not
+admission schemas for candidates. A candidate may use a different `SKILL.md`,
 multiple skills, a different progressive-disclosure structure, or no current
 README Labs interface at all.
 
 Embedded candidates that expose a `codex_skill` entrypoint can use the
 candidate review executor against the same held-out repository capsules as the
-canonical capability. The executor isolates one candidate treatment, supports
-explicit invocation or discovery, and records automatic scores as evidence
-without changing candidate or hypothesis authority. Other candidate forms use
-experiment-specific execution until they earn a reusable adapter.
+canonical `readme-review` capability. The executor isolates one candidate
+treatment, supports explicit invocation or discovery, and records automatic
+scores as evidence without changing candidate or hypothesis authority. Other
+candidate forms use experiment-specific execution until they earn a reusable
+adapter.
+
+The canonical `readme-generate` capability composes the complete sibling review
+workflow during ordinary owner-authorized repository work; it is not a
+write-producing candidate executor. Candidate generation remains deferred
+until an isolation backend owns the treatment's full process lifetime and can
+prove the mutable workspace is quiescent before capture. Prompt constraints,
+process-group cleanup, and final-state scans are not sufficient evidence when
+a detached descendant can retain an open write handle.
 
 ## Completion and automated evidence
 

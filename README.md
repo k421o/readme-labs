@@ -177,14 +177,15 @@ The initial milestone now includes:
   observations and descriptive analysis;
 - deterministic local-Git finding and no-finding scenarios with held-out
   scorecards;
-- the canonical `readme-review` capability and a blinded Codex runner;
+- the canonical `readme-review` and `readme-generate` capabilities plus a
+  blinded Codex review runner;
 - a generated experimental Codex plugin adapter; and
 - a repository-owned local/Git marketplace for native discovery and
   installation from immutable repository revisions.
 
 The marketplace is the proper mechanical Codex delivery path for this
 repository. It is not a public or verified marketplace listing, and it does
-not make the product adapter authoritative over the canonical capability.
+not make the product adapter authoritative over the canonical capabilities.
 
 The immutable `v0.1.0` tag was published by a concurrent extraction before the
 current architecture and release policy were reconciled. It is a historical
@@ -197,10 +198,13 @@ promise and not evidence for the present capability. See the
 
 ## Derived capabilities
 
-The first experimental capability is `capabilities/readme-review`. Research,
+The current capability sources are `capabilities/readme-review` and
+`capabilities/readme-generate`. Generation consumes the sibling review workflow
+and its references instead of maintaining a second analysis rubric. Research,
 the domain model, and evaluation artifacts remain canonical; packaging copies
-must be generated from a pinned capability version rather than edited
-independently.
+must be generated from pinned capability versions rather than edited
+independently. The bundled `0.3.0-dev.1` adapter is an unreleased development
+artifact, not evidence that generation behavior has passed release gates.
 
 Candidate trees under `candidates/` are intentionally different: they are
 testable experimental specimens with immutable provenance, not editable forks

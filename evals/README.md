@@ -3,7 +3,7 @@
 The evaluation lab tests README-facing capabilities against controlled tasks
 without confusing a Markdown fixture with a real repository.
 
-These task capsules protect and measure the released `readme-review` job and
+Review task capsules protect and measure the released `readme-review` job and
 provide held-out repository subjects for experimental candidate review.
 Open-ended candidate inquiry lives under `experiments/`. Failure against a
 capsule may diagnose compatibility with this job, but it does not prevent a
@@ -23,7 +23,7 @@ structurally different candidate from completing its own plan.
 The initial scenarios use level 4. This catches repository discovery and
 evidence-checking behavior while remaining deterministic and inexpensive.
 
-## Task capsules
+## Review task capsules
 
 Each scenario contains:
 

@@ -1,0 +1,4 @@
+interface:
+  display_name: "README Generation"
+  short_description: "Generate and review an evidence-backed README."
+  default_prompt: "Use $readme-generate to create a README for this repository."

@@ -40,5 +40,8 @@ the held-out score remains evidence only.
 Plugin, tooling, automation, and script candidates can be admitted and tested
 through appropriate experiment methods. This runner executes only a
 `codex_skill` entrypoint, including one exposed by a larger plugin candidate.
-README generation requires a separate write-isolation contract tracked in
-[issue #14](https://github.com/k421o/readme-labs/issues/14).
+Write-producing candidate execution still requires a lifetime-owned isolation
+backend that can prove no descendant retains access to the mutable workspace.
+That experiment boundary remains tracked in
+[issue #14](https://github.com/k421o/readme-labs/issues/14); it does not block
+the canonical `readme-generate` capability's owner-authorized repository work.
