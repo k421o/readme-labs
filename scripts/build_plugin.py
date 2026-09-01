@@ -22,6 +22,7 @@ PROVENANCE = PLUGIN_ROOT / "UPSTREAM.json"
 CAPABILITY_SOURCES = (
     ("readme-review", REPOSITORY_ROOT / "capabilities" / "readme-review"),
     ("readme-generate", REPOSITORY_ROOT / "capabilities" / "readme-generate"),
+    ("readme-prune", REPOSITORY_ROOT / "capabilities" / "readme-prune"),
 )
 
 

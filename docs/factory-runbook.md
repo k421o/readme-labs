@@ -8,7 +8,7 @@ boundaries for the first `readme-review` release without relying on task chat.
 | Question | Authoritative repository surface |
 | --- | --- |
 | README concepts and observations | `domain/`, interpreted with `research/` evidence |
-| Editable agent behavior | `capabilities/readme-review/` |
+| Editable agent behavior | the named skill directories under `capabilities/` |
 | Blinded scenarios and scoring | `evals/` |
 | Codex packaging | generated `products/codex-plugin/readme-labs/` |
 | Native installation discovery | `.agents/plugins/marketplace.json` |
@@ -33,10 +33,11 @@ uv run python scripts/build_plugin.py --check
 uv build
 ```
 
-`scripts/build_plugin.py` copies the canonical capability into the product and
-writes `UPSTREAM.json`. A generated skill must be byte-identical to the source
-tree. Edit the canonical capability, rebuild, and commit both sides; never edit
-the packaged copy directly.
+`scripts/build_plugin.py` copies the explicitly allowlisted canonical
+capabilities into the product and writes per-source revisions and hashes to
+`UPSTREAM.json`. Every generated skill must be byte-identical to its source
+tree. Edit a canonical capability, rebuild, and commit both sides; never edit a
+packaged copy directly.
 
 ## Install through the repository marketplace
 

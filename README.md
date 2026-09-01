@@ -184,7 +184,7 @@ The initial milestone now includes:
 
 The marketplace is the proper mechanical Codex delivery path for this
 repository. It is not a public or verified marketplace listing, and it does
-not make the product adapter authoritative over the canonical capability.
+not make the product adapter authoritative over the canonical capabilities.
 
 The immutable `v0.1.0` tag was published by a concurrent extraction before the
 current architecture and release policy were reconciled. It is a historical

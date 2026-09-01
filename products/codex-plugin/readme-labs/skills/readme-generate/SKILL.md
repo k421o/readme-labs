@@ -1,6 +1,6 @@
 ---
 name: readme-generate
-description: Generate a repository README from repository evidence, then revise the draft through the canonical README review workflow. Use when asked to create, draft, bootstrap, or explicitly replace a README. Do not use for an audit, critique, or focused improvement of an existing README; use readme-review for those requests.
+description: Generate a repository README from repository evidence, then revise the draft through the canonical README review workflow. Use when asked to create, draft, bootstrap, or explicitly replace a README. Use readme-review for an audit or critique without edits and readme-prune to remove, trim, declutter, or shorten existing content by subtraction. Do not use for a focused edit whose outcome is not creation or replacement.
 ---
 
 # README generation
@@ -25,6 +25,8 @@ skill.
 - Create a missing target when the request identifies its component. A request
   to create a README does not by itself authorize replacing a target that
   already exists.
+- Route a request to remove, trim, declutter, or shorten existing content
+  without replacement through `readme-prune`.
 - Replace an existing README only when the user explicitly asks for a rewrite,
   replacement, or overwrite. Otherwise preserve it and route audit or focused
   improvement work through `readme-review`.

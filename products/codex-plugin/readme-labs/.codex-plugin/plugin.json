@@ -1,18 +1,18 @@
 {
   "name": "readme-labs",
-  "version": "0.3.0-dev.1",
-  "description": "Experimental README review and generation capabilities derived from readme-labs",
+  "version": "0.3.0-dev.2",
+  "description": "Experimental README review, generation, and pruning capabilities derived from readme-labs",
   "author": {
     "name": "k421o"
   },
   "skills": "./skills/",
   "interface": {
     "displayName": "README Labs (Experimental)",
-    "shortDescription": "Evidence-backed README review and generation for Codex.",
-    "longDescription": "An experimental packaging adapter for the readme-review and readme-generate capabilities developed in readme-labs.",
+    "shortDescription": "Evidence-backed README review, generation, and pruning for Codex.",
+    "longDescription": "An experimental packaging adapter for the readme-review, readme-generate, and readme-prune capabilities developed in readme-labs.",
     "developerName": "k421o",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Use $readme-review to review an existing README or $readme-generate to create one from repository evidence."
+    "defaultPrompt": "Use $readme-review to review, $readme-generate to create or replace, or $readme-prune to remove content from an existing README."
   }
 }

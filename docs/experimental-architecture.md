@@ -17,7 +17,7 @@ class and its recorded state determine what it may influence.
 | Document evidence record | Project one observation or evaluation subject beside its README artifact while retaining hashes for the original run. | Evidence only; never a combined score or decision. |
 | Canonical domain artifact | Record an owner-selected model, method, or capability. | Editable README-domain authority. |
 | Regression contract | Protect an explicitly accepted property or compatibility promise. | May gate only the scope and release that claim the contract. |
-| Product adapter | Deliver a pinned canonical capability through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
+| Product adapter | Deliver pinned canonical capabilities through a host-native surface. | Mechanical distribution, never independent behavioral authority. |
 
 ## Experimental flow
 
@@ -36,8 +36,8 @@ outside work or current design
     -> regression and release gates
 ```
 
-The current canonical capability is a baseline and comparator. It is not an
-admission schema for candidates. A candidate may use a different `SKILL.md`,
+The current canonical capability set supplies baselines and comparators. It is
+not an admission schema for candidates. A candidate may use a different `SKILL.md`,
 multiple skills, a different progressive-disclosure structure, or no current
 README Labs interface at all.
 

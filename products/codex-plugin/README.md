@@ -1,9 +1,10 @@
 # Codex plugin adapter
 
 [`readme-labs/`](readme-labs/) is an installable experimental plugin produced
-from the canonical [`readme-review`](../../capabilities/readme-review/) and
-[`readme-generate`](../../capabilities/readme-generate/) skills. The packaged
-skill directories are generated and must not be edited directly.
+from the canonical [`readme-review`](../../capabilities/readme-review/),
+[`readme-generate`](../../capabilities/readme-generate/), and
+[`readme-prune`](../../capabilities/readme-prune/) skills. The packaged skill
+directories are generated and must not be edited directly.
 
 Rebuild or check it with:
 

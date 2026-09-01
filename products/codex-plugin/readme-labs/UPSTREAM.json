@@ -6,14 +6,20 @@
     {
       "destination": "skills/readme-review",
       "source": "capabilities/readme-review",
-      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
-      "source_sha256": "f48d15e1df50d190c7cbcb856dd15deff5d482f6eb2e376bf560fe2f94a5d14c"
+      "source_revision": "ef4cf30d0a534d04d28f08a0430db5731c347bab",
+      "source_sha256": "eb07501e62169f44d6594a2df949b7f23b14489150ff820d8a49cbeae244871e"
     },
     {
       "destination": "skills/readme-generate",
       "source": "capabilities/readme-generate",
-      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
-      "source_sha256": "d901f0942b293d7c6ca01cd6c5f70806ce7898bb122b754cbea11231b9326d38"
+      "source_revision": "ef4cf30d0a534d04d28f08a0430db5731c347bab",
+      "source_sha256": "c5885e2ca7553ba040ae6426073f3af5b8bef1d4e2fa560b50c12ffb78f4c154"
+    },
+    {
+      "destination": "skills/readme-prune",
+      "source": "capabilities/readme-prune",
+      "source_revision": "ef4cf30d0a534d04d28f08a0430db5731c347bab",
+      "source_sha256": "cc889325eb4ecffd9a71ef7421166a576f5dd96d4da3f82c15660be9eba27d13"
     }
   ]
 }
