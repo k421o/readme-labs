@@ -6,6 +6,7 @@ import yaml
 
 REVIEW_SKILL_DIR = Path("capabilities/readme-review")
 GENERATION_SKILL_DIR = Path("capabilities/readme-generate")
+PRUNE_SKILL_DIR = Path("capabilities/readme-prune")
 
 
 def test_readme_review_capability_has_no_scaffold_placeholders() -> None:
@@ -16,7 +17,11 @@ def test_readme_review_capability_has_no_scaffold_placeholders() -> None:
     assert "Do not use stars" in skill
     assert "unless the requested scope includes migrating" in skill
     assert "current task's tool record contains that execution" in skill
-    assert "Use readme-generate to create or explicitly replace" in skill
+    assert "readme-generate to create or explicitly replace" in skill
+    assert "Use readme-prune when the requested outcome is removal" in skill
+    assert "route a primarily subtractive request through `readme-prune`" in skill
+    assert "remove unsupported, stale, duplicative, or noisy content" in skill
+    assert "relocate still-needed content only" in skill
 
 
 def test_readme_review_references_are_local_and_present() -> None:
@@ -51,7 +56,9 @@ def test_readme_generation_routes_authoring_without_overlapping_review() -> None
 
     assert "name: readme-generate" in skill
     assert "create, draft, bootstrap, or explicitly replace" in skill
-    assert "Do not use for an audit, critique, or focused improvement" in skill
+    assert "Use readme-review for an audit or critique without edits" in skill
+    assert "readme-prune to remove, trim, declutter, or shorten" in skill
+    assert "Do not use for a focused edit" in skill
     assert "does not by itself authorize replacing" in skill
     assert "explicitly asks for a rewrite" in skill
     assert "replacement, or overwrite" in skill
@@ -109,3 +116,48 @@ def test_generation_openai_interface_invokes_canonical_skill_name() -> None:
         (GENERATION_SKILL_DIR / "agents/openai.yaml").read_text(encoding="utf-8")
     )
     assert "$readme-generate" in metadata["interface"]["default_prompt"]
+
+
+def test_readme_prune_routes_semantic_subtraction_without_overlapping_jobs() -> None:
+    skill = (PRUNE_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+
+    assert "name: readme-prune" in skill
+    assert "trim, declutter, shorten by subtraction, or remove" in skill
+    assert "Use `readme-review` for findings without edits" in skill
+    assert "Use `readme-generate` for a" in skill
+    assert "missing README, an explicit replacement, or a broad rewrite" in skill
+    assert "Do not delete or move the README" in skill
+    assert "Make no new substantive claims, sections, commands, or links" in skill
+    assert "TODO" not in skill
+
+
+def test_readme_prune_consumes_the_complete_review_source() -> None:
+    skill = (PRUNE_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+
+    assert "../readme-review/SKILL.md" in skill
+    assert "../readme-review/references/" in skill
+    assert "read every local reference" in skill
+    assert "single source" in skill
+    assert "Apply the complete sibling `readme-review` workflow" in skill
+    assert (PRUNE_SKILL_DIR.parent / "readme-review/SKILL.md").is_file()
+    assert (PRUNE_SKILL_DIR.parent / "readme-review/references").is_dir()
+
+
+def test_readme_prune_interface_freezes_safety_and_completion() -> None:
+    interface = (PRUNE_SKILL_DIR / "INTERFACE.md").read_text(encoding="utf-8")
+
+    assert "Named user job" in interface
+    assert "`user_directed` removals from `review_evidenced`" in interface
+    assert "Make no new substantive claims, sections, commands, or links" in interface
+    assert "Restore an agent-selected deletion" in interface
+    assert "Do not silently reverse an exact user-directed removal" in interface
+    assert "no material regression attributable to agent-selected pruning" in interface
+    assert "whole-file deletion or movement" in interface
+    assert "artifact capture during pruning" in interface
+
+
+def test_prune_openai_interface_invokes_canonical_skill_name() -> None:
+    metadata = yaml.safe_load(
+        (PRUNE_SKILL_DIR / "agents/openai.yaml").read_text(encoding="utf-8")
+    )
+    assert "$readme-prune" in metadata["interface"]["default_prompt"]

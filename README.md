@@ -18,8 +18,8 @@ eventually executable environments to test that model.
   content-addressed artifact records with document-centered evidence packages.
 - Collect reproducible corpus manifests without treating popularity as quality
   or copying an unbounded raw corpus into Git.
-- Evaluate README review and authoring behavior on both controlled and natural
-  repositories.
+- Evaluate README review, authoring, and pruning behavior on both controlled
+  and natural repositories.
 - Ingest outside research, methods, skills, plugins, tooling, automation,
   scripts, bundles, and trial evidence without prematurely making them
   canonical.
@@ -177,8 +177,8 @@ The initial milestone now includes:
   observations and descriptive analysis;
 - deterministic local-Git finding and no-finding scenarios with held-out
   scorecards;
-- the canonical `readme-review` and `readme-generate` capabilities plus a
-  blinded Codex review runner;
+- the canonical `readme-review`, `readme-generate`, and `readme-prune`
+  capabilities plus a blinded Codex review runner;
 - a generated experimental Codex plugin adapter; and
 - a repository-owned local/Git marketplace for native discovery and
   installation from immutable repository revisions.
@@ -198,13 +198,21 @@ promise and not evidence for the present capability. See the
 
 ## Derived capabilities
 
-The current capability sources are `capabilities/readme-review` and
-`capabilities/readme-generate`. Generation consumes the sibling review workflow
-and its references instead of maintaining a second analysis rubric. Research,
-the domain model, and evaluation artifacts remain canonical; packaging copies
-must be generated from pinned capability versions rather than edited
-independently. The bundled `0.3.0-dev.1` adapter is an unreleased development
-artifact, not evidence that generation behavior has passed release gates.
+The canonical capability set separates three observable jobs:
+
+- `capabilities/readme-review` reports material findings or an explicit
+  no-material-findings conclusion;
+- `capabilities/readme-generate` creates or explicitly replaces a README and
+  iterates through the complete review workflow; and
+- `capabilities/readme-prune` removes directed or review-evidenced content
+  while guarding the surviving reader contract against attributable regression.
+
+All three consume the same review criteria rather than maintaining independent
+README models. Research, the domain model, and evaluation artifacts remain
+canonical; packaging copies must be generated from pinned capability revisions
+rather than edited independently. The bundled `0.3.0-dev.2` adapter is an
+unreleased development artifact, not evidence that generation or pruning
+behavior has passed release gates.
 
 Candidate trees under `candidates/` are intentionally different: they are
 testable experimental specimens with immutable provenance, not editable forks

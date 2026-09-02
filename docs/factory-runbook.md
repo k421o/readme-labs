@@ -40,9 +40,10 @@ allowlist, and each generated skill must be byte-identical to its source tree.
 Edit a canonical capability, commit it, rebuild, and commit the product side;
 never edit a packaged copy directly.
 
-The current `0.3.0-dev.1` bundle is an unreleased development adapter. The
+The current `0.3.0-dev.2` bundle is an unreleased development adapter. The
 release evidence and blinded-pair procedure below remain specific to the
-review-only `v0.2.0` factory release.
+review-only `v0.2.0` factory release; generation and pruning need their own
+writable behavioral evidence before promotion.
 
 ## Install through the repository marketplace
 

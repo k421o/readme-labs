@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-CAPABILITY_NAMES = ("readme-review", "readme-generate")
+CAPABILITY_NAMES = ("readme-review", "readme-generate", "readme-prune")
 CAPABILITIES_ROOT = Path("capabilities")
 PLUGIN_ROOT = Path("products/codex-plugin/readme-labs")
 SKILLS_ROOT = PLUGIN_ROOT / "skills"
@@ -113,7 +113,7 @@ def test_plugin_adapter_is_experimental_and_pins_every_ordered_source() -> None:
     )
     provenance = json.loads(PROVENANCE.read_text(encoding="utf-8"))
 
-    assert manifest["version"] == "0.3.0-dev.1"
+    assert manifest["version"] == "0.3.0-dev.2"
     assert re.fullmatch(r"\d+\.\d+\.\d+-(?:dev|rc)\.\d+", manifest["version"])
     assert "Experimental" in manifest["interface"]["displayName"]
     assert manifest["interface"]["defaultPrompt"] == [
@@ -122,6 +122,7 @@ def test_plugin_adapter_is_experimental_and_pins_every_ordered_source() -> None:
             "Use $readme-labs:readme-generate to create a README from repository "
             "evidence."
         ),
+        "Use $readme-labs:readme-prune to remove content from an existing README.",
     ]
     assert provenance["maturity"] == "experimental"
     assert provenance["product_version"] == manifest["version"]

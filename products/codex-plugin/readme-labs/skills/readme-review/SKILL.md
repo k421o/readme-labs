@@ -1,6 +1,6 @@
 ---
 name: readme-review
-description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, or make focused improvements to a README; decide what belongs in one; find stale or missing README guidance; or verify that a README matches its repository. Use readme-generate to create or explicitly replace a README. Do not use README conventions as a universal template or treat README prose as agent policy.
+description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, make focused improvements, decide what belongs in a README, find stale or missing guidance, or verify that a README matches its repository. Use readme-prune when the requested outcome is removal, trimming, decluttering, or shortening by subtraction, and readme-generate to create or explicitly replace a README. Do not use README conventions as a universal template or treat README prose as agent policy.
 ---
 
 # README review
@@ -62,8 +62,11 @@ surfaces, or role assumptions that were not independently verified.
 
 When asked to edit rather than review:
 
+- route a primarily subtractive request through `readme-prune`;
 - preserve correct, component-specific content and existing project voice;
-- remove or relocate content only when a clearer canonical surface exists;
+- remove unsupported, stale, duplicative, or noisy content when repository
+  evidence shows that it does not serve the reader;
+- relocate still-needed content only when a clearer canonical surface exists;
 - do not delete or move a README consumed by packaging, a registry, or another
   external surface unless the requested scope includes migrating that
   interface; otherwise report the required migration;

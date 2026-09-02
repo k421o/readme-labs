@@ -16,8 +16,8 @@ The repository begins as a **domain module with an evaluation lab**:
 - a provenance-bearing intake and candidate library;
 - content-addressed README artifact and evidence records;
 - advisory agent-response evaluation; and
-- one experimental plugin adapter exposing two canonical capability sources
-  derived from the domain work.
+- one experimental plugin adapter exposing three narrow canonical capability
+  sources derived from named README jobs.
 
 It is intentionally not yet a marketplace product, a general evaluation
 framework, or a monorepo of README tools.

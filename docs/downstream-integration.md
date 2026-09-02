@@ -12,13 +12,14 @@ exposes the earlier `readme-contract-review` skill and remains historical
 compatibility evidence after the current source layout changes. It is not a
 statement that the predecessor is actively supported.
 
-The canonical source capabilities are `capabilities/readme-review` and
-`capabilities/readme-generate`. Generation consumes the complete review
-workflow and its local references, so downstream packaging must preserve their
-sibling layout. A downstream lock must never point to a moving branch or
-independently edit a generated adapter. New README-domain work belongs here; a
-downstream migration selects an intentional immutable release and evaluates
-the interface-name changes it adopts.
+The canonical source capabilities are `capabilities/readme-review`,
+`capabilities/readme-generate`, and `capabilities/readme-prune`. Generation and
+pruning both consume the complete review workflow and its local references, so
+downstream packaging must preserve the three capabilities' sibling layout. A
+downstream lock must never point to a moving branch or independently edit a
+generated adapter. New README-domain work belongs here; a downstream migration
+selects an intentional immutable release and evaluates the interface-name
+changes it adopts.
 
 ## Allowed consumption models
 
@@ -55,14 +56,13 @@ An independently edited copy is not an allowed model.
 ```text
 readme-labs domain and research
              ↓
-released readme-review capability
-             ├───────────────┐
-             ↓               │
-released readme-generate capability
-             └───────┬───────┘
-                     ↓
+released capabilities:
+  readme-review
+    ├──→ readme-generate (consumes review)
+    └──→ readme-prune (consumes review)
+             ↓
 optional README plugin adapter
-                     ↓
+             ↓
 repository-guidance bundle and routing
 ```
 

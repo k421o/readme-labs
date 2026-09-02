@@ -1,0 +1,4 @@
+interface:
+  display_name: "README Pruning"
+  short_description: "Remove low-signal README content without losing reader value."
+  default_prompt: "Use $readme-prune to remove unsupported or unwanted content from this repository's README."

@@ -2,19 +2,25 @@
   "artifact_kind": "codex_plugin_adapter",
   "generated_by": "scripts/build_plugin.py",
   "maturity": "experimental",
-  "product_version": "0.3.0-dev.1",
+  "product_version": "0.3.0-dev.2",
   "sources": [
     {
       "destination": "skills/readme-review",
       "source": "capabilities/readme-review",
-      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
-      "source_sha256": "f48d15e1df50d190c7cbcb856dd15deff5d482f6eb2e376bf560fe2f94a5d14c"
+      "source_revision": "fcddc6c037c6b7bacb760e5f4533dbbfe48f9465",
+      "source_sha256": "9e5d59181ea5e82f96631de2e5a8dd8342cee84c9fcf571a68dbe266929cba6e"
     },
     {
       "destination": "skills/readme-generate",
       "source": "capabilities/readme-generate",
-      "source_revision": "7eea760c3bc55b19bf05ca7c67cd63f08d7e3995",
-      "source_sha256": "d901f0942b293d7c6ca01cd6c5f70806ce7898bb122b754cbea11231b9326d38"
+      "source_revision": "fcddc6c037c6b7bacb760e5f4533dbbfe48f9465",
+      "source_sha256": "d7b985fd2e792fbe3c98ea5afa3d4a71f1a3eda1cd410954b91dd6899462fcff"
+    },
+    {
+      "destination": "skills/readme-prune",
+      "source": "capabilities/readme-prune",
+      "source_revision": "ef4cf30d0a534d04d28f08a0430db5731c347bab",
+      "source_sha256": "cc889325eb4ecffd9a71ef7421166a576f5dd96d4da3f82c15660be9eba27d13"
     }
   ]
 }

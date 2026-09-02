@@ -33,6 +33,6 @@ The two tasks did not exchange state before publication. Their artifacts are
 reconciled in
 [`docs/migrations/2026-08-30-concurrent-bootstrap-reconciliation.md`](migrations/2026-08-30-concurrent-bootstrap-reconciliation.md):
 unique research and immutable history are retained, while the domain-first
-layout, `capabilities/readme-review`, `capabilities/readme-generate`, versioned
-contracts, evaluation lab, and generated product adapters are the current
-editable authority.
+layout, `capabilities/readme-review`, `capabilities/readme-generate`,
+`capabilities/readme-prune`, versioned contracts, evaluation lab, and generated
+product adapters are the current editable authority.
