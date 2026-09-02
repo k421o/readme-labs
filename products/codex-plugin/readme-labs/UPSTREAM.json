@@ -2,6 +2,7 @@
   "artifact_kind": "codex_plugin_adapter",
   "generated_by": "scripts/build_plugin.py",
   "maturity": "experimental",
+  "product_version": "0.3.0-dev.1",
   "sources": [
     {
       "destination": "skills/readme-review",

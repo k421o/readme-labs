@@ -132,7 +132,7 @@ second independent consumer proves the interface and justifies extraction.
 - Add criteria to a capability only when observed behavior or evidence supports
   a recurring decision boundary.
 - Admit structurally different candidates without requiring compatibility with
-  the current capability or its regression tests.
+  the current capabilities or their regression tests.
 - Let an admitted hypothesis complete its planned run unless a recorded safety,
   authorization, or infrastructure boundary makes the run incomplete.
 - Treat automated experimental results and soft agent recommendations as

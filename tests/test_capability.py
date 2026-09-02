@@ -68,14 +68,35 @@ def test_readme_generation_routes_authoring_without_overlapping_review() -> None
 
 def test_readme_generation_consumes_the_complete_review_source() -> None:
     skill = (GENERATION_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(skill.split())
 
     assert "../readme-review/SKILL.md" in skill
     assert "../readme-review/references/" in skill
     assert "read every local reference" in skill
     assert "single source" in skill
     assert "Apply the complete sibling `readme-review` workflow" in skill
+    assert "exact written draft" in normalized
+    assert (
+        "run the complete review workflow again against the revised bytes"
+        in normalized
+    )
+    assert (
+        "latest complete pass reaches a no-material-findings conclusion" in normalized
+    )
     assert (GENERATION_SKILL_DIR.parent / "readme-review/SKILL.md").is_file()
     assert (GENERATION_SKILL_DIR.parent / "readme-review/references").is_dir()
+
+
+def test_packaged_generation_keeps_its_review_dependency_as_a_sibling() -> None:
+    packaged_skills = Path("products/codex-plugin/readme-labs/skills")
+    generation = packaged_skills / "readme-generate"
+    review = generation.parent / "readme-review"
+
+    assert (generation / "SKILL.md").is_file()
+    assert (review / "SKILL.md").is_file()
+    assert (review / "references/roles-and-anatomy.md").is_file()
+    assert (review / "references/evidence-and-verification.md").is_file()
+    assert (review / "references/review-criteria.md").is_file()
 
 
 def test_readme_generation_interface_freezes_iteration_and_capture_boundaries() -> None:

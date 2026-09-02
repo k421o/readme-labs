@@ -36,17 +36,26 @@ outside work or current design
     -> regression and release gates
 ```
 
-The current canonical capability set supplies baselines and comparators. It is
-not an admission schema for candidates. A candidate may use a different `SKILL.md`,
+The current canonical capabilities are baselines and comparators. They are not
+admission schemas for candidates. A candidate may use a different `SKILL.md`,
 multiple skills, a different progressive-disclosure structure, or no current
 README Labs interface at all.
 
 Embedded candidates that expose a `codex_skill` entrypoint can use the
 candidate review executor against the same held-out repository capsules as the
-canonical capability. The executor isolates one candidate treatment, supports
-explicit invocation or discovery, and records automatic scores as evidence
-without changing candidate or hypothesis authority. Other candidate forms use
-experiment-specific execution until they earn a reusable adapter.
+canonical `readme-review` capability. The executor isolates one candidate
+treatment, supports explicit invocation or discovery, and records automatic
+scores as evidence without changing candidate or hypothesis authority. Other
+candidate forms use experiment-specific execution until they earn a reusable
+adapter.
+
+The canonical `readme-generate` capability composes the complete sibling review
+workflow during ordinary owner-authorized repository work; it is not a
+write-producing candidate executor. Candidate generation remains deferred
+until an isolation backend owns the treatment's full process lifetime and can
+prove the mutable workspace is quiescent before capture. Prompt constraints,
+process-group cleanup, and final-state scans are not sufficient evidence when
+a detached descendant can retain an open write handle.
 
 ## Completion and automated evidence
 

@@ -13,6 +13,10 @@
     "developerName": "k421o",
     "category": "Productivity",
     "capabilities": [],
-    "defaultPrompt": "Use $readme-review to review, $readme-generate to create or replace, or $readme-prune to remove content from an existing README."
+    "defaultPrompt": [
+      "Use $readme-labs:readme-review to review an existing README.",
+      "Use $readme-labs:readme-generate to create a README from repository evidence.",
+      "Use $readme-labs:readme-prune to remove content from an existing README."
+    ]
   }
 }

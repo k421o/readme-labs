@@ -177,7 +177,8 @@ The initial milestone now includes:
   observations and descriptive analysis;
 - deterministic local-Git finding and no-finding scenarios with held-out
   scorecards;
-- the canonical `readme-review` capability and a blinded Codex runner;
+- the canonical `readme-review`, `readme-generate`, and `readme-prune`
+  capabilities plus a blinded Codex review runner;
 - a generated experimental Codex plugin adapter; and
 - a repository-owned local/Git marketplace for native discovery and
   installation from immutable repository revisions.
@@ -209,7 +210,9 @@ The canonical capability set separates three observable jobs:
 All three consume the same review criteria rather than maintaining independent
 README models. Research, the domain model, and evaluation artifacts remain
 canonical; packaging copies must be generated from pinned capability revisions
-rather than edited independently.
+rather than edited independently. The bundled `0.3.0-dev.2` adapter is an
+unreleased development artifact, not evidence that generation or pruning
+behavior has passed release gates.
 
 Candidate trees under `candidates/` are intentionally different: they are
 testable experimental specimens with immutable provenance, not editable forks

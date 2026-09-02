@@ -1,6 +1,6 @@
 ---
 name: readme-review
-description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, decide what belongs in a README, find stale or missing guidance, or verify that a README matches its repository. Use readme-prune when the requested outcome is removal, trimming, decluttering, or shortening by subtraction, and readme-generate to create or explicitly replace a README. Do not use README conventions as a universal template or treat README prose as agent policy.
+description: Review repository README files for reader-facing signal, factual support, role-appropriate structure, and useful routing. Use when asked to audit, critique, compare, make focused improvements, decide what belongs in a README, find stale or missing guidance, or verify that a README matches its repository. Use readme-prune when the requested outcome is primarily removal, trimming, decluttering, or shortening by subtraction, and readme-generate to create or explicitly replace a README. Do not use README conventions as a universal template or treat README prose as agent policy.
 ---
 
 # README review

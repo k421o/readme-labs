@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -15,6 +16,7 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_ROOT = REPOSITORY_ROOT / "products" / "codex-plugin" / "readme-labs"
 SKILLS_ROOT = PLUGIN_ROOT / "skills"
 PROVENANCE = PLUGIN_ROOT / "UPSTREAM.json"
+PLUGIN_MANIFEST = PLUGIN_ROOT / ".codex-plugin" / "plugin.json"
 
 # This ordered allowlist is the product's complete generated skill surface.
 # Adding a capability is an explicit product decision rather than directory
@@ -66,11 +68,54 @@ def source_revision(source: Path) -> str:
         raise RuntimeError(
             f"canonical capability needs a committed source revision: {relative}"
         )
+    _assert_source_matches_revision(REPOSITORY_ROOT, source, revision)
     return revision
+
+
+def _committed_file_map(
+    repository_root: Path, source: Path, revision: str
+) -> dict[str, bytes]:
+    source_relative = source.relative_to(repository_root)
+    result = subprocess.run(
+        ["git", "ls-tree", "-r", "-z", revision, "--", source_relative],
+        cwd=repository_root,
+        check=True,
+        capture_output=True,
+    )
+    committed: dict[str, bytes] = {}
+    for entry in (item for item in result.stdout.split(b"\0") if item):
+        metadata, raw_path = entry.split(b"\t", 1)
+        object_type, object_id = metadata.split()[1:]
+        if object_type != b"blob":
+            raise RuntimeError("capability source contains a non-blob Git object")
+        path = Path(os.fsdecode(raw_path))
+        relative = path.relative_to(source_relative).as_posix()
+        committed[relative] = subprocess.run(
+            ["git", "cat-file", "blob", object_id.decode()],
+            cwd=repository_root,
+            check=True,
+            capture_output=True,
+        ).stdout
+    return committed
+
+
+def _assert_source_matches_revision(
+    repository_root: Path, source: Path, revision: str
+) -> None:
+    if file_map(source) != _committed_file_map(repository_root, source, revision):
+        relative = source.relative_to(repository_root)
+        raise RuntimeError(
+            "canonical capability has changes not present in its source revision: "
+            f"{relative}"
+        )
 
 
 def expected_provenance() -> dict[str, object]:
     _validate_capability_sources(CAPABILITY_SOURCES)
+    manifest = json.loads(PLUGIN_MANIFEST.read_text(encoding="utf-8"))
+    product_version = manifest.get("version")
+    if not isinstance(product_version, str) or not product_version:
+        raise ValueError("plugin manifest requires a product version")
     sources = []
     for name, source in CAPABILITY_SOURCES:
         sources.append(
@@ -84,6 +129,7 @@ def expected_provenance() -> dict[str, object]:
     return {
         "artifact_kind": "codex_plugin_adapter",
         "maturity": "experimental",
+        "product_version": product_version,
         "sources": sources,
         "generated_by": "scripts/build_plugin.py",
     }

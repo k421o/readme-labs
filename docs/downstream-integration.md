@@ -12,10 +12,13 @@ exposes the earlier `readme-contract-review` skill and remains historical
 compatibility evidence after the current source layout changes. It is not a
 statement that the predecessor is actively supported.
 
-The canonical source capability is `capabilities/readme-review`. A downstream
-lock must never point to its moving branch or independently edit its generated
-adapter. New README-domain work belongs here; a downstream migration selects an
-intentional immutable release and evaluates the interface-name change.
+The canonical source capabilities are `capabilities/readme-review` and
+`capabilities/readme-generate`. Generation consumes the complete review
+workflow and its local references, so downstream packaging must preserve their
+sibling layout. A downstream lock must never point to a moving branch or
+independently edit a generated adapter. New README-domain work belongs here; a
+downstream migration selects an intentional immutable release and evaluates
+the interface-name changes it adopts.
 
 ## Allowed consumption models
 
@@ -38,12 +41,12 @@ An independently edited copy is not an allowed model.
 2. Record the version, upstream revision, compatibility, and rollback version
    in `repository-guidance`.
 3. Update installation or routing from the historical `readme-contract-review`
-   interface to the released capability name; preserve AGENTS.md guidance
-   locally.
-4. Test discovery so README requests reach the released capability and
-   AGENTS.md requests continue to reach their existing owner.
-5. Replay downstream integration fixtures plus the upstream capability's
-   published scenario set.
+   interface to the released capability names it adopts; preserve AGENTS.md
+   guidance locally.
+4. Test discovery so appropriate README requests reach the released
+   capabilities and AGENTS.md requests continue to reach their existing owner.
+5. Replay downstream integration fixtures plus each adopted upstream
+   capability's published scenario set.
 6. Confirm that no editable compatibility copy is reintroduced.
 7. Document upgrade and rollback behavior in the downstream pull request.
 
@@ -51,11 +54,15 @@ An independently edited copy is not an allowed model.
 
 ```text
 readme-labs domain and research
-          ↓
+             ↓
 released readme-review capability
-          ↓
+             ├───────────────┐
+             ↓               │
+released readme-generate capability
+             └───────┬───────┘
+                     ↓
 optional README plugin adapter
-          ↓
+                     ↓
 repository-guidance bundle and routing
 ```
 
