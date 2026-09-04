@@ -9,14 +9,12 @@ Create a README as a reader-facing interface for the evidenced component, not
 as a generic section template. Keep the draft mutable until the requested
 authoring work is complete.
 
-## Required review source
+## Review source
 
-Before authoring, read the sibling [README review
-skill](../readme-review/SKILL.md) completely and read every local reference
-file shipped in [its references directory](../readme-review/references/). The
-review skill and those references are the single source of role, evidence,
-analysis, and finding behavior. Do not restate or fork their criteria in this
-skill.
+Use the sibling [README review skill](../readme-review/SKILL.md) for shared
+criteria. Read its [references](../readme-review/references/) when the target's
+role, a factual claim, or a proposed section needs that detail. Reuse sources
+already read during this task.
 
 ## Scope and overwrite boundary
 
@@ -53,19 +51,16 @@ skill.
    placeholders or invent commands, compatibility, status, support, security,
    performance, or publication claims. Keep uncertainty visible or omit a
    claim that repository evidence cannot support.
-5. Apply the complete sibling `readme-review` workflow to the exact written
-   draft, including its finding standard, execution-claim audit, change
-   safeguards, and every local reference. Treat material findings as internal
-   revision input.
-6. Apply the smallest supported corrections, then run the complete review
-   workflow again against the revised bytes. Repeat while a review pass finds
-   a material, in-scope issue that repository evidence can correct.
-7. Stop when the latest complete pass reaches a no-material-findings
-   conclusion. If a remaining correction requires unsupported facts, external
-   verification, new authority, an interface migration, or work outside the
+5. Review the written draft against `readme-review` criteria and correct
+   material, in-scope problems. Check the affected claims, links, and reader
+   path after a correction. Repeat broader review only when the change exposes
+   another dependency or unresolved concern.
+6. Finish when the draft satisfies the requested reader job and no known
+   material, in-scope issue remains. If a correction requires unsupported facts,
+   external verification, new authority, an interface migration, or work outside the
    requested scope, keep the best factual draft and report the residual finding
    and its exact limit instead of inventing a resolution.
-8. Validate changed relative links and consequential commands in proportion to
+7. Validate changed relative links and consequential commands in proportion to
    risk. In the final response, name the target, the evidenced role, checks
    actually executed, the no-material-findings conclusion or residual limits,
    and any rendered or external surfaces not independently verified.

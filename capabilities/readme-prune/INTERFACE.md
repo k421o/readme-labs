@@ -27,8 +27,8 @@ the exact final bytes for material effects attributable to pruning.
   supported delivery surfaces.
 - Make no new substantive claims, sections, commands, or links. Limit additions
   to local Markdown, grammar, or link repairs made necessary by deletion.
-- Apply the complete sibling `readme-review` workflow and all of its local
-  references to the initial and exact final bytes.
+- Use `readme-review` criteria and relevant references to evaluate proposed
+  removals and their effects on the exact final bytes.
 - Restore an agent-selected deletion that causes a material reader regression.
   Do not silently reverse an exact user-directed removal; report any resulting
   material regression as a residual limit.
