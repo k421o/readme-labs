@@ -1,10 +1,14 @@
-"""Content-addressed artifact helpers shared by intake and candidates."""
+"""Shared deterministic hashing, JSON, timestamp, and schema helpers."""
 
 from __future__ import annotations
 
 import hashlib
+import json
 import os
+from datetime import UTC, datetime
+from importlib import resources
 from pathlib import Path
+from typing import Any
 
 
 def tree_sha256(root: Path) -> str:
@@ -58,3 +62,64 @@ def resolve_contained(root: Path, relative: str) -> Path:
     except ValueError as error:
         raise ValueError(f"path escapes its declared root: {relative}") from error
     return path
+
+
+def sha256(path: Path) -> str:
+    """Return the hex SHA-256 digest of one file's bytes."""
+
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def write_json(path: Path, value: dict[str, Any]) -> None:
+    """Write a JSON document deterministically, creating parent directories."""
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+
+def utc_now() -> str:
+    """Return the current UTC time as an ISO-8601 timestamp ending in ``Z``."""
+
+    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
+
+
+def timestamp(value: datetime | None = None) -> str:
+    """Normalize an optional aware datetime to a ``Z``-suffixed UTC timestamp."""
+
+    resolved = value or datetime.now(UTC)
+    if resolved.tzinfo is None:
+        raise ValueError("timestamp must include a timezone")
+    return resolved.astimezone(UTC).isoformat().replace("+00:00", "Z")
+
+
+def load_schema(
+    name: str,
+    source_path: Path | None = None,
+    *,
+    schema_root: Path | None = None,
+) -> dict[str, Any]:
+    """Load a JSON Schema from the repository or the packaged data fallback.
+
+    ``source_path`` names the on-disk schema file directly; otherwise
+    ``schema_root / name`` is used. When the on-disk copy is absent the schema
+    packaged into the wheel under ``readme_lab/data/<name>`` is loaded.
+    """
+
+    if source_path is not None:
+        path = source_path
+    elif schema_root is not None:
+        path = schema_root / name
+    else:
+        raise TypeError("load_schema requires source_path or schema_root")
+    if path.is_file():
+        text = path.read_text(encoding="utf-8")
+    else:
+        text = resources.files("readme_lab").joinpath("data", name).read_text(
+            encoding="utf-8"
+        )
+    schema = json.loads(text)
+    if not isinstance(schema, dict):
+        raise TypeError(f"{name} must contain a JSON object")
+    return schema

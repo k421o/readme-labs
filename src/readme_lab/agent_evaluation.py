@@ -6,29 +6,16 @@ import hashlib
 import json
 import subprocess
 from datetime import UTC, datetime
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from readme_lab.artifacts import resolve_contained
+from readme_lab.artifacts import load_schema, resolve_contained, sha256, write_json
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_ROOT = REPOSITORY_ROOT / "experiments" / "schemas"
 EVALUATOR_SCHEMA_NAME = "evaluator-v1.schema.json"
-
-
-def _load_packaged_schema(name: str) -> dict[str, Any]:
-    path = SCHEMA_ROOT / name
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", name).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError(f"{name} must contain a JSON object")
-    return schema
 
 
 def load_evaluator(path: Path) -> dict[str, Any]:
@@ -36,7 +23,9 @@ def load_evaluator(path: Path) -> dict[str, Any]:
 
     path = path.resolve()
     evaluator = json.loads(path.read_text(encoding="utf-8"))
-    Draft202012Validator(_load_packaged_schema(EVALUATOR_SCHEMA_NAME)).validate(
+    Draft202012Validator(
+        load_schema(EVALUATOR_SCHEMA_NAME, schema_root=SCHEMA_ROOT)
+    ).validate(
         evaluator
     )
     instructions_path = resolve_contained(path.parent, evaluator["instructions"])
@@ -58,10 +47,6 @@ def load_evaluator(path: Path) -> dict[str, Any]:
         "_instructions_path": instructions_path,
         "_response_schema_path": response_schema_path,
     }
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _git(repository: Path, *arguments: str) -> str:
@@ -112,12 +97,6 @@ def load_agent_review_response(
     if response["recommendation"] not in evaluator["recommendations"]:
         raise ValueError("response recommendation is not declared by evaluator")
     return response
-
-
-def _write_json(path: Path, value: dict[str, Any]) -> None:
-    path.write_text(
-        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
 
 
 def run_agent_evaluation(
@@ -202,8 +181,8 @@ def run_agent_evaluation(
         "evaluator": {
             "id": evaluator["id"],
             "authority": "advisory",
-            "spec_sha256": _sha256(evaluator_path.resolve()),
-            "instructions_sha256": _sha256(evaluator["_instructions_path"]),
+            "spec_sha256": sha256(evaluator_path.resolve()),
+            "instructions_sha256": sha256(evaluator["_instructions_path"]),
         },
         "subject": {
             "repository_head": _git(repository, "rev-parse", "HEAD"),
@@ -212,7 +191,7 @@ def run_agent_evaluation(
                 _git(repository, "diff", "--binary", "HEAD").encode()
             ).hexdigest(),
             "readme_path": readme_path,
-            "readme_sha256": _sha256(readme),
+            "readme_sha256": sha256(readme),
         },
         "executor": {
             "kind": "codex_cli",
@@ -231,9 +210,9 @@ def run_agent_evaluation(
         },
         "artifacts": {
             "events": events_path.name,
-            "events_sha256": _sha256(events_path),
+            "events_sha256": sha256(events_path),
             "stderr": stderr_path.name,
-            "stderr_sha256": _sha256(stderr_path),
+            "stderr_sha256": sha256(stderr_path),
             "response": response_path.name if response_path.exists() else None,
         },
         "automated_authority": "evidence_only",
@@ -264,7 +243,7 @@ def run_agent_evaluation(
             run_record["result"] = "completed"
             run_record["recommendation"] = response["recommendation"]
             run_record["confidence"] = response["confidence"]
-            run_record["artifacts"]["response_sha256"] = _sha256(response_path)
+            run_record["artifacts"]["response_sha256"] = sha256(response_path)
 
-    _write_json(run_dir / "run.json", run_record)
+    write_json(run_dir / "run.json", run_record)
     return run_record

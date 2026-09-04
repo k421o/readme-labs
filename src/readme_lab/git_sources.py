@@ -43,14 +43,6 @@ def is_git_repository(path: Path) -> bool:
     return result.returncode == 0 and result.stdout.strip() == "true"
 
 
-def git_root(path: Path) -> Path:
-    """Resolve the exact working-tree root containing a path."""
-
-    output = run_git(path, "rev-parse", "--show-toplevel")
-    assert isinstance(output, str)
-    return Path(output.strip()).resolve()
-
-
 def git_identity(repository: Path) -> tuple[str, str, str | None]:
     """Return immutable HEAD, tree, and optional branch identity."""
 

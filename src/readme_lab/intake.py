@@ -5,28 +5,16 @@ from __future__ import annotations
 import hashlib
 import json
 import subprocess
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from readme_lab.artifacts import artifact_sha256, resolve_contained
+from readme_lab.artifacts import artifact_sha256, load_schema, resolve_contained
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
 SCHEMA_NAME = "source-manifest-v1.schema.json"
 SCHEMA_PATH = REPOSITORY_ROOT / "intake" / SCHEMA_NAME
-
-
-def _load_schema() -> dict[str, Any]:
-    if SCHEMA_PATH.is_file():
-        text = SCHEMA_PATH.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", SCHEMA_NAME).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError("source intake schema must be a JSON object")
-    return schema
 
 
 def load_intake_manifest(path: Path) -> dict[str, Any]:
@@ -34,7 +22,8 @@ def load_intake_manifest(path: Path) -> dict[str, Any]:
 
     manifest = json.loads(path.read_text(encoding="utf-8"))
     Draft202012Validator(
-        _load_schema(), format_checker=FormatChecker()
+        load_schema(SCHEMA_NAME, source_path=SCHEMA_PATH),
+        format_checker=FormatChecker(),
     ).validate(manifest)
     item_ids = [item["id"] for item in manifest["items"]]
     if len(item_ids) != len(set(item_ids)):

@@ -5,15 +5,14 @@ from __future__ import annotations
 import hashlib
 import json
 import shutil
-from datetime import UTC, datetime
-from importlib import resources
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
 from readme_lab.agent_evaluation import load_agent_review_response, load_evaluator
-from readme_lab.artifacts import resolve_contained
+from readme_lab.artifacts import load_schema, resolve_contained, sha256, timestamp
 from readme_lab.domain import validate_observation
 from readme_lab.inspect import inspect_readme
 from readme_lab.static_analysis import load_static_analysis_run
@@ -24,34 +23,11 @@ ARTIFACT_SCHEMA = "artifact-record-v1.schema.json"
 EVIDENCE_SCHEMA = "evidence-record-v1.schema.json"
 
 
-def _load_schema(name: str) -> dict[str, Any]:
-    path = SCHEMA_ROOT / name
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", name).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError(f"{name} must contain a JSON object")
-    return schema
-
-
 def _canonical_sha256(value: Any) -> str:
     encoded = json.dumps(
         value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
     ).encode()
     return hashlib.sha256(encoded).hexdigest()
-
-
-def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _timestamp(value: datetime | None) -> str:
-    timestamp = value or datetime.now(UTC)
-    if timestamp.tzinfo is None:
-        raise ValueError("captured_at must include a timezone")
-    return timestamp.astimezone(UTC).isoformat().replace("+00:00", "Z")
 
 
 def record_id_for_digest(content_sha256: str) -> str:
@@ -269,12 +245,12 @@ def capture_readme_artifact(
     source = source.resolve()
     if source.is_symlink() or not source.is_file():
         raise FileNotFoundError(source)
-    content_sha256 = _file_sha256(source)
+    content_sha256 = sha256(source)
     record_id = record_id_for_digest(content_sha256)
     record_dir = registry.resolve() / record_id
     if record_dir.exists():
         raise FileExistsError(record_dir)
-    timestamp = _timestamp(captured_at)
+    captured = timestamp(captured_at)
     record_dir.mkdir(parents=True)
     try:
         artifact_path = record_dir / "artifact.md"
@@ -290,7 +266,7 @@ def capture_readme_artifact(
             },
             boundary=boundary,
             pre_capture_editability=pre_capture_editability,
-            captured_at=timestamp,
+            captured_at=captured,
             ownership=ownership,
             visibility=visibility,
             body_policy="embedded",
@@ -338,7 +314,7 @@ def register_reference_artifact(
     record_dir = registry.resolve() / record_id
     if record_dir.exists():
         raise FileExistsError(record_dir)
-    timestamp = _timestamp(captured_at)
+    captured = timestamp(captured_at)
     record_dir.mkdir(parents=True)
     try:
         reference = {
@@ -351,7 +327,7 @@ def register_reference_artifact(
         }
         reference_path = record_dir / "artifact.ref.json"
         _write_new_json(reference_path, reference)
-        reference_sha256 = _file_sha256(reference_path)
+        reference_sha256 = sha256(reference_path)
         record = _base_record(
             content_sha256=content_sha256,
             byte_length=byte_length,
@@ -364,7 +340,7 @@ def register_reference_artifact(
             },
             boundary="observed_source_snapshot",
             pre_capture_editability="not_applicable",
-            captured_at=timestamp,
+            captured_at=captured,
             ownership=ownership,
             visibility=visibility,
             body_policy="reference_only",
@@ -402,7 +378,8 @@ def load_artifact_record(record_dir: Path) -> dict[str, Any]:
     record_path = record_dir / "record.json"
     record = json.loads(record_path.read_text(encoding="utf-8"))
     Draft202012Validator(
-        _load_schema(ARTIFACT_SCHEMA), format_checker=FormatChecker()
+        load_schema(ARTIFACT_SCHEMA, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(record)
     digest = record["artifact"]["content_sha256"]
     expected_record_id = record_id_for_digest(digest)
@@ -419,7 +396,7 @@ def load_artifact_record(record_dir: Path) -> dict[str, Any]:
         artifact = resolve_contained(record_dir, storage["path"])
         if artifact.is_symlink() or not artifact.is_file():
             raise ValueError("embedded README artifact is missing or is a symlink")
-        actual = _file_sha256(artifact)
+        actual = sha256(artifact)
         if actual != digest or storage["sha256"] != digest:
             raise ValueError("embedded README artifact digest mismatch")
         if artifact.stat().st_size != record["artifact"]["byte_length"]:
@@ -430,7 +407,7 @@ def load_artifact_record(record_dir: Path) -> dict[str, Any]:
         reference = resolve_contained(record_dir, storage["reference_path"])
         if reference.is_symlink() or not reference.is_file():
             raise ValueError("artifact reference is missing or is a symlink")
-        if _file_sha256(reference) != storage["reference_sha256"]:
+        if sha256(reference) != storage["reference_sha256"]:
             raise ValueError("artifact reference digest mismatch")
         reference_value = json.loads(reference.read_text(encoding="utf-8"))
         if reference_value["artifact_id"] != record["artifact"]["id"]:
@@ -534,7 +511,7 @@ def add_artifact_provenance(
     record = load_artifact_record(record_dir)
     provenance = _provenance(
         kind=kind,
-        recorded_at=_timestamp(recorded_at),
+        recorded_at=timestamp(recorded_at),
         repository=repository,
         revision=revision,
         recorded_path=recorded_path,
@@ -562,7 +539,7 @@ def add_artifact_membership(
     record_dir = record_dir.resolve()
     record = load_artifact_record(record_dir)
     membership = _membership(
-        (collection_id, purpose), _timestamp(recorded_at)
+        (collection_id, purpose), timestamp(recorded_at)
     )
     identity = (collection_id, purpose)
     if any(
@@ -627,7 +604,7 @@ def _repository_source(
     return {
         "role": role,
         "path": relative.as_posix(),
-        "sha256": _file_sha256(path),
+        "sha256": sha256(path),
         "selector": selector,
     }
 
@@ -664,7 +641,8 @@ def _write_evidence(record_dir: Path, value: dict[str, Any]) -> Path:
     evidence = {**value}
     evidence["evidence_id"] = f"ev-{_canonical_sha256(value)[:16]}"
     Draft202012Validator(
-        _load_schema(EVIDENCE_SCHEMA), format_checker=FormatChecker()
+        load_schema(EVIDENCE_SCHEMA, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(evidence)
     evidence_dir = record_dir.resolve() / "evidence"
     evidence_dir.mkdir(exist_ok=True)
@@ -722,7 +700,7 @@ def inspect_captured_artifact(
         raise ValueError("structural inspection requires available README bytes")
     occurrence = _occurrence_by_id(record, occurrence_id)
     artifact_path = resolve_contained(record_dir, storage["path"])
-    timestamp = observed_at or datetime.fromisoformat(
+    observed = observed_at or datetime.fromisoformat(
         record["capture"]["captured_at"].replace("Z", "+00:00")
     )
     observation = inspect_readme(
@@ -731,7 +709,7 @@ def inspect_captured_artifact(
         revision=occurrence["revision"],
         role=occurrence["role"],
         role_assignment="declared",
-        observed_at=timestamp,
+        observed_at=observed,
         source_path=occurrence["path"],
         retrieval_url=occurrence.get("retrieval_url"),
         license_spdx=record["custody"].get("license_spdx"),
@@ -978,11 +956,11 @@ def attach_soft_review_evidence(
         raise ValueError("soft-review run exceeds evidence-only authority")
     if run["evaluator"]["id"] != evaluator["id"]:
         raise ValueError("soft-review run does not match evaluator id")
-    if run["evaluator"]["spec_sha256"] != _file_sha256(
+    if run["evaluator"]["spec_sha256"] != sha256(
         evaluator["_spec_path"]
     ):
         raise ValueError("soft-review run does not match evaluator spec")
-    if run["evaluator"]["instructions_sha256"] != _file_sha256(
+    if run["evaluator"]["instructions_sha256"] != sha256(
         evaluator["_instructions_path"]
     ):
         raise ValueError("soft-review run does not match evaluator instructions")
@@ -990,7 +968,7 @@ def attach_soft_review_evidence(
         name = run["artifacts"].get(role)
         if not isinstance(name, str):
             continue
-        if _file_sha256(run_dir / name) != run["artifacts"].get(f"{role}_sha256"):
+        if sha256(run_dir / name) != run["artifacts"].get(f"{role}_sha256"):
             raise ValueError(f"soft-review {role} artifact digest mismatch")
     subject = run["subject"]
     if subject["readme_sha256"] != record["artifact"]["content_sha256"]:
@@ -1030,7 +1008,7 @@ def attach_soft_review_evidence(
             "kind": "soft_agent_evaluator",
             "id": evaluator["id"],
             "version": None,
-            "spec_sha256": _file_sha256(evaluator["_spec_path"]),
+            "spec_sha256": sha256(evaluator["_spec_path"]),
         },
         source_records=_soft_run_sources(
             run_dir, run, evaluator, repository_root=repository_root
@@ -1060,7 +1038,8 @@ def load_evidence_record(
 
     evidence = json.loads(path.read_text(encoding="utf-8"))
     Draft202012Validator(
-        _load_schema(EVIDENCE_SCHEMA), format_checker=FormatChecker()
+        load_schema(EVIDENCE_SCHEMA, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(evidence)
     value = {
         key: content for key, content in evidence.items() if key != "evidence_id"
@@ -1079,7 +1058,7 @@ def load_evidence_record(
         source_path = resolve_contained(repository_root, source["path"])
         if source_path.is_symlink() or not source_path.is_file():
             raise ValueError(f"evidence source is missing: {source['path']}")
-        if _file_sha256(source_path) != source["sha256"]:
+        if sha256(source_path) != source["sha256"]:
             raise ValueError(f"evidence source digest mismatch: {source['path']}")
     return evidence
 

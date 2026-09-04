@@ -5,13 +5,12 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
 
-from readme_lab.artifacts import resolve_contained, tree_sha256
+from readme_lab.artifacts import load_schema, resolve_contained, tree_sha256
 from readme_lab.intake import load_intake_manifest
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -19,22 +18,13 @@ SCHEMA_NAME = "candidate-v1.schema.json"
 SCHEMA_PATH = REPOSITORY_ROOT / "candidates" / SCHEMA_NAME
 
 
-def _load_schema() -> dict[str, Any]:
-    if SCHEMA_PATH.is_file():
-        text = SCHEMA_PATH.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", SCHEMA_NAME).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError("candidate schema must be a JSON object")
-    return schema
-
-
 def load_candidate(path: Path) -> dict[str, Any]:
     """Load one candidate descriptor without imposing a skill shape."""
 
     candidate = json.loads(path.read_text(encoding="utf-8"))
-    Draft202012Validator(_load_schema()).validate(candidate)
+    Draft202012Validator(
+        load_schema(SCHEMA_NAME, source_path=SCHEMA_PATH)
+    ).validate(candidate)
     entrypoint_ids = [entrypoint["id"] for entrypoint in candidate["entrypoints"]]
     if len(entrypoint_ids) != len(set(entrypoint_ids)):
         raise ValueError("candidate entrypoint ids must be unique")
