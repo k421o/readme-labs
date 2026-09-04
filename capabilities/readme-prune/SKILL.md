@@ -9,13 +9,12 @@ Remove the smallest authorized set of content from an existing README while
 preserving the reader-facing contract that the repository supports. Brevity is
 not the objective; evidenced subtraction is.
 
-## Required review source
+## Review source
 
-Before pruning, read the sibling [README review
-skill](../readme-review/SKILL.md) completely and read every local reference
-file shipped in [its references directory](../readme-review/references/). The
-review skill and those references are the single source of role, evidence,
-analysis, and finding behavior. Do not restate or fork their criteria here.
+Use the sibling [README review skill](../readme-review/SKILL.md) for shared
+criteria. Read its [references](../readme-review/references/) when the target's
+role or a disputed claim needs that detail. Reuse sources already read during
+this task.
 
 ## Pruning modes
 
@@ -56,9 +55,8 @@ unchanged and say so.
 
 1. Inspect the target README and enough repository evidence to establish its
    role, delivery surfaces, shortest useful reader path, and consequential
-   boundaries. Apply the complete sibling `readme-review` workflow to the
-   initial bytes. For directed removal, keep unrelated findings separate from
-   the user's basis for subtraction.
+   boundaries relevant to the requested removals. For directed removal, keep
+   unrelated findings separate from the user's basis for subtraction.
 2. Identify complete candidate units and classify each basis as
    `user_directed` or `review_evidenced`. For evidence-selected candidates,
    record the supporting repository evidence and the reader question that will
@@ -73,16 +71,17 @@ unchanged and say so.
    contents entries, orphaned reference definitions, empty headings, or local
    connective text only when the primary deletion makes them invalid. Do not
    replace removed prose with a generic summary or use pruning as a rewrite.
-5. Apply the complete sibling `readme-review` workflow to the exact edited
-   bytes. Compare the result with the initial reader contract, not with a
-   universal template or a length target.
+5. Check the exact edited bytes for broken routes, lost reader-critical facts,
+   and other effects of the deletions using `readme-review` criteria. Compare
+   the result with the initial reader contract.
 6. Restore any agent-selected deletion that creates a material reader-facing
    regression. Do not silently reverse a directed removal; keep it removed and
    report the attributable regression or external migration need as a residual
    limit. Do not repair unrelated pre-existing gaps by adding content.
-7. Repeat only while another supported candidate remains and the latest full
-   review shows no material regression attributable to agent-selected pruning.
-   Stop on a clean attributable result or an explicit residual limit.
+7. Finish when the requested removals are handled and no known material
+   regression from agent-selected pruning remains, or report an explicit
+   residual limit. Reopen broader review only for a newly exposed dependency
+   or unresolved concern.
 8. Validate changed relative links and consequential commands in proportion to
    risk. In the final response, name the target, each material unit removed and
    its basis, checks actually executed, the attributable-regression conclusion

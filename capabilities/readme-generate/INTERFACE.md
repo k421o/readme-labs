@@ -24,11 +24,11 @@ latest review reaches no material findings or an explicit residual limit.
   boundaries, and canonical routes without imposing a universal template.
 - Ground consequential claims in repository evidence and leave no authoring
   placeholders.
-- Apply the complete sibling `readme-review` workflow and all of its local
-  references to the exact target bytes after drafting and after each material
-  revision.
-- Finish with a no-material-findings conclusion from the latest complete review
-  pass, or identify each residual material finding and the evidence, authority,
+- Review the written draft using `readme-review` criteria and relevant
+  references. Recheck corrections and affected dependencies; repeat broader
+  review only when new evidence warrants it.
+- Finish with no known material, in-scope findings, or identify each residual
+  material finding and the evidence, authority,
   verification, migration, or scope limit that prevents correction.
 - Report only commands actually executed and name important links, rendered
   surfaces, or role assumptions that were not independently verified.
