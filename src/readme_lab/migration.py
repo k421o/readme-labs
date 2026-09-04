@@ -4,13 +4,12 @@ from __future__ import annotations
 
 import json
 import subprocess
-from datetime import UTC, datetime
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
+from readme_lab.artifacts import load_schema, utc_now
 from readme_lab.git_sources import remote_records, run_git
 from readme_lab.intake import fingerprint_git_path
 
@@ -19,26 +18,14 @@ SCHEMA_NAME = "git-migration-receipt-v1.schema.json"
 SCHEMA_PATH = REPOSITORY_ROOT / "intake" / SCHEMA_NAME
 
 
-def _now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
-def _load_schema() -> dict[str, Any]:
-    if SCHEMA_PATH.is_file():
-        text = SCHEMA_PATH.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", SCHEMA_NAME).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError("migration receipt schema must be an object")
-    return schema
-
-
 def load_git_migration_receipt(path: Path) -> dict[str, Any]:
     """Load and validate one settled migration receipt."""
 
     receipt = json.loads(path.read_text(encoding="utf-8"))
-    Draft202012Validator(_load_schema(), format_checker=FormatChecker()).validate(
+    Draft202012Validator(
+        load_schema(SCHEMA_NAME, source_path=SCHEMA_PATH),
+        format_checker=FormatChecker(),
+    ).validate(
         receipt
     )
     return receipt
@@ -128,7 +115,7 @@ def build_git_migration_receipt(
     receipt = {
         "schema_version": 1,
         "id": receipt_id,
-        "recorded_at": _now(),
+        "recorded_at": utc_now(),
         "source": {
             "repository_id": source_repository_id,
             "ownership": "owned",
@@ -160,7 +147,10 @@ def build_git_migration_receipt(
         },
         "limitations": limitations or [],
     }
-    Draft202012Validator(_load_schema(), format_checker=FormatChecker()).validate(
+    Draft202012Validator(
+        load_schema(SCHEMA_NAME, source_path=SCHEMA_PATH),
+        format_checker=FormatChecker(),
+    ).validate(
         receipt
     )
     return receipt
@@ -169,7 +159,10 @@ def build_git_migration_receipt(
 def write_git_migration_receipt(path: Path, receipt: dict[str, Any]) -> None:
     """Write a validated receipt without copying the migrated artifact."""
 
-    Draft202012Validator(_load_schema(), format_checker=FormatChecker()).validate(
+    Draft202012Validator(
+        load_schema(SCHEMA_NAME, source_path=SCHEMA_PATH),
+        format_checker=FormatChecker(),
+    ).validate(
         receipt
     )
     if path.exists():

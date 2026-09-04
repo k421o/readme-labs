@@ -9,7 +9,7 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from readme_lab.artifacts import artifact_sha256, resolve_contained
+from readme_lab.artifacts import artifact_sha256, resolve_contained, write_json
 from readme_lab.git_sources import git_identity, run_git
 from readme_lab.ingestion import (
     _job_directory,
@@ -17,7 +17,6 @@ from readme_lab.ingestion import (
     _log,
     _store_job,
     _target,
-    _write_json,
     load_external_action_plan,
 )
 from readme_lab.intake import fingerprint_git_path
@@ -43,7 +42,7 @@ def _write_action_result(
     job_dir: Path, plan: dict[str, Any], result: dict[str, Any]
 ) -> None:
     path = job_dir / "control/actions" / f"{plan['id']}.result.json"
-    _write_json(path, result)
+    write_json(path, result)
     job = _load_job_from_directory(job_dir)
     _log(job, "external_action_executed", action=plan["action"], action_id=plan["id"])
     _store_job(job_dir, job)

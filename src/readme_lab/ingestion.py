@@ -2,21 +2,26 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import os
 import re
 import shutil
 import subprocess
 from collections.abc import Iterable
-from datetime import UTC, datetime
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from readme_lab.artifacts import artifact_sha256, resolve_contained, tree_sha256
+from readme_lab.artifacts import (
+    artifact_sha256,
+    load_schema,
+    resolve_contained,
+    sha256,
+    tree_sha256,
+    utc_now,
+    write_json,
+)
 from readme_lab.candidates import verify_candidate
 from readme_lab.experiments import load_experiment_plan
 from readme_lab.git_sources import (
@@ -42,25 +47,10 @@ ACTION_SCHEMA = "external-action-plan-v1.schema.json"
 ID_PATTERN = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
-def _now() -> str:
-    return datetime.now(UTC).isoformat().replace("+00:00", "Z")
-
-
-def _load_schema(name: str) -> dict[str, Any]:
-    path = SCHEMA_ROOT / name
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", name).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError(f"{name} must contain a JSON object")
-    return schema
-
-
 def _validate(value: dict[str, Any], schema_name: str) -> None:
     Draft202012Validator(
-        _load_schema(schema_name), format_checker=FormatChecker()
+        load_schema(schema_name, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(value)
 
 
@@ -70,17 +60,6 @@ def load_finalization_receipt(path: Path) -> dict[str, Any]:
     receipt = json.loads(path.read_text(encoding="utf-8"))
     _validate(receipt, RECEIPT_SCHEMA)
     return receipt
-
-
-def _write_json(path: Path, value: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(
-        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-    )
-
-
-def _file_sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _assert_id(value: str) -> None:
@@ -156,13 +135,13 @@ def load_ingestion_job(yard: Path, job_id: str) -> dict[str, Any]:
 
 
 def _store_job(job_dir: Path, job: dict[str, Any]) -> None:
-    job["updated_at"] = _now()
+    job["updated_at"] = utc_now()
     _validate(job, JOB_SCHEMA)
-    _write_json(job_dir / "control/job.json", job)
+    write_json(job_dir / "control/job.json", job)
 
 
 def _log(job: dict[str, Any], event: str, **details: Any) -> None:
-    job["action_log"].append({"at": _now(), "event": event, "details": details})
+    job["action_log"].append({"at": utc_now(), "event": event, "details": details})
 
 
 def _source_kind(source: str) -> tuple[str, Path | None]:
@@ -393,7 +372,7 @@ def _inventory(job_id: str, checkout: Path, *, include_ignored: bool) -> dict[st
     inventory = {
         "schema_version": 1,
         "job_id": job_id,
-        "observed_at": _now(),
+        "observed_at": utc_now(),
         "file_count": file_count,
         "total_bytes": total_bytes,
         "symlinks": sorted(symlinks),
@@ -487,11 +466,11 @@ def begin_ingestion(
         if _git_repositories(checkout):
             _apply_remote_policy(checkout, remote_policy, job_id)
         inventory = _inventory(job_id, checkout, include_ignored=include_ignored)
-        _write_json(job_dir / "control/inventory.json", inventory)
+        write_json(job_dir / "control/inventory.json", inventory)
         selections = {"schema_version": 1, "job_id": job_id, "selections": []}
         _validate(selections, SELECTION_SCHEMA)
-        _write_json(job_dir / "control/selections.json", selections)
-        now = _now()
+        write_json(job_dir / "control/selections.json", selections)
+        now = utc_now()
         repository_locator = (
             original_remotes[0]["fetch_url"] if original_remotes else locator
         )
@@ -551,7 +530,7 @@ def refresh_ingestion_inventory(*, yard: Path, job_id: str) -> dict[str, Any]:
         job_dir / "checkout",
         include_ignored=job["acquisition"]["include_ignored"],
     )
-    _write_json(job_dir / job["inventory"], inventory)
+    write_json(job_dir / job["inventory"], inventory)
     _log(job, "inventory_refreshed")
     _store_job(job_dir, job)
     return inventory
@@ -693,7 +672,7 @@ def add_ingestion_selection(
     }
     selections["selections"].append(selection)
     _validate(selections, SELECTION_SCHEMA)
-    _write_json(path, selections)
+    write_json(path, selections)
     job["status"] = "selected"
     _log(
         job,
@@ -740,7 +719,7 @@ def _source_record(
     artifact = _resolve_artifact(checkout, source_path)
     return {
         "state": "workspace",
-        "observed_at": _now(),
+        "observed_at": utc_now(),
         "path": source_path,
         "artifact_type": artifact_type,
         "sha256": artifact_sha256(artifact, artifact_type),
@@ -768,7 +747,7 @@ def _intake_kind(role: str) -> str:
 
 def _target(kind: str, path: Path, domain_repository: Path) -> dict[str, str]:
     relative = path.resolve().relative_to(domain_repository.resolve()).as_posix()
-    return {"kind": kind, "path": relative, "sha256": _file_sha256(path)}
+    return {"kind": kind, "path": relative, "sha256": sha256(path)}
 
 
 def _manifest_repository(job: dict[str, Any]) -> dict[str, Any]:
@@ -846,7 +825,7 @@ def _write_candidate(
         ],
     }
     descriptor_path = candidate_root / "candidate.json"
-    _write_json(descriptor_path, descriptor)
+    write_json(descriptor_path, descriptor)
     return snapshot, _target("candidate", descriptor_path, domain_repository)
 
 
@@ -1046,7 +1025,7 @@ def admit_ingestion(
         "schema_version": 1,
         "id": manifest_id,
         "title": title,
-        "observed_at": _now(),
+        "observed_at": utc_now(),
         "source_repository": _manifest_repository(job),
         "items": items,
         "relationships": relationships,
@@ -1055,7 +1034,7 @@ def admit_ingestion(
             "only landed domain material."
         ],
     }
-    _write_json(manifest_path, manifest)
+    write_json(manifest_path, manifest)
     verification = verify_intake_manifest(
         manifest_path, source_root=checkout, repository_root=domain_repository
     )
@@ -1089,7 +1068,7 @@ def link_existing_admission(
         path = resolve_contained(domain_repository, relative)
         if not path.is_file():
             raise FileNotFoundError(path)
-        linked.append({"kind": kind, "path": relative, "sha256": _file_sha256(path)})
+        linked.append({"kind": kind, "path": relative, "sha256": sha256(path)})
     if not linked:
         raise ValueError("at least one landed target is required")
     job["admission"] = {"mode": "linked_existing", "targets": linked}
@@ -1103,7 +1082,7 @@ def _verify_target(
     target: dict[str, str], *, domain_repository: Path, checkout: Path
 ) -> bool:
     path = resolve_contained(domain_repository, target["path"])
-    if not path.is_file() or _file_sha256(path) != target["sha256"]:
+    if not path.is_file() or sha256(path) != target["sha256"]:
         return False
     kind = target["kind"]
     if kind == "intake_manifest":
@@ -1160,7 +1139,7 @@ def verify_ingestion(
         for item in target_results
     ]
     job["verification"] = {
-        "verified_at": _now(),
+        "verified_at": utc_now(),
         "verified": True,
         "targets": verified_targets,
     }
@@ -1294,7 +1273,7 @@ def finalize_ingestion(
         "schema_version": 1,
         "id": f"{job_id}-finalization",
         "job_id": job_id,
-        "completed_at": _now(),
+        "completed_at": utc_now(),
         "source": _receipt_source(job),
         "remote_policy": job["acquisition"]["remote_policy"],
         "selections": [
@@ -1317,7 +1296,7 @@ def finalize_ingestion(
     }
     _validate(receipt, RECEIPT_SCHEMA)
     receipt_path = job_dir / "control/finalization-receipt.json"
-    _write_json(receipt_path, receipt)
+    write_json(receipt_path, receipt)
     job["finalization"] = "control/finalization-receipt.json"
     job["status"] = "finalized"
     _log(
@@ -1329,7 +1308,7 @@ def finalize_ingestion(
     _store_job(job_dir, job)
 
     if exported is not None:
-        _write_json(exported, receipt)
+        write_json(exported, receipt)
     if destination is not None:
         shutil.move(job_dir, destination)
     return {
@@ -1409,7 +1388,7 @@ def create_external_action_plan(
         "schema_version": 1,
         "id": action_id,
         "job_id": job_id,
-        "created_at": _now(),
+        "created_at": utc_now(),
         "action": action,
         "status": "planned",
         "preconditions": {
@@ -1424,7 +1403,7 @@ def create_external_action_plan(
     path = job_dir / "control/actions" / f"{action_id}.json"
     if path.exists():
         raise FileExistsError(path)
-    _write_json(path, plan)
+    write_json(path, plan)
     _log(job, "external_action_planned", action=action, action_id=action_id)
     _store_job(job_dir, job)
     return plan

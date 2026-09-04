@@ -2,19 +2,17 @@
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from collections import Counter
 from datetime import UTC, datetime
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 from markdown_it import MarkdownIt
 
-from readme_lab.artifacts import resolve_contained
+from readme_lab.artifacts import load_schema, resolve_contained, sha256, timestamp
 from readme_lab.corpus import materialize_corpus_documents
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[2]
@@ -26,24 +24,14 @@ MARKDOWN_STRUCTURE_IMPLEMENTATION = (
 )
 
 
-def _load_schema(name: str) -> dict[str, Any]:
-    path = SCHEMA_ROOT / name
-    if path.is_file():
-        text = path.read_text(encoding="utf-8")
-    else:
-        text = resources.files("readme_lab").joinpath("data", name).read_text()
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError(f"{name} must contain a JSON object")
-    return schema
-
-
 def load_static_analyzer(path: Path) -> dict[str, Any]:
     """Load one adapter without treating its native output as universal."""
 
     path = path.resolve()
     analyzer = json.loads(path.read_text(encoding="utf-8"))
-    Draft202012Validator(_load_schema(ANALYZER_SCHEMA)).validate(analyzer)
+    Draft202012Validator(
+        load_schema(ANALYZER_SCHEMA, schema_root=SCHEMA_ROOT)
+    ).validate(analyzer)
     rule_ids = [rule["id"] for rule in analyzer["rules"]]
     if len(rule_ids) != len(set(rule_ids)):
         raise ValueError("static analyzer rule ids must be unique")
@@ -64,7 +52,8 @@ def load_static_analysis_run(
 
     run = json.loads(path.read_text(encoding="utf-8"))
     Draft202012Validator(
-        _load_schema(RUN_SCHEMA), format_checker=FormatChecker()
+        load_schema(RUN_SCHEMA, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(run)
     subject_ids = [subject["subject_id"] for subject in run["subjects"]]
     if len(subject_ids) != len(set(subject_ids)):
@@ -75,7 +64,7 @@ def load_static_analysis_run(
             "id": analyzer["id"],
             "version": analyzer["adapter"]["version"],
             "adapter_kind": analyzer["adapter"]["kind"],
-            "spec_sha256": _sha256(analyzer["_spec_path"]),
+            "spec_sha256": sha256(analyzer["_spec_path"]),
         }
         if run["analyzer"] != expected_analyzer:
             raise ValueError("static analysis run does not match analyzer spec")
@@ -102,20 +91,6 @@ def load_static_analysis_run(
         if run["summary"] != _summarize(run["subjects"]):
             raise ValueError("static analysis run summary does not match subjects")
     return run
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
-
-
-def _now() -> datetime:
-    return datetime.now(UTC)
-
-
-def _timestamp(value: datetime) -> str:
-    if value.tzinfo is None:
-        raise ValueError("static analysis timestamps must include a timezone")
-    return value.isoformat().replace("+00:00", "Z")
 
 
 def _normalized_heading(value: str) -> str:
@@ -268,7 +243,7 @@ def _subject(
         "repository": repository,
         "revision": revision,
         "path": recorded_path,
-        "content_sha256": _sha256(path),
+        "content_sha256": sha256(path),
     }
     if retrieval_url is not None:
         source["retrieval_url"] = retrieval_url
@@ -324,13 +299,13 @@ def _run_record(
     run = {
         "schema_version": 1,
         "run_id": run_id,
-        "recorded_at": _timestamp(recorded_at),
+        "recorded_at": timestamp(recorded_at),
         "mode": mode,
         "analyzer": {
             "id": analyzer["id"],
             "version": analyzer["adapter"]["version"],
             "adapter_kind": analyzer["adapter"]["kind"],
-            "spec_sha256": _sha256(analyzer["_spec_path"]),
+            "spec_sha256": sha256(analyzer["_spec_path"]),
         },
         "configuration": {
             "profile": profile,
@@ -351,7 +326,8 @@ def _run_record(
         ],
     }
     Draft202012Validator(
-        _load_schema(RUN_SCHEMA), format_checker=FormatChecker()
+        load_schema(RUN_SCHEMA, schema_root=SCHEMA_ROOT),
+        format_checker=FormatChecker(),
     ).validate(run)
     return run
 
@@ -413,7 +389,7 @@ def run_document_static_analysis(
         subjects=[subject],
         profile=profile,
         enabled_rule_ids=enabled_rule_ids,
-        recorded_at=recorded_at or _now(),
+        recorded_at=recorded_at or datetime.now(UTC),
     )
     _write_new_run(output, run)
     return run
@@ -456,7 +432,7 @@ def run_corpus_static_analysis(
         subjects=subjects,
         profile="all",
         enabled_rule_ids=enabled_rule_ids,
-        recorded_at=recorded_at or _now(),
+        recorded_at=recorded_at or datetime.now(UTC),
         extra_limitations=[
             "Corpus diagnostics describe this pinned sample and do not estimate "
             "population prevalence or README quality."

@@ -11,13 +11,18 @@ import shutil
 import subprocess
 import tomllib
 from datetime import UTC, datetime
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator, FormatChecker
 
-from readme_lab.artifacts import resolve_contained, tree_sha256
+from readme_lab.artifacts import (
+    load_schema,
+    resolve_contained,
+    sha256,
+    tree_sha256,
+    write_json,
+)
 from readme_lab.candidates import load_candidate, verify_candidate
 from readme_lab.capsule import load_capsule, materialize_capsule
 
@@ -35,26 +40,11 @@ SANDBOX_VIOLATION = re.compile(r"recorded sandbox violation", re.IGNORECASE)
 SKILL_NAME = re.compile(r"^name:\s*['\"]?([a-z0-9]+(?:-[a-z0-9]+)*)['\"]?\s*$")
 
 
-def _load_schema(name: str, source_path: Path) -> dict[str, Any]:
-    if source_path.is_file():
-        text = source_path.read_text(encoding="utf-8")
-    else:
-        text = (
-            resources.files("readme_lab")
-            .joinpath("data", name)
-            .read_text(encoding="utf-8")
-        )
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError(f"{name} must contain a JSON object")
-    return schema
-
-
 def load_response(path: Path) -> dict[str, Any]:
     """Load and validate a structured README-review response."""
 
     response = json.loads(path.read_text(encoding="utf-8"))
-    schema = _load_schema(RESPONSE_SCHEMA_NAME, RESPONSE_SCHEMA_PATH)
+    schema = load_schema(RESPONSE_SCHEMA_NAME, RESPONSE_SCHEMA_PATH)
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(response)
     return response
 
@@ -65,15 +55,11 @@ def load_scorecard(capsule_path: Path) -> dict[str, Any]:
     capsule = load_capsule(capsule_path)
     scorecard_path = (capsule_path.parent / capsule["scorecard"]).resolve()
     scorecard = json.loads(scorecard_path.read_text(encoding="utf-8"))
-    schema = _load_schema(SCORECARD_SCHEMA_NAME, SCORECARD_SCHEMA_PATH)
+    schema = load_schema(SCORECARD_SCHEMA_NAME, SCORECARD_SCHEMA_PATH)
     Draft202012Validator(schema, format_checker=FormatChecker()).validate(scorecard)
     if scorecard["scenario_id"] != capsule["id"]:
         raise ValueError("scorecard scenario_id does not match its capsule")
     return scorecard
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def _tree_sha256(root: Path) -> str:
@@ -258,7 +244,7 @@ def score_review_response(
     return {
         "score_schema_version": "1.0.0",
         "scenario_id": scorecard["scenario_id"],
-        "response_sha256": _sha256(response_path),
+        "response_sha256": sha256(response_path),
         "automatic_checks": {
             "conclusion_match": conclusion_match,
             "response_conclusion_and_findings_consistent": response_consistent,
@@ -365,12 +351,6 @@ def build_executor_permission_profile(held_out_root: Path) -> str:
             "enabled = false",
             "",
         )
-    )
-
-
-def _write_json(path: Path, value: dict[str, Any]) -> None:
-    path.write_text(
-        json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
 
@@ -520,7 +500,7 @@ def stage_candidate_review_skill(
         "candidate_id": candidate["id"],
         "candidate_kind": candidate["kind"],
         "authority": candidate["authority"],
-        "descriptor_sha256": _sha256(candidate_path.resolve()),
+        "descriptor_sha256": sha256(candidate_path.resolve()),
         "candidate_tree_sha256": verification["tree_sha256"],
         "entrypoint": {
             "id": entrypoint["id"],
@@ -574,7 +554,7 @@ def _artifact_binding(
             raise RuntimeError(
                 "marketplace install record does not match artifact revision"
             )
-        install_record_sha256 = _sha256(install_record_path)
+        install_record_sha256 = sha256(install_record_path)
 
     clone_revision = subprocess.run(
         ["git", "rev-parse", "HEAD"],
@@ -625,7 +605,7 @@ def _artifact_binding(
         "artifact_revision_verified": True,
         "marketplace_revision": clone_revision,
         "marketplace_ref": marketplace_config["ref"],
-        "marketplace_config_sha256": _sha256(config_path),
+        "marketplace_config_sha256": sha256(config_path),
         "marketplace_install_record_sha256": install_record_sha256,
         "committed_product_sha256": committed_sha256,
         "marketplace_product_sha256": marketplace_sha256,
@@ -888,7 +868,7 @@ def run_codex_capsule(
             "ephemeral": True,
             "network_policy": capsule["environment"]["network"],
             "permission_profile": "readme-eval",
-            "permission_profile_sha256": _sha256(profile_path),
+            "permission_profile_sha256": sha256(profile_path),
             "factory_checkout_denied_by_command_sandbox": True,
             "permission_preflight_passed": True,
             "scorecard_read_after_executor_exit": True,
@@ -899,9 +879,9 @@ def run_codex_capsule(
         "materialization": materialization,
         "artifacts": {
             "events": events_path.name,
-            "events_sha256": _sha256(events_path),
+            "events_sha256": sha256(events_path),
             "stderr": stderr_path.name,
-            "stderr_sha256": _sha256(stderr_path),
+            "stderr_sha256": sha256(stderr_path),
             "response": response_path.name,
         },
     }
@@ -922,7 +902,7 @@ def run_codex_capsule(
         )
     if result.returncode != 0:
         run_record["result"] = "executor_failed"
-        _write_json(run_dir / "run.json", run_record)
+        write_json(run_dir / "run.json", run_record)
         raise RuntimeError(f"Codex executor failed with exit code {result.returncode}")
 
     load_response(response_path)
@@ -933,14 +913,14 @@ def run_codex_capsule(
         stderr_path=stderr_path,
     )
     score_path = run_dir / "score.json"
-    _write_json(score_path, score)
+    write_json(score_path, score)
     scorecard_path = (capsule_path.parent / capsule["scorecard"]).resolve()
     run_record["artifacts"].update(
         {
-            "response_sha256": _sha256(response_path),
+            "response_sha256": sha256(response_path),
             "score": score_path.name,
-            "score_sha256": _sha256(score_path),
-            "held_out_scorecard_sha256": _sha256(scorecard_path),
+            "score_sha256": sha256(score_path),
+            "held_out_scorecard_sha256": sha256(scorecard_path),
         }
     )
     if candidate_binding is None:
@@ -953,7 +933,7 @@ def run_codex_capsule(
             and run_record["execution"]["candidate_treatment_unchanged"]
             else "completed_with_boundary_violation"
         )
-    _write_json(run_dir / "run.json", run_record)
+    write_json(run_dir / "run.json", run_record)
     return run_record
 
 

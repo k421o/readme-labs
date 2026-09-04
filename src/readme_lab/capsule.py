@@ -2,42 +2,29 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 import os
 import shutil
 import subprocess
 import tomllib
-from importlib import resources
 from pathlib import Path
 from typing import Any
 
 from jsonschema import Draft202012Validator
+
+from readme_lab.artifacts import load_schema, sha256
 
 CAPSULE_SCHEMA_PATH = (
     Path(__file__).resolve().parents[2] / "evals" / ("task-capsule-v1.schema.json")
 )
 
 
-def _load_schema() -> dict[str, Any]:
-    if CAPSULE_SCHEMA_PATH.is_file():
-        text = CAPSULE_SCHEMA_PATH.read_text(encoding="utf-8")
-    else:
-        packaged = resources.files("readme_lab").joinpath(
-            "data", "task-capsule-v1.schema.json"
-        )
-        text = packaged.read_text(encoding="utf-8")
-    schema = json.loads(text)
-    if not isinstance(schema, dict):
-        raise TypeError("task capsule schema must be a JSON object")
-    return schema
-
-
 def load_capsule(path: Path) -> dict[str, Any]:
     """Load and validate a task capsule."""
 
     capsule = tomllib.loads(path.read_text(encoding="utf-8"))
-    Draft202012Validator(_load_schema()).validate(capsule)
+    Draft202012Validator(
+        load_schema(CAPSULE_SCHEMA_PATH.name, source_path=CAPSULE_SCHEMA_PATH)
+    ).validate(capsule)
     return capsule
 
 
@@ -63,10 +50,6 @@ def _git(
         env=environment,
     )
     return result.stdout.strip()
-
-
-def _sha256(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
 def materialize_capsule(capsule_path: Path, destination: Path) -> dict[str, Any]:
@@ -106,7 +89,7 @@ def materialize_capsule(capsule_path: Path, destination: Path) -> dict[str, Any]
     mutation_sha256 = None
     if mutation_name:
         mutation = (capsule_path.parent / mutation_name).resolve()
-        mutation_sha256 = _sha256(mutation)
+        mutation_sha256 = sha256(mutation)
         subprocess.run(
             ["git", "apply", "--unidiff-zero", str(mutation)],
             cwd=destination,
@@ -133,7 +116,7 @@ def materialize_capsule(capsule_path: Path, destination: Path) -> dict[str, Any]
         "destination": destination.as_posix(),
         "fidelity_level": environment["fidelity_level"],
         "network": environment["network"],
-        "capsule_sha256": _sha256(capsule_path),
+        "capsule_sha256": sha256(capsule_path),
         "mutation_sha256": mutation_sha256,
         "git_timestamp": git_timestamp,
         "base_commit": base_commit,

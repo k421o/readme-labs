@@ -8,10 +8,18 @@ REVIEW_SKILL_DIR = Path("capabilities/readme-review")
 GENERATION_SKILL_DIR = Path("capabilities/readme-generate")
 PRUNE_SKILL_DIR = Path("capabilities/readme-prune")
 
+# Prose snapshots below pin the current reviewed wording of each SKILL.md
+# deliberately. They are not behavior contracts: a copyedit must update them
+# in the same change. Structural and linkage checks stay in their own tests.
 
-def test_readme_review_capability_has_no_scaffold_placeholders() -> None:
+
+def test_readme_review_skill_has_no_scaffold_placeholders() -> None:
     skill = (REVIEW_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     assert "TODO" not in skill
+
+
+def test_readme_review_skill_prose_snapshot() -> None:
+    skill = (REVIEW_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
     assert "Establish its role before" in skill
     assert "Do not demand empty conventional sections" in skill
     assert "Do not use stars" in skill
@@ -51,10 +59,16 @@ def test_review_openai_interface_invokes_canonical_skill_name() -> None:
     assert "$readme-review" in metadata["interface"]["default_prompt"]
 
 
-def test_readme_generation_routes_authoring_without_overlapping_review() -> None:
+def test_readme_generation_skill_has_no_scaffold_placeholders() -> None:
     skill = (GENERATION_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
-
     assert "name: readme-generate" in skill
+    assert "TODO" not in skill
+
+
+def test_readme_generation_skill_prose_snapshot() -> None:
+    skill = (GENERATION_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    normalized = " ".join(skill.split())
+
     assert "create, draft, bootstrap, or explicitly replace" in skill
     assert "Use readme-review for an audit or critique without edits" in skill
     assert "readme-prune to remove, trim, declutter, or shorten" in skill
@@ -63,15 +77,6 @@ def test_readme_generation_routes_authoring_without_overlapping_review() -> None
     assert "explicitly asks for a rewrite" in skill
     assert "replacement, or overwrite" in skill
     assert "preserve correct component-specific content" in skill
-    assert "TODO" not in skill
-
-
-def test_readme_generation_consumes_the_complete_review_source() -> None:
-    skill = (GENERATION_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
-    normalized = " ".join(skill.split())
-
-    assert "../readme-review/SKILL.md" in skill
-    assert "../readme-review/references/" in skill
     assert "read every local reference" in skill
     assert "single source" in skill
     assert "Apply the complete sibling `readme-review` workflow" in skill
@@ -81,8 +86,16 @@ def test_readme_generation_consumes_the_complete_review_source() -> None:
         in normalized
     )
     assert (
-        "latest complete pass reaches a no-material-findings conclusion" in normalized
+        "latest complete pass reaches a no-material-findings conclusion"
+        in normalized
     )
+
+
+def test_readme_generation_consumes_the_complete_review_source() -> None:
+    skill = (GENERATION_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+
+    assert "../readme-review/SKILL.md" in skill
+    assert "../readme-review/references/" in skill
     assert (GENERATION_SKILL_DIR.parent / "readme-review/SKILL.md").is_file()
     assert (GENERATION_SKILL_DIR.parent / "readme-review/references").is_dir()
 
@@ -118,17 +131,24 @@ def test_generation_openai_interface_invokes_canonical_skill_name() -> None:
     assert "$readme-generate" in metadata["interface"]["default_prompt"]
 
 
-def test_readme_prune_routes_semantic_subtraction_without_overlapping_jobs() -> None:
+def test_readme_prune_skill_has_no_scaffold_placeholders() -> None:
+    skill = (PRUNE_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
+    assert "name: readme-prune" in skill
+    assert "TODO" not in skill
+
+
+def test_readme_prune_skill_prose_snapshot() -> None:
     skill = (PRUNE_SKILL_DIR / "SKILL.md").read_text(encoding="utf-8")
 
-    assert "name: readme-prune" in skill
     assert "trim, declutter, shorten by subtraction, or remove" in skill
     assert "Use `readme-review` for findings without edits" in skill
     assert "Use `readme-generate` for a" in skill
     assert "missing README, an explicit replacement, or a broad rewrite" in skill
     assert "Do not delete or move the README" in skill
     assert "Make no new substantive claims, sections, commands, or links" in skill
-    assert "TODO" not in skill
+    assert "read every local reference" in skill
+    assert "single source" in skill
+    assert "Apply the complete sibling `readme-review` workflow" in skill
 
 
 def test_readme_prune_consumes_the_complete_review_source() -> None:
@@ -136,9 +156,6 @@ def test_readme_prune_consumes_the_complete_review_source() -> None:
 
     assert "../readme-review/SKILL.md" in skill
     assert "../readme-review/references/" in skill
-    assert "read every local reference" in skill
-    assert "single source" in skill
-    assert "Apply the complete sibling `readme-review` workflow" in skill
     assert (PRUNE_SKILL_DIR.parent / "readme-review/SKILL.md").is_file()
     assert (PRUNE_SKILL_DIR.parent / "readme-review/references").is_dir()
 
