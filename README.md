@@ -9,6 +9,26 @@ laboratory**. It is establishing a common model for README roles and content,
 then using controlled fixtures, pinned public repositories, mutation tests, and
 eventually executable environments to test that model.
 
+## Repository map
+
+```text
+.
+├── domain/        # Change shared contracts here; keep observations descriptive.
+├── research/      # Separate source findings from adopted contracts.
+├── corpus/        # Keep sampling manifests here, not an unbounded source corpus.
+├── intake/        # Assess outside material before adopting it.
+├── readmes/       # Preserve captured outputs separately from editable READMEs.
+├── candidates/    # Keep experimental specimens separate from current capabilities.
+├── experiments/   # Compare candidates before promotion.
+├── evals/         # Keep held-out expectations separate from agent-visible fixtures.
+├── capabilities/  # Edit skill behavior here; derive it from the domain evidence.
+├── products/      # Generate packaged skills from capabilities; do not edit copies.
+├── src/           # Put reusable collection and analysis behavior here.
+├── scripts/       # Keep repository maintenance and packaging entrypoints here.
+├── tests/         # Check implementation behavior; review quality needs evaluations.
+└── docs/          # Explain cross-cutting architecture and operating procedures.
+```
+
 ## Current work
 
 - Build an evidence-backed anatomy for root, package, component, experiment,
@@ -64,23 +84,6 @@ user contract.
 The maintained progression, entry and exit signals, repository-split triggers,
 and dependency rules are in
 [`docs/complexity-progression.md`](docs/complexity-progression.md).
-
-## Project layout
-
-```text
-domain/         README roles, taxonomy, and observation schemas
-research/       Findings, sources, examples, and interpretation
-corpus/         Versioned manifests, labels, and sampling plans
-intake/         Outside research, methods, artifacts, and provenance
-readmes/        Captured README artifacts, evidence records, and reports
-candidates/     Reproducible non-authoritative skills, plugins, tools, and methods
-experiments/    Hypotheses, static analyzers, advisory evaluators, and runs
-evals/          Task capsules, mutations, environments, and scorecards
-capabilities/   Agent-facing projections derived from the domain model
-products/       Packaging adapters created only when a capability earns them
-src/            Deterministic collection and analysis code
-tests/          Schema, parser, provenance, and evaluation-contract tests
-```
 
 Directories are added when their current contents justify them. The future
 shape in the complexity progression is not a request for empty scaffolding.
